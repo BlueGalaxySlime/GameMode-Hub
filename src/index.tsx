@@ -11,7 +11,7 @@ type DeckyInstaller = {
   callable: (method: string) => (...args: unknown[]) => Promise<unknown>;
 };
 const checkUpdates = callable<[], UpdateResult>("check_updates");
-const VERSION = "0.2.1";
+const VERSION = "0.2.2";
 
 function Content() {
   const [message, setMessage] = useState("Nie sprawdzono aktualizacji.");
@@ -64,7 +64,7 @@ function Content() {
   }
 
   return <>
-    <PanelSection title="SteamHub · 0.2.1">
+    <PanelSection title="SteamHub · 0.2.2">
       <PanelSectionRow><div>Wersja demonstracyjna. Moduły będą dodawane stopniowo.</div></PanelSectionRow>
     </PanelSection>
     <PanelSection title="Moduły (w przygotowaniu)">
