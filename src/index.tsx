@@ -22,7 +22,7 @@ function Content() {
     finally { setBusy(false); }
   }
   return <>
-    <PanelSection title="SteamOS-Hub · 0.1.0">
+    <PanelSection title="SteamHub · 0.1.0">
       <PanelSectionRow><div>Wersja demonstracyjna. Moduły będą dodawane stopniowo.</div></PanelSectionRow>
     </PanelSection>
     <PanelSection title="Moduły (w przygotowaniu)">
@@ -36,8 +36,8 @@ function Content() {
 }
 
 export default definePlugin(() => ({
-  name: "SteamOS-Hub",
-  titleView: <div className={staticClasses.Title}>SteamOS-Hub</div>,
+  name: "SteamHub",
+  titleView: <div className={staticClasses.Title}>SteamHub</div>,
   content: <Content />,
   icon: <FaTools />,
 }));
