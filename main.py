@@ -2,12 +2,10 @@
 import asyncio
 import json
 import re
-import socket
-import time
 import urllib.error
 import urllib.request
 
-CURRENT_VERSION = "0.2.0"
+CURRENT_VERSION = "0.2.1"
 RELEASES_API = "https://api.github.com/repos/BlueGalaxySlime/SteamOS-Hub/releases/latest"
 ASSET_NAME = "SteamHub.zip"
 
@@ -22,25 +20,13 @@ def _fetch_latest_release():
         RELEASES_API,
         headers={
             "Accept": "application/vnd.github+json",
-            "User-Agent": "SteamHub/0.2.0",
+            "User-Agent": "SteamHub/0.2.1",
             "X-GitHub-Api-Version": "2022-11-28",
         },
     )
-    for attempt in range(3):
-        try:
-            with urllib.request.urlopen(request, timeout=12) as response:
-                data = json.load(response)
-            break
-        except urllib.error.HTTPError as error:
-            if error.code in (429, 500, 502, 503, 504) and attempt < 2:
-                time.sleep(attempt + 1)
-                continue
-            raise
-        except (urllib.error.URLError, TimeoutError, socket.timeout):
-            if attempt < 2:
-                time.sleep(attempt + 1)
-                continue
-            raise
+    # One network request per manual click. Never retry automatically.
+    with urllib.request.urlopen(request, timeout=6) as response:
+        data = json.load(response)
 
     latest = str(data.get("tag_name", ""))
     asset = next((a for a in data.get("assets", []) if a.get("name") == ASSET_NAME), None)
