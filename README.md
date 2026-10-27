@@ -1,18 +1,35 @@
 # SteamHub
 
-SteamHub is an experimental Decky Loader plugin for SteamOS Gaming Mode. Repository: SteamOS-Hub.
+**SteamHub** — eksperymentalna, modułowa wtyczka do Decky Loader na SteamOS. Projekt rozwijany w repozytorium `SteamOS-Hub`.
 
-## Installation — important
+## 📦 Pobierz SteamHub
 
-**Do not use GitHub's green Code → Download ZIP button.** That downloads source code and cannot be installed as a Decky plugin.
+### **[⬇️ Pobierz najnowszą wersję SteamHub (GitHub Releases)](https://github.com/BlueGalaxySlime/SteamOS-Hub/releases/latest)**
 
-The installable ZIP is named **SteamHub.zip** and must contain a top-level `SteamHub/` folder with `plugin.json`, `main.py`, and `dist/index.js`.
+Na stronie wydania rozwiń **Assets** i pobierz **`SteamHub.zip`**.
 
-- **Preview builds:** open [Actions](../../actions/workflows/build.yml), choose a successful run on `main`, and download the `SteamHub-preview` artifact. GitHub wraps the actual `SteamHub.zip` in an artifact ZIP; extract the outer artifact and use the inner `SteamHub.zip`.
-- **Published releases:** use [Releases](../../releases) when an actual versioned release is available. Do not assume a release exists yet.
+> **Nie wybieraj „Code → Download ZIP” ani „Source code (zip)”.** To archiwa kodu źródłowego, a nie paczki do instalacji w Decky Loader.
+>
+> Jeśli link do najnowszego wydania nie działa lub nie ma pliku `SteamHub.zip`, paczka nie została jeszcze opublikowana.
 
-On the device, open Decky Loader → Settings → General → Developer Mode, then Developer → Install Plugin from ZIP File and select the actual `SteamHub.zip`.
+## Instalacja
 
-**Status:** experimental; the install/update flow has not been validated on Lenovo Legion Go S. The in-plugin update button uses an internal Decky API and may be incompatible with some Decky versions. No automatic background updates.
+1. Pobierz `SteamHub.zip` z sekcji **Releases → Assets**.
+2. Otwórz Decky Loader w Gaming Mode.
+3. W ustawieniach Decky włącz **Developer Mode**, jeśli jest wyłączony.
+4. W sekcji deweloperskiej wybierz instalację wtyczki z pliku ZIP i wskaż `SteamHub.zip`.
+5. Po instalacji sprawdź, czy na liście wtyczek pojawia się **SteamHub**.
 
-See [installation notes](docs/INSTALL.md) and [update limitations](docs/UPDATES.md).
+Nie rozpakowuj paczki instalacyjnej. Jeśli masz wcześniejszą wersję o nazwie `SteamOS-Hub`, może być konieczne jej jednorazowe usunięcie przed instalacją `SteamHub`.
+
+## Aktualizacje
+
+Wtyczka ma przyciski **Sprawdź aktualizacje** i **Aktualizuj**. Aktualizacje nie są uruchamiane w tle. Funkcja instalacji aktualizacji wykorzystuje wewnętrzny mechanizm Decky Loader i **nie została jeszcze zweryfikowana na Lenovo Legion Go S**.
+
+## Stan projektu
+
+Wersja testowa. Moduły Game Manager, Library Manager i Terminal są planowane, ale jeszcze niedostępne.
+
+- [Wszystkie wydania](https://github.com/BlueGalaxySlime/SteamOS-Hub/releases)
+- [Instrukcje instalacji](docs/INSTALL.md)
+- [Informacje o aktualizacjach](docs/UPDATES.md)
