@@ -38,7 +38,7 @@ jobs:
           if-no-files-found: error
 
   release:
-    if: startsWith(github.ref, 'refs/tags/v')
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     needs: build
     runs-on: ubuntu-latest
     permissions:
@@ -53,4 +53,10 @@ jobs:
       - name: Publish GitHub Release
         env:
           GH_TOKEN: ${{ github.token }}
-        run: gh release create "${GITHUB_REF_NAME}" release/SteamHub.zip --title "${GITHUB_REF_NAME}" --generate-notes
+        run: |
+          VERSION="v$(node -p "require('./package.json').version")"
+          if gh release view "$VERSION" >/dev/null 2>&1; then
+            echo "Release $VERSION already exists; refusing to overwrite."
+            exit 0
+          fi
+          gh release create "$VERSION" release/SteamHub.zip --target "$GITHUB_SHA" --title "SteamHub $VERSION" --generate-notes
