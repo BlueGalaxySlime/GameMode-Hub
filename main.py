@@ -7,7 +7,7 @@ from pathlib import Path
 import urllib.error
 import urllib.request
 
-CURRENT_VERSION = "0.2.2"
+CURRENT_VERSION = "0.2.3"
 RELEASES_API = "https://api.github.com/repos/BlueGalaxySlime/SteamOS-Hub/releases/latest"
 ASSET_NAME = "SteamHub.zip"
 
@@ -49,7 +49,7 @@ def _fetch_latest_release():
         RELEASES_API,
         headers={
             "Accept": "application/vnd.github+json",
-            "User-Agent": "SteamHub/0.2.2",
+            "User-Agent": "SteamHub/0.2.3",
             "X-GitHub-Api-Version": "2022-11-28",
         },
     )

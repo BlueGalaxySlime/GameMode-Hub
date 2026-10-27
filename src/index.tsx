@@ -11,12 +11,13 @@ type DeckyInstaller = {
   callable: (method: string) => (...args: unknown[]) => Promise<unknown>;
 };
 const checkUpdates = callable<[], UpdateResult>("check_updates");
-const VERSION = "0.2.2";
+const VERSION = "0.2.3";
 
 function Content() {
   const [message, setMessage] = useState("Nie sprawdzono aktualizacji.");
   const [release, setRelease] = useState<UpdateResult | null>(null);
   const [busy, setBusy] = useState(false);
+  const [lastChecked, setLastChecked] = useState<string | null>(null);
   const inProgress = useRef(false);
 
   async function check() {
@@ -24,6 +25,7 @@ function Content() {
     inProgress.current = true;
     setBusy(true);
     setRelease(null);
+    setMessage("Sprawdzanie aktualizacji…");
     try {
       const result = await checkUpdates();
       if (result.status === "no_releases") setMessage(result.error || "Brak opublikowanych wydań GitHub Releases.");
@@ -33,10 +35,11 @@ function Content() {
         setMessage("Dostępna wersja " + result.latest + ". Możesz ją zainstalować.");
       } else if (result.latest && result.latest !== VERSION) {
         setMessage("Wydanie " + result.latest + " nie jest nowsze lub nie ma paczki z sumą SHA-256.");
-      } else setMessage("SteamHub jest aktualny (" + VERSION + ").");
+      } else setMessage("SteamHub " + VERSION + " jest aktualny. Korzystasz z najnowszej wersji.");
     } catch (error) {
       setMessage("Błąd komunikacji z wtyczką: " + (error instanceof Error ? error.message : String(error)));
     } finally {
+      setLastChecked(new Date().toLocaleString("pl-PL"));
       inProgress.current = false;
       setBusy(false);
     }
@@ -64,14 +67,15 @@ function Content() {
   }
 
   return <>
-    <PanelSection title="SteamHub · 0.2.2">
+    <PanelSection title="SteamHub · 0.2.3">
       <PanelSectionRow><div>Wersja demonstracyjna. Moduły będą dodawane stopniowo.</div></PanelSectionRow>
     </PanelSection>
     <PanelSection title="Moduły (w przygotowaniu)">
       <PanelSectionRow><div>Game Manager · Library Manager · Terminal</div></PanelSectionRow>
     </PanelSection>
     <PanelSection title="Aktualizacje">
-      <PanelSectionRow><div>{message}</div></PanelSectionRow>
+      <PanelSectionRow><div role="status" aria-live="polite">{message}</div></PanelSectionRow>
+      <PanelSectionRow><div>{lastChecked ? "Ostatnia próba: " + lastChecked : "Nie wykonano jeszcze sprawdzenia."}</div></PanelSectionRow>
       <PanelSectionRow><ButtonItem layout="below" disabled={busy} onClick={check}>{busy ? "Czekaj…" : "Sprawdź aktualizacje"}</ButtonItem></PanelSectionRow>
       {release?.available && <PanelSectionRow><ButtonItem layout="below" disabled={busy} onClick={install}>Aktualizuj do {release.latest}</ButtonItem></PanelSectionRow>}
     </PanelSection>
