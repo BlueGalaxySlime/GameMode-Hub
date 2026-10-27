@@ -5,7 +5,7 @@ import { callable, definePlugin } from "@decky/api";
 
 type UpdateResult = {
   current: string; latest: string | null; url: string | null; sha256: string | null;
-  available: boolean; status: "ok" | "no_releases" | "error";
+  available: boolean; status: "ok" | "no_releases" | "error"; error?: string | null;
 };
 type DeckyInstaller = {
   callable: (method: string) => (...args: unknown[]) => Promise<unknown>;
@@ -23,16 +23,16 @@ function Content() {
     setRelease(null);
     try {
       const result = await checkUpdates();
-      if (result.status === "no_releases") setMessage("Brak opublikowanych wydań GitHub Releases.");
-      else if (result.status === "error") setMessage("Nie udało się sprawdzić aktualizacji.");
+      if (result.status === "no_releases") setMessage(result.error || "Brak opublikowanych wydań GitHub Releases.");
+      else if (result.status === "error") setMessage(result.error || "Nie udało się sprawdzić aktualizacji.");
       else if (result.available) {
         setRelease(result);
         setMessage("Dostępna wersja " + result.latest + ". Możesz ją zainstalować.");
       } else if (result.latest && result.latest !== VERSION) {
         setMessage("Wydanie " + result.latest + " nie jest nowsze lub nie ma paczki z sumą SHA-256.");
       } else setMessage("SteamHub jest aktualny (" + VERSION + ").");
-    } catch {
-      setMessage("Błąd komunikacji z wtyczką.");
+    } catch (error) {
+      setMessage("Błąd komunikacji z wtyczką: " + (error instanceof Error ? error.message : String(error)));
     } finally {
       setBusy(false);
     }
@@ -48,8 +48,6 @@ function Content() {
     setBusy(true);
     setMessage("Przekazuję aktualizację do Decky Loader…");
     try {
-      // Loader-owned installation: download, verify SHA-256, replace and reload.
-      // DeckyBackend is an internal API and may not exist in every Decky version.
       await backend.callable("utilities/install_plugin")(release.url, "SteamHub", release.latest, release.sha256, 2);
       setMessage("Aktualizacja przekazana do Decky Loader.");
     } catch {
