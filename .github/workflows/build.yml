@@ -1,0 +1,56 @@
+name: Build SteamHub preview
+
+on:
+  push:
+    branches:
+      - main
+      - feat/initial-foundation
+    tags:
+      - 'v*'
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install dependencies
+        run: npm install --no-audit --no-fund
+      - name: Typecheck
+        run: npm run typecheck
+      - name: Build Decky frontend
+        run: npm run build
+      - name: Check Python syntax
+        run: python3 -m py_compile main.py
+      - name: Create Decky plugin ZIP
+        run: python3 scripts/package.py
+      - uses: actions/upload-artifact@v4
+        with:
+          name: SteamHub-preview
+          path: release/SteamHub.zip
+          if-no-files-found: error
+
+  release:
+    if: startsWith(github.ref, 'refs/tags/v')
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: npm install --no-audit --no-fund
+      - run: npm run typecheck && npm run build && python3 scripts/package.py
+      - name: Publish GitHub Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh release create "${GITHUB_REF_NAME}" release/SteamHub.zip --title "${GITHUB_REF_NAME}" --generate-notes

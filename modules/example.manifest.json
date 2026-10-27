@@ -1,0 +1,8 @@
+{
+  "id": "example",
+  "name": "Example module (not installed)",
+  "version": "0.0.0",
+  "enabledByDefault": false,
+  "capabilities": [],
+  "entrypoint": null
+}

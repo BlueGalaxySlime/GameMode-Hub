@@ -1,0 +1,14 @@
+{
+  "name": "SteamHub",
+  "author": "BlueGalaxySlime",
+  "api_version": 1,
+  "flags": [],
+  "publish": {
+    "tags": [
+      "utility",
+      "launcher"
+    ],
+    "description": "Modular gaming-mode utilities for SteamOS (early preview).",
+    "image": "https://opengraph.githubassets.com/1/BlueGalaxySlime/SteamOS-Hub"
+  }
+}
