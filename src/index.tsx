@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { FaTools } from "react-icons/fa";
 import { ButtonItem, PanelSection, PanelSectionRow, staticClasses } from "@decky/ui";
 import { callable, definePlugin } from "@decky/api";
@@ -11,14 +11,17 @@ type DeckyInstaller = {
   callable: (method: string) => (...args: unknown[]) => Promise<unknown>;
 };
 const checkUpdates = callable<[], UpdateResult>("check_updates");
-const VERSION = "0.2.0";
+const VERSION = "0.2.1";
 
 function Content() {
   const [message, setMessage] = useState("Nie sprawdzono aktualizacji.");
   const [release, setRelease] = useState<UpdateResult | null>(null);
   const [busy, setBusy] = useState(false);
+  const inProgress = useRef(false);
 
   async function check() {
+    if (inProgress.current) return;
+    inProgress.current = true;
     setBusy(true);
     setRelease(null);
     try {
@@ -34,17 +37,19 @@ function Content() {
     } catch (error) {
       setMessage("Błąd komunikacji z wtyczką: " + (error instanceof Error ? error.message : String(error)));
     } finally {
+      inProgress.current = false;
       setBusy(false);
     }
   }
 
   async function install() {
-    if (!release?.available || !release.url || !release.sha256 || !release.latest) return;
+    if (inProgress.current || !release?.available || !release.url || !release.sha256 || !release.latest) return;
     const backend = (window as Window & { DeckyBackend?: DeckyInstaller }).DeckyBackend;
     if (!backend || typeof backend.callable !== "function") {
       setMessage("Ta wersja Decky nie udostępnia instalatora. Użyj Decky → Developer → Install Plugin from URL.");
       return;
     }
+    inProgress.current = true;
     setBusy(true);
     setMessage("Przekazuję aktualizację do Decky Loader…");
     try {
@@ -53,12 +58,13 @@ function Content() {
     } catch {
       setMessage("Decky nie zainstalował aktualizacji. Sprawdź wersję Decky Loader.");
     } finally {
+      inProgress.current = false;
       setBusy(false);
     }
   }
 
   return <>
-    <PanelSection title="SteamHub · 0.2.0">
+    <PanelSection title="SteamHub · 0.2.1">
       <PanelSectionRow><div>Wersja demonstracyjna. Moduły będą dodawane stopniowo.</div></PanelSectionRow>
     </PanelSection>
     <PanelSection title="Moduły (w przygotowaniu)">
