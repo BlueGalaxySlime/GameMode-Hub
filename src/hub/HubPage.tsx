@@ -5,7 +5,7 @@ import {
   DialogControlsSectionHeader, Field, Navigation, SidebarNavigation, Toggle
 } from "@decky/ui";
 import { callable } from "@decky/api";
-import { FaHome, FaPlug, FaPuzzlePiece, FaSyncAlt } from "react-icons/fa";
+import { FaFolderOpen, FaHome, FaPlug, FaPuzzlePiece, FaSyncAlt, FaTerminal } from "react-icons/fa";
 import { withTimeout } from "../utils/withTimeout";
 import { UpdaterPage } from "./UpdaterPage";
 
@@ -92,6 +92,13 @@ function AddonSelector({ installed, selected, pending, error, toggle, reload }: 
 }
 
 type RuntimePlugin = { name: string; content?: ReactNode };
+const FEATURE_NAMES: Record<string, string> = {
+  "Decky Manager": "Pliki",
+  "Decky Terminal": "Terminal"
+};
+function featureName(name: string): string {
+  return FEATURE_NAMES[name] ?? name;
+}
 type RuntimeLoader = { plugins?: RuntimePlugin[] };
 
 /**
@@ -127,29 +134,52 @@ function AddonOptions({ name, addon, selected, remove }: {
   selected: boolean;
   remove: () => void;
 }) {
-  const [panelOpen, setPanelOpen] = useState(false);
+  const [advanced, setAdvanced] = useState(false);
+  const [manualPanelOpen, setManualPanelOpen] = useState(false);
+  const integrated = name === "Decky Manager" || name === "Decky Terminal";
   const originalContent = loadedPluginContent(name);
+  const active = !!addon && !addon.disabled;
+  const showPanel = active && !!originalContent && (integrated || manualPanelOpen);
+
   return <DialogBody>
     <DialogControlsSection>
-      <DialogControlsSectionHeader>{name}</DialogControlsSectionHeader>
-      <Field label="Stan dodatku" description={addon?.disabled ? "Wyłączony w Decky" : addon ? "Aktywny w Decky" : "Niedostępny"} />
-      <Field label="Widoczny w SteamHub">
-        <Toggle value={selected} onChange={value => { if (!value) remove(); }} />
-      </Field>
-      <Field label="Ustawienia dodatku"
-        description="SteamHub udostępnia pełny ekran ustawień. Docelowo natywne opcje będą dostarczane przez niezależne adaptery." />
-      {originalContent && <Field label="Panel oryginalnej wtyczki"
-        description="Możesz otworzyć istniejący panel dodatku bez kopiowania jego kodu. Jego układ może różnić się od ustawień Steam.">
-        <DialogButton onClick={() => setPanelOpen(value => !value)}>
-          {panelOpen ? "Ukryj panel" : "Pokaż panel"}
+      <DialogControlsSectionHeader>{featureName(name)}</DialogControlsSectionHeader>
+      {showPanel
+        ? <ExternalPanelBoundary key={name}>
+            <div style={{ width: "100%", maxWidth: "100%", minHeight: 240, padding: "8px 0" }}>
+              {originalContent}
+            </div>
+          </ExternalPanelBoundary>
+        : <Field label="Panel dodatku jest niedostępny"
+            description={!addon ? "Dodatek nie jest zainstalowany. Zainstaluj go w Decky, aby używać go tutaj."
+              : addon.disabled ? "Dodatek jest wyłączony w Decky. Włącz go w ustawieniach Decky."
+              : integrated ? "Decky nie udostępnia panelu tej wtyczki do osadzenia. Użyj oryginalnego panelu Decky."
+              : "Panel można otworzyć poniżej, jeśli Decky udostępnia jego zawartość."} />}
+      {!integrated && active && !!originalContent &&
+        <Field label="Panel oryginalnej wtyczki">
+          <DialogButton onClick={() => setManualPanelOpen(value => !value)}>
+            {manualPanelOpen ? "Ukryj panel" : "Pokaż panel"}
+          </DialogButton>
+        </Field>}
+      <Field label="Opcje zaawansowane" description="Stan i konfiguracja integracji">
+        <DialogButton onClick={() => setAdvanced(value => !value)}>
+          {advanced ? "Zwiń" : "Rozwiń"}
         </DialogButton>
-      </Field>}
-      {panelOpen && originalContent && <ExternalPanelBoundary key={name}>
-        <div style={{ maxWidth: "100%", padding: "12px 0" }}>{originalContent}</div>
-      </ExternalPanelBoundary>}
-      <Field label="Zarządzanie w Decky">
-        <DialogButton onClick={() => Navigation.Navigate("/decky/settings/plugins")}>Otwórz listę wtyczek Decky</DialogButton>
       </Field>
+      {advanced && <>
+        <Field label="Stan dodatku"
+          description={addon?.disabled ? "Wyłączony w Decky" : addon ? "Aktywny w Decky" : "Niezainstalowany"} />
+        <Field label="Panel w SteamHub"
+          description={originalContent ? "Wykryty panel oryginalnej wtyczki" : "Interfejs nie jest dostępny przez bieżący loader"} />
+        <Field label="Widoczny w SteamHub">
+          <Toggle value={selected} onChange={value => { if (!value) remove(); }} />
+        </Field>
+        <Field label="Zarządzanie w Decky" description="Wtyczka zachowuje własne ustawienia oraz aktualizacje.">
+          <DialogButton onClick={() => Navigation.Navigate("/decky/settings/plugins")}>
+            Otwórz Decky
+          </DialogButton>
+        </Field>
+      </>}
     </DialogControlsSection>
   </DialogBody>;
 }
@@ -208,9 +238,9 @@ export function HubPage() {
     { title: "Aktualizacje", route: "/steamhub/updates", icon: <FaSyncAlt />,
       content: <UpdaterPage /> },
     ...selected.map(name => ({
-      title: name,
+      title: featureName(name),
       route: "/steamhub/addon/" + encodeURIComponent(name),
-      icon: <FaPlug />,
+      icon: name === "Decky Manager" ? <FaFolderOpen /> : name === "Decky Terminal" ? <FaTerminal /> : <FaPlug />,
       content: <AddonOptions name={name} addon={installed.find(x => x.name === name)}
         selected={selected.includes(name)} remove={() => { void toggle(name, false); }} />
     }))
