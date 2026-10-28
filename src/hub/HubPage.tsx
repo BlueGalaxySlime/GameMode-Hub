@@ -8,6 +8,7 @@ import { callable } from "@decky/api";
 import { FaFolderOpen, FaHome, FaPlug, FaPuzzlePiece, FaSyncAlt, FaTerminal } from "react-icons/fa";
 import { withTimeout } from "../utils/withTimeout";
 import { UpdaterPage } from "./UpdaterPage";
+import { DeckyTerminalPage } from "./DeckyTerminalAdapter";
 
 type InstalledAddon = {
   name: string;
@@ -94,7 +95,7 @@ function AddonSelector({ installed, selected, pending, error, toggle, reload }: 
 type RuntimePlugin = { name: string; content?: ReactNode };
 const FEATURE_NAMES: Record<string, string> = {
   "Decky Manager": "Pliki",
-  "Decky Terminal": "Terminal"
+  "Decky Terminal": "Decky Terminal (zewnętrzny)"
 };
 function featureName(name: string): string {
   return FEATURE_NAMES[name] ?? name;
@@ -136,7 +137,7 @@ function AddonOptions({ name, addon, selected, remove }: {
 }) {
   const [advanced, setAdvanced] = useState(false);
   const [manualPanelOpen, setManualPanelOpen] = useState(false);
-  const integrated = name === "Decky Manager" || name === "Decky Terminal";
+  const integrated = name === "Decky Manager";
   const originalContent = loadedPluginContent(name);
   const active = !!addon && !addon.disabled;
   const showPanel = active && !!originalContent && (integrated || manualPanelOpen);
@@ -235,9 +236,11 @@ export function HubPage() {
     { title: "Dodatki", route: "/steamhub/addons", icon: <FaPuzzlePiece />,
       content: <AddonSelector installed={installed} selected={selected} pending={busy}
         error={error} toggle={toggle} reload={() => { void refresh(); }} /> },
+    { title: "Terminal", route: "/steamhub/terminal", icon: <FaTerminal />,
+      content: <DeckyTerminalPage /> },
     { title: "Aktualizacje", route: "/steamhub/updates", icon: <FaSyncAlt />,
       content: <UpdaterPage /> },
-    ...selected.map(name => ({
+    ...selected.filter(name => name !== "Decky Terminal").map(name => ({
       title: featureName(name),
       route: "/steamhub/addon/" + encodeURIComponent(name),
       icon: name === "Decky Manager" ? <FaFolderOpen /> : name === "Decky Terminal" ? <FaTerminal /> : <FaPlug />,
