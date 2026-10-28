@@ -4,6 +4,7 @@ import { ButtonItem, PanelSection, PanelSectionRow, staticClasses } from "@decky
 import { callable, definePlugin } from "@decky/api";
 import { TabManagerModule } from "./modules/tab-manager/TabManagerModule";
 import { startTabManager, stopTabManager } from "./modules/tab-manager/LibraryIntegration";
+import { RequestTimeoutError, withTimeout } from "./utils/withTimeout";
 
 type UpdateResult = {
   current: string; latest: string | null; url: string | null; sha256: string | null;
@@ -13,7 +14,7 @@ type DeckyInstaller = {
   callable: (method: string) => (...args: unknown[]) => Promise<unknown>;
 };
 const checkUpdates = callable<[], UpdateResult>("check_updates");
-const VERSION = "0.3.1";
+const VERSION = "0.3.2";
 
 function Content() {
   const [message, setMessage] = useState("Nie sprawdzono aktualizacji.");
@@ -28,7 +29,7 @@ function Content() {
     setRelease(null);
     setMessage("Sprawdzanie aktualizacji…");
     try {
-      const result = await checkUpdates();
+      const result = await withTimeout(checkUpdates(), 12000);
       if (result.status === "no_releases") setMessage(result.error || "Brak opublikowanych wydań GitHub Releases.");
       else if (result.status === "error") setMessage(result.error || "Nie udało się sprawdzić aktualizacji.");
       else if (result.available) {
@@ -38,7 +39,9 @@ function Content() {
         setMessage("Wydanie " + result.latest + " nie jest nowsze lub nie ma paczki z sumą SHA-256.");
       } else setMessage("SteamHub " + VERSION + " jest aktualny. Korzystasz z najnowszej wersji.");
     } catch (error) {
-      setMessage("Błąd komunikacji z wtyczką: " + (error instanceof Error ? error.message : String(error)));
+      setMessage(error instanceof RequestTimeoutError
+        ? "Sprawdzanie trwało zbyt długo. Spróbuj ponownie lub sprawdź połączenie z Internetem."
+        : "Błąd komunikacji z wtyczką: " + (error instanceof Error ? error.message : String(error)));
     } finally {
       setLastChecked(new Date().toLocaleString("pl-PL"));
       inProgress.current = false;
@@ -68,7 +71,7 @@ function Content() {
   }
 
   return <>
-    <PanelSection title="SteamHub · 0.3.1">
+    <PanelSection title="SteamHub · 0.3.2">
       <PanelSectionRow><div>Tab Manager jest eksperymentalny i wymaga weryfikacji na SteamOS.</div></PanelSectionRow>
     </PanelSection>
     <PanelSection title="Moduły (w przygotowaniu)">
