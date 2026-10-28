@@ -247,7 +247,7 @@ export function HubPage() {
       content: <UpdatesPage /> },
     { title: "Pobieranie", route: HUB_ROUTE + "/downloads", icon: <FaDownload />,
       content: <DownloadsPage /> },
-    { title: "UI", route: HUB_ROUTE + "/ui", icon: <FaTv />,
+    { title: "Optymalizacja", route: HUB_ROUTE + "/ui", icon: <FaTv />,
       content: <UiPage /> },
     { title: "Podziękowania", route: HUB_ROUTE + "/credits", icon: <FaHeart />,
       content: <CreditsPage /> },
