@@ -65,7 +65,7 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           VERSION="v$(node -p "require('./package.json').version")"
-          test "$(grep -oP '^CURRENT_VERSION = "\\K[^"]+' main.py)" = "${VERSION#v}" || { echo "Backend version mismatch"; exit 1; }
+          grep -Fq "CURRENT_VERSION = \"${VERSION#v}\"" main.py || { echo "Backend version mismatch"; exit 1; }
           grep -q "const VERSION = \"${VERSION#v}\"" src/hub/UpdaterPage.tsx || { echo "Frontend version mismatch"; exit 1; }
           HEAD_SHA="$(gh api repos/$GITHUB_REPOSITORY/branches/main --jq .commit.sha)"
           if [ "$HEAD_SHA" != "$GITHUB_SHA" ]; then
