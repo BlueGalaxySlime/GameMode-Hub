@@ -1,3 +1,12 @@
+# GameMode Hub 0.5.45 (testowy)
+
+- **Aktywna edycja pól:** po naciśnięciu A i wejściu w pole tekstowe, pierwsze B uruchamia zaznaczanie od aktualnej pozycji kursora. Pojawia się krótka wskazówka. Kierunki na padzie przesuwają koniec zaznaczenia, bez zmiany wpisanego tekstu.
+- **Wyjście z edycji:** drugie B kończy zaznaczanie i wychodzi z edycji pola, dlatego użytkownik nie powinien utknąć w trybie zaznaczania. Poza aktywną edycją B zachowuje dotychczasową funkcję cofania.
+- **Y w aktywnym polu:** otwiera natywne menu Wytnij / Kopiuj / Wklej / Zaznacz wszystko. Wytnij usuwa tekst dopiero po pomyślnym zapisie w schowku; w razie braku uprawnień do schowka pozostawia tekst nienaruszony.
+- **Wspólna obsługa:** Szukaj w Pulpicie, pasek w Plikach, edycja nazw, pola Zgłoszeń i nazwa nowego folderu. Działa zarówno ze standardowym polem SteamOS, jak i polem bez automatycznej klawiatury.
+- **Ograniczenie SteamOS:** przy otwartej klawiaturze ekranowej jej własne skróty mogą przejmować B/Y. Nie ma niezawodnej identyfikacji źródła kierunku (krzyżak kontra analog) we wszystkich wersjach Steam. Z tego powodu nie wprowadzono globalnego przechwytywania analoga; B jest zawsze ścieżką wyjścia z trybu, o ile zdarzenie dociera do Huba.
+- **Testowanie:** automatyczne testy ruchu kursora i integracji callbacków; wymaga fizycznego testu na Lenovo z otwartą klawiaturą SteamOS i bez niej.
+
 # GameMode Hub 0.5.44 (testowy)
 
 - **X wraca do paska:** w Pulpicie X przenosi fokus na Szukaj, a w Plikach X przenosi go na pasek ścieżki. Działa na liście i bez zmiany aktualnego folderu, wyszukiwania ani kategorii.
