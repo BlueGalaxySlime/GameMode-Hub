@@ -206,7 +206,7 @@ test("Flatpak actions are in Desktop Y menus; system update remains read-only", 
   const backend = fs.readFileSync("flatpak_manager.py", "utf8");
   assert.ok(page.includes('<MenuGroup label="Flatpak">'));
   assert.ok(page.includes('openFlatpakManager(app.id)'));
-  assert.ok(page.includes('Sprawdź aktualizacje Flatpak'));
+  assert.ok(page.includes('Sprawdź aktualizacje wszystkich'));
   assert.ok(page.includes('FlatpakManagerDialog'));
   assert.ok(flatpak.includes('item.installation === "user"'));
   assert.ok(flatpak.includes('Potwierdź aktualizację'));
@@ -233,6 +233,37 @@ test("Reports uses compact inline placeholders and multiline bounded description
   assert.ok(!reports.includes('<Field '));
   assert.ok(!reports.includes('<DialogControlsSectionHeader'));
   assert.ok(inputs.includes('export function HubTextArea('));
-  assert.ok(inputs.includes('<textarea {...props}'));
+  assert.ok(inputs.includes('<textarea {...fieldProps} autoFocus={focusOnMount}'));
   assert.ok(inputs.includes('inputMode={options.autoKeyboard ? "text" : "none"}'));
+});
+
+
+test("Report fields are native focusable Steam rows with A editing, B exiting", () => {
+  const reports = fs.readFileSync("src/hub/ReportsPage.tsx", "utf8");
+  const inputs = fs.readFileSync("src/hub/HubTextInput.tsx", "utf8");
+  assert.ok(reports.includes('onOKActionDescription="Edytuj tytuł"'));
+  assert.ok(reports.includes('onOKActionDescription="Edytuj opis"'));
+  assert.ok(reports.includes('onClick={() => setEditingDetail(true)}'));
+  assert.ok(reports.includes('finishTitle(event.key === "ArrowDown")'));
+  assert.ok(reports.includes('onCancelButton={event => {'));
+  assert.ok(reports.includes('restoreButtonFocus(detailRowRef.current)'));
+  assert.ok(inputs.includes('background: "transparent"'));
+  assert.ok(!inputs.slice(inputs.indexOf("export function HubTextArea(")).includes('"#333d50"'));
+  assert.ok(!inputs.slice(inputs.indexOf("export function HubTextArea(")).includes('"#68748a"'));
+  assert.ok(!inputs.slice(inputs.indexOf("export function HubTextArea(")).includes('borderRadius: 4'));
+});
+test("Flatpak checks display an accurate nonzero status and Y can update all user apps", () => {
+  const flatpak = fs.readFileSync("src/hub/FlatpakManagerDialog.tsx", "utf8");
+  const py = fs.readFileSync("flatpak_manager.py", "utf8");
+  assert.ok(page.includes('void checkFlatpakUpdates();'));
+  assert.ok(page.includes('Dostępne aktualizacje: '));
+  assert.ok(page.includes('Brak aktualizacji'));
+  assert.ok(page.includes('Nie udało się sprawdzić aktualizacji'));
+  assert.ok(page.includes('onSelected={() => openFlatpakManager(undefined, true)}'));
+  assert.ok(page.includes('Aktualizuj wszystkie (użytkownika)'));
+  assert.ok(flatpak.includes('Potwierdź wszystkie'));
+  assert.ok(flatpak.includes('onUpdated?.()'));
+  assert.ok(backend.includes('async def flatpak_update_all_user('));
+  assert.ok(py.includes('def flatpak_update_all_user():'));
+  assert.ok(py.includes('["--user", "update", "--app"'));
 });

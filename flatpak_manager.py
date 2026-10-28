@@ -83,3 +83,20 @@ def flatpak_update_user(app_id):
     if result.returncode:
         raise RuntimeError("Aktualizacja nie powiodła się. Sprawdź ustawienia Flatpak.")
     return {"updated": True, "id": app_id}
+
+
+
+def flatpak_update_all_user():
+    """Update only user-installed Flatpak applications, never system installations."""
+    if os.geteuid() == 0:
+        raise PermissionError("Aktualizacja w Hubie nie używa konta root.")
+    installed = _installed()
+    if not any(app["installation"] == "user" for app in installed):
+        return {"updated": False}
+    try:
+        result = _run(["--user", "update", "--app", "--noninteractive", "--assumeyes"], 240)
+    except (FileNotFoundError, subprocess.TimeoutExpired, OSError):
+        raise RuntimeError("Nie udało się zaktualizować Flatpaków użytkownika.")
+    if result.returncode:
+        raise RuntimeError("Aktualizacja Flatpaków użytkownika nie powiodła się.")
+    return {"updated": True}

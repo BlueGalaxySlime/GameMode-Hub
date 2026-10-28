@@ -29,6 +29,9 @@ const listDesktopApps = callable<[], DesktopApp[]>("desktop_list_apps");
 const readState = callable<[], DesktopState>("desktop_get_state");
 const updateSetting = callable<[string, string, boolean | number | string | null], SavedApp>("desktop_set_setting");
 const resetDesktopCategories = callable<[], { reset: number; state: DesktopState }>("desktop_reset_categories");
+const flatpakOverview = callable<[], {
+  apps: { id: string; installation: string; updateable: boolean }[]; error: string;
+}>("flatpak_overview");
 const rememberTemporary = callable<[number], number[]>("desktop_remember_temporary");
 const forgetTemporary = callable<[number], number[]>("desktop_forget_temporary");
 
@@ -64,6 +67,9 @@ export function DesktopPage() {
   const categorySavingRef = useRef(false);
   const rulesModalOpenRef = useRef(false);
   const flatpakModalOpenRef = useRef(false);
+  const [flatpakStatus, setFlatpakStatus] = useState<
+    { state: "checking" | "ready" | "error"; count: number }
+  >({ state: "checking", count: 0 });
 
   async function refresh() {
     setBusy(true);
@@ -93,7 +99,20 @@ export function DesktopPage() {
     }
   }
 
-  useEffect(() => { void refresh(); }, []);
+  async function checkFlatpakUpdates() {
+    setFlatpakStatus({ state: "checking", count: 0 });
+    try {
+      const result = await withTimeout(flatpakOverview(), 40000);
+      if (result.error) throw new Error(result.error);
+      setFlatpakStatus({
+        state: "ready", count: result.apps.filter(app => app.updateable).length
+      });
+    } catch {
+      setFlatpakStatus({ state: "error", count: 0 });
+    }
+  }
+
+  useEffect(() => { void refresh(); void checkFlatpakUpdates(); }, []);
 
   async function save(app: DesktopApp, key: string, value: boolean | number | string | null) {
     const saved = await withTimeout(updateSetting(app.id, key, value), 5000);
@@ -247,12 +266,14 @@ export function DesktopPage() {
     }, 0);
   }
 
-  function openFlatpakManager(selectedId?: string) {
+  function openFlatpakManager(selectedId?: string, bulkRequested = false) {
     if (flatpakModalOpenRef.current) return;
     flatpakModalOpenRef.current = true;
     window.setTimeout(() => {
       try {
-        const dialog = showModal(<FlatpakManagerDialog selectedId={selectedId} />);
+        const dialog = showModal(<FlatpakManagerDialog selectedId={selectedId}
+          bulkRequested={bulkRequested}
+          onUpdated={() => { void checkFlatpakUpdates(); }} />);
         void dialog.ClosedPromise.finally(() => { flatpakModalOpenRef.current = false; });
       } catch {
         flatpakModalOpenRef.current = false;
@@ -354,7 +375,12 @@ export function DesktopPage() {
               onClick={() => setSortMode(item.key)}>{item.label}</MenuItem>)}
         </MenuGroup>
         <MenuGroup label="Flatpak">
-          <MenuItem onSelected={() => openFlatpakManager()}>Sprawdź aktualizacje Flatpak</MenuItem>
+          <MenuItem onSelected={() => openFlatpakManager()}>
+            Sprawdź aktualizacje wszystkich
+          </MenuItem>
+          <MenuItem onSelected={() => openFlatpakManager(undefined, true)}>
+            Aktualizuj wszystkie (użytkownika)
+          </MenuItem>
         </MenuGroup>
         <MenuGroup label="Reguły widoku">
           <MenuItem onSelected={openRules}>Pokaż reguły</MenuItem>
@@ -397,6 +423,12 @@ export function DesktopPage() {
           <span>Aplikacje: {visible.length}</span>
           <span>Sortowanie: {sortOptions.find(item => item.key === sortMode)?.label ?? "Nazwa A–Z"}</span>
           <span>Reguły: .desktop / Flatpak + własne przypisania</span>
+          <span aria-label="Stan aktualizacji Flatpak">
+            {flatpakStatus.state === "checking" ? "Sprawdzanie aktualizacji…" :
+              flatpakStatus.state === "error" ? "Nie udało się sprawdzić aktualizacji" :
+              flatpakStatus.count ? "Dostępne aktualizacje: " + flatpakStatus.count :
+              "Brak aktualizacji"}
+          </span>
         </div>
         {/* Read-only context. There is no second action that merely resets to Wszystkie. */}
         <div aria-label="Ścieżka pulpitu" style={{ display: "flex", gap: 6,

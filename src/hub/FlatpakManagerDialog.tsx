@@ -10,15 +10,18 @@ type FlatpakApp = {
 type Overview = { apps: FlatpakApp[]; error: string };
 const readFlatpaks = callable<[], Overview>("flatpak_overview");
 const updateUser = callable<[string], { updated: boolean; id: string }>("flatpak_update_user");
+const updateAllUser = callable<[], { updated: boolean }>("flatpak_update_all_user");
 
 /** Read-only for system installations. Only explicitly confirmed --user updates. */
-export function FlatpakManagerDialog({ selectedId, closeModal }: {
-  selectedId?: string; closeModal?: () => void;
+export function FlatpakManagerDialog({ selectedId, bulkRequested = false, onUpdated, closeModal }: {
+  selectedId?: string; bulkRequested?: boolean; onUpdated?: () => void;
+  closeModal?: () => void;
 }) {
   const [data, setData] = useState<Overview | null>(null);
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState("");
   const [confirm, setConfirm] = useState<string | null>(null);
+  const [confirmAll, setConfirmAll] = useState(bulkRequested);
   const working = useRef(false);
 
   async function refresh() {
@@ -47,9 +50,29 @@ export function FlatpakManagerDialog({ selectedId, closeModal }: {
     try {
       await withTimeout(updateUser(app), 245000);
       setMessage("Zaktualizowano " + app + ".");
+      onUpdated?.();
       setData(await withTimeout(readFlatpaks(), 40000));
     } catch {
       setMessage("Aktualizacja nie powiodła się. Nie wykonano poleceń root ani sudo.");
+    } finally {
+      working.current = false;
+      setBusy(false);
+    }
+  }
+
+  async function updateAll() {
+    if (!confirmAll || working.current || !data || data.error) return;
+    setConfirmAll(false);
+    working.current = true;
+    setBusy(true);
+    setMessage("");
+    try {
+      await withTimeout(updateAllUser(), 245000);
+      setMessage("Zaktualizowano Flatpaki użytkownika.");
+      onUpdated?.();
+      setData(await withTimeout(readFlatpaks(), 40000));
+    } catch {
+      setMessage("Nie udało się zaktualizować wszystkich Flatpaków użytkownika.");
     } finally {
       working.current = false;
       setBusy(false);
@@ -60,6 +83,7 @@ export function FlatpakManagerDialog({ selectedId, closeModal }: {
   const chosen = selectedId ? apps.filter(item => item.id === selectedId) : [];
   const visible = chosen.length ? chosen : apps.filter(item => item.updateable);
   const updates = apps.filter(item => item.updateable).length;
+  const userUpdates = apps.filter(item => item.updateable && item.installation === "user").length;
 
   return <ModalRoot onCancel={() => { if (!busy) closeModal?.(); }}>
     <div style={{ display: "flex", flexDirection: "column", gap: 8, padding: 12,
@@ -102,11 +126,33 @@ export function FlatpakManagerDialog({ selectedId, closeModal }: {
           </DialogButton>
         </Focusable>
       </div>}
+      {!selectedId && !confirmAll && userUpdates > 0 &&
+        <DialogButton disabled={busy} onClick={() => setConfirmAll(true)}>
+          Aktualizuj wszystkie Flatpaki użytkownika ({userUpdates})
+        </DialogButton>}
+      {confirmAll && !busy && <div style={{ display: "flex",
+        flexDirection: "column", gap: 6 }}>
+        <strong>Aktualizować wszystkie Flatpaki użytkownika?</strong>
+        <div style={{ fontSize: 12 }}>
+          {userUpdates} aktualizacji. Systemowe Flatpaki pozostaną bez zmian.
+        </div>
+        <Focusable flow-children="row"
+          navEntryPreferPosition={NavEntryPositionPreferences.MAINTAIN_X}
+          style={{ display: "flex", flexDirection: "row", gap: 8 }}>
+          <DialogButton preferredFocus onClick={() => setConfirmAll(false)}>
+            Anuluj
+          </DialogButton>
+          <DialogButton disabled={!data || !!data.error || userUpdates === 0}
+            onClick={() => { void updateAll(); }}>
+            Potwierdź wszystkie
+          </DialogButton>
+        </Focusable>
+      </div>}
       {!!message && <div role="status" style={{ fontSize: 12 }}>{message}</div>}
       <Focusable flow-children="row"
         navEntryPreferPosition={NavEntryPositionPreferences.MAINTAIN_X}
         style={{ display: "flex", flexDirection: "row", gap: 8 }}>
-        <DialogButton disabled={busy || !!confirm} onClick={() => { void refresh(); }}>
+        <DialogButton disabled={busy || !!confirm || confirmAll} onClick={() => { void refresh(); }}>
           Sprawdź ponownie
         </DialogButton>
         <DialogButton disabled={busy} onClick={() => closeModal?.()}>Zamknij</DialogButton>

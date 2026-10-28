@@ -1,3 +1,11 @@
+# GameMode Hub 0.5.32 (testowy)
+
+- **Zgłoszenia — naprawa nawigacji padem:** Tytuł i Opis są wybieralnymi natywnymi wierszami SteamOS. A otwiera edycję, B ją kończy, a góra/dół porusza się między polami jak w Szukaj i Pliki. Tytuł akceptuje strzałkę w dół do opisu.
+- **Zgłoszenia — spójny wygląd:** usunięto niebieskie, ręcznie narzucone tło, kolor ramki i zaokrąglenia wielowierszowego pola. Pozostawiono większy opis i licznik 1200 znaków; elementy przeglądania są natywnymi przyciskami SteamOS.
+- **Pulpit — stan aktualizacji Flatpak:** automatyczne sprawdzenie przy otwieraniu Pulpitu. Pasek stanu pokazuje Sprawdzanie, Błąd, Brak aktualizacji albo Dostępne aktualizacje: N. Stan odświeża się po aktualizacji.
+- **Pulpit → Y na Szukaj:** „Sprawdź aktualizacje wszystkich” i „Aktualizuj wszystkie (użytkownika)”. Zbiorcza aktualizacja wymaga osobnego potwierdzenia i dotyczy tylko aplikacji Flatpak użytkownika, bez roota i bez zmian systemowych.
+- **Bez zmian:** transfer Wi-Fi i istniejące funkcje Huba. Test sterowania na rzeczywistym Lenovo nadal wymagany.
+
 # GameMode Hub 0.5.31 (testowy)
 
 - **Zgłoszenia — kompaktowy interfejs:** usunięto rozciągnięte wiersze z etykietami; dwa pola tekstowe z opisem wewnątrz (jak pasek Szukaj/Pliki). Tytuł jest jednolinijkowy.

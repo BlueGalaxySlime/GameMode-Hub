@@ -45,3 +45,29 @@ class FlatpakTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class FlatpakBulkTests(unittest.TestCase):
+    def test_bulk_updates_user_apps_without_shell_or_system(self):
+        calls = []
+        def fake_run(args, timeout=25):
+            calls.append(args)
+            if args[0] == "list":
+                return Mock(returncode=0, stdout="org.example.App\tuser\norg.example.System\tsystem\n")
+            return Mock(returncode=0, stdout="")
+        with patch.object(fm.os, "geteuid", return_value=1000), patch.object(fm, "_run", side_effect=fake_run):
+            self.assertTrue(fm.flatpak_update_all_user()["updated"])
+        self.assertEqual(calls[-1], ["--user", "update", "--app", "--noninteractive", "--assumeyes"])
+
+    def test_bulk_does_not_touch_system_only_apps(self):
+        def fake_run(args, timeout=25):
+            if args[0] != "list":
+                raise AssertionError("Unexpected bulk Flatpak operation")
+            return Mock(returncode=0, stdout="org.example.System\tsystem\n")
+        with patch.object(fm.os, "geteuid", return_value=1000), patch.object(fm, "_run", side_effect=fake_run):
+            self.assertFalse(fm.flatpak_update_all_user()["updated"])
+
+    def test_bulk_rejects_root(self):
+        with patch.object(fm.os, "geteuid", return_value=0):
+            with self.assertRaises(PermissionError):
+                fm.flatpak_update_all_user()

@@ -49,16 +49,20 @@ export type HubTextAreaProps = {
   maxLength?: number;
   style?: CSSProperties;
   "aria-label"?: string;
+  focusOnMount?: boolean;
+  onKeyDown?: KeyboardEventHandler<HTMLTextAreaElement>;
 };
 
 export function HubTextArea(props: HubTextAreaProps) {
   const options = useSyncExternalStore(subscribeHubPreferences, getHubPreferences);
-  return <textarea {...props} inputMode={options.autoKeyboard ? "text" : "none"}
+  const { focusOnMount, ...fieldProps } = props;
+  return <textarea {...fieldProps} autoFocus={focusOnMount}
+    inputMode={options.autoKeyboard ? "text" : "none"}
     autoComplete="off" spellCheck={false} style={{
       display: "block", width: "100%", minWidth: 0, boxSizing: "border-box",
-      minHeight: 116, maxHeight: 220, resize: "vertical", borderRadius: 4,
-      padding: "10px 12px", background: "#333d50", color: "inherit",
-      border: "1px solid #68748a", font: "inherit", lineHeight: 1.4,
+      minHeight: 116, maxHeight: 220, resize: "none",
+      padding: "8px 10px", background: "transparent", color: "inherit",
+      border: "none", borderRadius: 0, font: "inherit", lineHeight: 1.4,
       ...props.style
     }} />;
 }
