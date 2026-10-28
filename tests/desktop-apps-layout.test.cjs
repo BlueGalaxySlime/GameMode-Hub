@@ -363,3 +363,19 @@ test("Empty Downloads queue does not poll every two seconds", () => {
   assert.ok(source.includes('active ? interval : 30000'));
   assert.ok(source.includes('gamemodehub-downloads-changed'));
 });
+
+test("Hub recovery shortcuts are independent of active modules and do not kill downloads", () => {
+  const entry = fs.readFileSync("src/index.tsx", "utf8");
+  const recovery = fs.readFileSync("src/hub/hubRecovery.tsx", "utf8");
+  assert.ok(entry.includes('onClick={refreshHubView}'));
+  assert.ok(entry.includes('onClick={closeHubView}'));
+  assert.ok(entry.includes('<HubPage key={revision} />'));
+  assert.ok(entry.includes('event.key !== "=" && event.key !== "ContextMenu"'));
+  assert.ok(entry.includes('element.isContentEditable'));
+  assert.ok(entry.includes('<HubErrorBoundary resetKey={revision}>'));
+  assert.ok(recovery.includes('MenuGroup label="Awaryjne"'));
+  assert.ok(recovery.includes('bPreferPopLeft: true'));
+  assert.ok(recovery.includes('Navigation.Navigate("/library")'));
+  assert.ok(!recovery.includes('shutdown'));
+  assert.ok(!recovery.includes('cancelDownload'));
+});

@@ -6,6 +6,7 @@
 - **Trzy stany:** Uśpiony, Aktywny i Praca w tle, wyliczane z otwarcia Huba i liczby aktywnych pobrań. Bez uruchamiania dodatkowej usługi.
 - **DEV w Opcjach Huba:** domyślnie wyłączony. Pokazuje zużycie CPU/RAM samego procesu backendu Decky, stan i daty sprawdzeń; pomiar tylko podczas widocznej strony ustawień z włączonym trybem DEV.
 - **Lżejsze Pobieranie:** gdy kolejka jest pusta, kontrola widoku co 30 s zamiast co około 2 s; przy dodaniu zadania aktualizacja widoku następuje natychmiast.
+- **Awaryjne odzyskiwanie interfejsu:** pod Otwórz Hub w panelu Decky dodano Odśwież interfejs Huba i Zamknij Hub. Odświeżenie ponownie montuje widok React, nie zabija backendu ani pobierania. Zamknięcie wraca do biblioteki. Skrót klawiaturowy `=` lub ContextMenu otwiera natywne menu awaryjne; przechwycenie fizycznego przycisku `=` w SteamOS nie jest gwarantowane i wymaga testu na Lenovo. Gdy zawiesi się całe Decky, ani skrót, ani menu wtyczki nie mogą zagwarantować ratunku.
 - **Bez zmian:** menu Y, B, transfer, sposób instalowania hotfixów i autoryzacja Flatpak/Polkit. Integracja ProtonDB na różne klienty wymaga odrębnego modułu i testów, nie włączono ryzykownych modyfikacji widoków Steam w tym wydaniu.
 
 # GameMode Hub 0.5.36 (testowy)
