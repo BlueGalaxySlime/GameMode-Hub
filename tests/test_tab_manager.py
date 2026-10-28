@@ -47,6 +47,17 @@ class TabManagerTests(unittest.TestCase):
         self.assertEqual(result["latest"], "0.3.0")
         self.assertEqual(result["sha256"], "a" * 64)
 
+    def test_update_checker_returns_error_on_python_timeout(self):
+        async def timeout(*args, **kwargs):
+            raise TimeoutError("simulated")
+        async def perform():
+            with patch.object(main.asyncio, "to_thread", timeout):
+                return await main.Plugin().check_updates()
+        result = __import__("asyncio").run(perform())
+        self.assertEqual(result["status"], "error")
+        self.assertFalse(result["available"])
+        self.assertIn("limit czasu", result["error"])
+
     def test_default_disabled(self):
         self.assertFalse(tab_manager._read_tab_manager_enabled())
 
