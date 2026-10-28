@@ -4,7 +4,8 @@ import { callable } from "@decky/api";
 
 import {
   TabDefinition, TabFilter, tabManagerEnabledChanged,
-  tabManagerTabsChanged, tabManagerConflictChanged, detectTabMasterConflict
+  tabManagerTabsChanged, tabManagerConflictChanged, detectTabMasterConflict,
+  availableSteamCollections
 } from "./LibraryIntegration";
 
 const FILTER_LABELS: Record<TabFilter, string> = {
@@ -118,9 +119,20 @@ export function TabManagerModule() {
   }
 
   function cycleFilter(tab: TabDefinition) {
-    const index = SIMPLE_FILTERS.indexOf(tab.filter);
-    const next = SIMPLE_FILTERS[(index + 1) % SIMPLE_FILTERS.length];
-    void persist(tabs.map(item => item.id === tab.id ? { ...item, filter: next, collection_id: "" } : item));
+    const collections = availableSteamCollections();
+    const options: TabFilter[] = collections.length ? [...SIMPLE_FILTERS, "collection"] : SIMPLE_FILTERS;
+    const index = options.indexOf(tab.filter);
+    const next = options[(index + 1) % options.length];
+    const collection_id = next === "collection" ? collections[0].id : "";
+    void persist(tabs.map(item => item.id === tab.id ? { ...item, filter: next, collection_id } : item));
+  }
+
+  function cycleCollection(tab: TabDefinition) {
+    const collections = availableSteamCollections();
+    if (!collections.length) return;
+    const current = collections.findIndex(collection => collection.id === tab.collection_id);
+    const collection_id = collections[(current + 1) % collections.length].id;
+    void persist(tabs.map(item => item.id === tab.id ? { ...item, collection_id } : item));
   }
 
   function rename(id: string) {
@@ -159,6 +171,9 @@ export function TabManagerModule() {
           <ButtonItem disabled={busy} onClick={() => { setEditingId(tab.id); setEditingTitle(tab.title); }}>Zmień nazwę</ButtonItem>
         </>}
         <ButtonItem disabled={busy} onClick={() => cycleFilter(tab)}>Filtr: {FILTER_LABELS[tab.filter] ?? "Wszystkie gry"}</ButtonItem>
+        {tab.filter === "collection" && <ButtonItem disabled={busy} onClick={() => cycleCollection(tab)}>
+          Kolekcja: {availableSteamCollections().find(item => item.id === tab.collection_id)?.title ?? "Niedostępna"}
+        </ButtonItem>}
         <ToggleField label="Widoczna" checked={!tab.hidden} disabled={busy} onChange={visible => void persist(tabs.map(t => t.id === tab.id ? { ...t, hidden: !visible } : t))} />
         <ButtonItem disabled={busy || index === 0} onClick={() => move(index, -1)}>W górę</ButtonItem>
         <ButtonItem disabled={busy || index === tabs.length - 1} onClick={() => move(index, 1)}>W dół</ButtonItem>
