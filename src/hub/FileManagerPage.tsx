@@ -343,23 +343,16 @@ export function FileManagerPage() {
             onSelected={() => {
               if (currentPage && !favorites.includes(currentPage.path))
                 void changeFavorites([...favorites, currentPage.path]);
-            }}>Dodaj bieżący folder</MenuItem>
-          {currentPage && favorites.includes(currentPage.path) &&
-            <MenuItem disabled={savingFavorites}
-              onSelected={() => { void changeFavorites(favorites.filter(p => p !== currentPage.path)); }}>
-              Usuń bieżący z ulubionych
-            </MenuItem>}
+            }}>Dodaj zakładkę bieżącego folderu</MenuItem>
           {favorites.map(path =>
-            <MenuItem key={path} onSelected={() => { void load(path, hidden); }}>
-              {"★ " + path}
+            <MenuItem key={"open:" + path} onSelected={() => { void load(path, hidden); }}>
+              {"Otwórz zakładkę: ★ " + path}
             </MenuItem>)}
-          {favorites.length > 0 && <MenuGroup label="Usuń zapisany folder">
-            {favorites.map(path =>
-              <MenuItem key={path} disabled={savingFavorites}
-                onSelected={() => { void changeFavorites(favorites.filter(p => p !== path)); }}>
-                {path}
-              </MenuItem>)}
-          </MenuGroup>}
+          {favorites.map(path =>
+            <MenuItem key={"remove:" + path} disabled={savingFavorites}
+              onSelected={() => { void changeFavorites(favorites.filter(p => p !== path)); }}>
+              {"Usuń zakładkę (bez usuwania plików): " + path}
+            </MenuItem>)}
         </MenuGroup>
         {clipboard && <MenuItem onSelected={() => { void operate("paste"); }}>
           {"Wklej tutaj (" + clipboard.paths.length + ")"}
