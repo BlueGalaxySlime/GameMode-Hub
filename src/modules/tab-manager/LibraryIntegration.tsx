@@ -159,6 +159,7 @@ function nativeHubTab(): SteamTab {
 
 /** Uses Steam's original grid component rather than constructing a separate collection tab. */
 function mergeLibraryTabs(tabs: SteamTab[], deps: any[]): SteamTab[] {
+  if (!active || conflict) return tabs;
   const template = tabs.find(tab => tab?.id === "AllGames");
   if (!template) return tabs;
   // Never replace Steam's own tabs or objects; TabManager only appends additions.
