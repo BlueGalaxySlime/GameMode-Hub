@@ -16,6 +16,9 @@ const infoScroll = fs.readFileSync("src/hub/GamepadScrollArea.tsx", "utf8");
 const hubPage = fs.readFileSync("src/hub/HubPage.tsx", "utf8");
 const desktopPage = fs.readFileSync("src/hub/DesktopPage.tsx", "utf8");
 const createFolder = fs.readFileSync("src/hub/CreateFolderDialog.tsx", "utf8");
+const trashDialog = fs.readFileSync("src/hub/TrashDialogs.tsx", "utf8");
+const backend = fs.readFileSync("main.py", "utf8");
+const packageCode = fs.readFileSync("scripts/package.py", "utf8");
 const terminalPage = fs.readFileSync("src/hub/DeckyTerminalAdapter.tsx", "utf8");
 const compiled = ts.transpileModule(fs.readFileSync("src/core/filePath.ts", "utf8"), {
   compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2020 }
@@ -219,4 +222,23 @@ test("file menus have no redundant Back label; new folder opens keyboard modal",
   assert.ok(createFolder.includes('event.key === "Enter"'));
   assert.ok(createFolder.includes('makeFolder(folder, proposed)'));
   assert.ok(createFolder.includes('closeModal?.()'));
+});
+
+test("Y offers a reversible Trash action with explicit confirmation and recovery", () => {
+  assert.ok(ui.includes('<MenuItem onSelected={() => confirmTrash(entry)}>Przenieś do Kosza</MenuItem>'));
+  assert.ok(ui.includes('<MenuItem onSelected={openTrashDialog}>Kosz</MenuItem>'));
+  assert.ok(ui.includes("showModal("));
+  assert.ok(ui.includes("<ConfirmTrashDialog path={target}"));
+  assert.ok(ui.includes("<TrashListDialog onRestored="));
+  assert.ok(trashDialog.includes("<ModalRoot"));
+  assert.ok(trashDialog.includes("Przenieść do Kosza?"));
+  assert.ok(trashDialog.includes("Folder zostanie przeniesiony wraz z całą zawartością."));
+  assert.ok(trashDialog.includes("B anuluje."));
+  assert.ok(trashDialog.includes("closeModal?.()"));
+  assert.ok(trashDialog.includes("files_trash_restore"));
+  assert.ok(!trashDialog.includes("Usuń na zawsze"));
+  for (const name of ["files_trash", "files_trash_list", "files_trash_restore"]) {
+    assert.ok(backend.includes("async def " + name + "("));
+  }
+  assert.ok(packageCode.includes('"trash_manager.py"'));
 });

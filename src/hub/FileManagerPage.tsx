@@ -8,6 +8,7 @@ import type { HubPreferences } from "../core/hubSession";
 import { useHubSessionState } from "./useHubSessionState";
 import { HubTextInput } from "./HubTextInput";
 import { CreateFolderDialog } from "./CreateFolderDialog";
+import { ConfirmTrashDialog, TrashListDialog } from "./TrashDialogs";
 
 type SortBy = "name" | "type" | "size" | "date";
 type Entry = {
@@ -366,6 +367,48 @@ export function FileManagerPage() {
     }, 0);
   }
 
+  // Refresh only live panes. Keep the other pane's directory and user session.
+  async function refreshAfterTrashOperation() {
+    const liveLeft = page?.path;
+    const liveRight = splitTree ? (rightPage ?? page)?.path : null;
+    try {
+      const refreshedLeft = liveLeft
+        ? await withTimeout(fileList(liveLeft, hidden, 0, sortBy, descending), 8000)
+        : null;
+      const refreshedRight = liveRight && liveRight !== liveLeft
+        ? await withTimeout(fileList(liveRight, hidden, 0, sortBy, descending), 8000)
+        : refreshedLeft;
+      if (refreshedLeft) setPage(refreshedLeft);
+      if (splitTree && refreshedRight) setRightPage(refreshedRight);
+    } catch (error) {
+      setMessage("Nie udało się odświeżyć listy: " + String(error));
+    }
+  }
+
+  function openTrashDialog() {
+    window.setTimeout(() => showModal(
+      <TrashListDialog onRestored={() => {
+        setMessage("Przywrócono element z Kosza.");
+        void refreshAfterTrashOperation();
+      }} />
+    ), 0);
+  }
+
+  function confirmTrash(entry: Entry) {
+    if (entry.symlink || busy) return;
+    const target = entry.path;
+    window.setTimeout(() => showModal(
+      <ConfirmTrashDialog path={target} name={entry.name} directory={entry.directory}
+        onMoved={() => {
+          if (clipboard?.paths.includes(target)) setClipboard(null);
+          setSelected(null);
+          setMarkedPaths(paths => paths.filter(path => path !== target));
+          setMessage("Przeniesiono do Kosza.");
+          void refreshAfterTrashOperation();
+        }} />
+    ), 0);
+  }
+
   // Native Steam menu, like the existing menu on a folder/file row.
   // MenuGroup opens its choices in a right-hand submenu, as in Gaming Mode.
   function openBrowserMenu(parent: EventTarget) {
@@ -375,6 +418,7 @@ export function FileManagerPage() {
     showContextMenu(
       <Menu label="Opcje plików">
         <MenuItem disabled={!currentPage} onSelected={openCreateFolderDialog}>Nowy folder...</MenuItem>
+        <MenuItem onSelected={openTrashDialog}>Kosz</MenuItem>
         <MenuGroup label="Ulubione">
           <MenuItem disabled={!currentPage || savingFavorites ||
             (favorites.length >= 32 && !favorites.includes(currentPage.path))}
@@ -451,6 +495,7 @@ export function FileManagerPage() {
         </>}
         <MenuItem onSelected={() => clipboardAction(entry, "copy")}>Kopiuj</MenuItem>
         <MenuItem onSelected={() => clipboardAction(entry, "move")}>Przenieś</MenuItem>
+        <MenuItem onSelected={() => confirmTrash(entry)}>Przenieś do Kosza</MenuItem>
         {entry.directory && clipboard &&
           <MenuItem onSelected={() => { void pasteTo(entry.path); }}>
             {"Wklej do folderu (" + clipboard.paths.length + ")"}

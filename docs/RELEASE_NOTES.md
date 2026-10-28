@@ -1,3 +1,11 @@
+# GameMode Hub 0.5.18 (testowy)
+
+- **Pliki — Kosz:** Y na pliku albo folderze → „Przenieś do Kosza”; osobne okno z nazwą elementu i potwierdzeniem. B anuluje. Usuwanie na zawsze nie jest dostępne.
+- **Przywracanie:** Y na pasku adresu → „Kosz” pokazuje wpisy zapisane przez GameMode Hub; A przywraca plik lub folder na pierwotną ścieżkę, bez nadpisywania istniejących elementów.
+- **Ochrona:** odmowa przenoszenia katalogu domowego, folderów systemowych i ukrytych konfiguracji; odmowa operacji na dowiązaniach; tylko dysk domowy (nośniki zewnętrzne pozostają nietknięte). Pliki trafiają do standardowego Kosza użytkownika, bez trwałego usuwania.
+- **Testy:** nowe przypadki odwracalnego przenoszenia, przywracania, kolizji i zabezpieczeń.
+- **Bez zmian:** funkcje Pulpitu, bezpieczny terminal i istniejące operacje kopiowania/przenoszenia.
+
 # GameMode Hub 0.5.17 (testowy)
 
 - **Pliki:** usunięto zbędny tekst „Wstecz” z menu kontekstowych. Przycisk B i krzyżak/pad nadal obsługują cofanie i nawigację.

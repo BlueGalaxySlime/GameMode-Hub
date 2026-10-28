@@ -32,7 +32,7 @@ jobs:
       - name: Build Decky frontend
         run: npm run build
       - name: Check Python syntax
-        run: python3 -m py_compile main.py hub_settings.py release_catalog.py file_manager.py desktop_apps.py terminal_core/*.py
+        run: python3 -m py_compile main.py hub_settings.py release_catalog.py file_manager.py desktop_apps.py trash_manager.py terminal_core/*.py
       - name: Test backend
         run: python3 -m unittest discover -s tests -v
       - name: Verify channel classification and downgrade safeguards

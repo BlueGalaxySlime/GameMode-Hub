@@ -25,8 +25,9 @@ from release_catalog import RELEASES_API as RELEASE_CATALOG_API, catalog, valida
 from file_manager import listing as list_files, create_folder, rename_entry, paste_entry, paste_entries
 from desktop_apps import (list_desktop_apps, get_desktop_state, set_desktop_setting,
                           remember_temporary_shortcut, forget_temporary_shortcut)
+from trash_manager import trash_entry, list_trash, restore_entry
 
-CURRENT_VERSION = "0.5.17"
+CURRENT_VERSION = "0.5.18"
 RELEASES_API = "https://api.github.com/repos/BlueGalaxySlime/GameMode-Hub/releases/latest"
 ASSET_NAME = "GameMode-Hub.zip"
 
@@ -155,6 +156,15 @@ class Plugin:
 
     async def files_list(self, path=None, hidden=False, offset=0, sort_by="name", descending=False):
         return await asyncio.to_thread(list_files, path, hidden, offset, sort_by, descending)
+
+    async def files_trash(self, path):
+        return await asyncio.to_thread(trash_entry, path)
+
+    async def files_trash_list(self):
+        return await asyncio.to_thread(list_trash)
+
+    async def files_trash_restore(self, item_id):
+        return await asyncio.to_thread(restore_entry, item_id)
 
     async def files_mkdir(self, folder, name):
         return await asyncio.to_thread(create_folder, folder, name)
