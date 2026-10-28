@@ -5,7 +5,7 @@
 ## Instalacja na SteamOS — GameMode Hub 0.5.6
 
 1. Jeśli masz starą wtyczkę **SteamHub**, usuń ją w Decky. Nazwa identyfikatora wtyczki uległa zmianie.
-2. Pobierz **[GameMode-Hub.zip](https://github.com/BlueGalaxySlime/GameMode-Hub/releases/latest)** z *Releases → Assets*. Nie rozpakowuj archiwum.
+2. Pobierz **[GameMode-Hub.zip](https://github.com/BlueGalaxySlime/GameMode-Hub/releases/download/v0.5.6/GameMode-Hub.zip)** z wydania 0.5.6. Nie rozpakowuj archiwum.
 3. W Gaming Mode otwórz Decky Loader → ustawienia deweloperskie i zainstaluj wtyczkę z ZIP. Szczegóły: [instrukcja](docs/INSTALL.md).
 4. Naciśnij przycisk **⋯**, otwórz **GameMode Hub**, wybierz **Otwórz GameMode Hub**. Zostaniesz w interfejsie SteamOS.
 

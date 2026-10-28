@@ -9,10 +9,10 @@ już zainstalowanego kodu zdalnie bez wydania stabilnego, a kanał Stabilny celo
 Aby naprawić aktualizator, **zainstaluj ręcznie z Decky → Developer → Install Plugin from URL**
 bez odinstalowywania GameMode Hub:
 
-`https://github.com/BlueGalaxySlime/GameMode-Hub/releases/download/v0.5.5/GameMode-Hub.zip`
+`https://github.com/BlueGalaxySlime/GameMode-Hub/releases/download/v0.5.6/GameMode-Hub.zip`
 
 Można również pobrać ZIP i użyć **Install Plugin from ZIP File**.
-Po instalacji sprawdź w GameMode Hub → Aktualizacje, czy wersja to **0.5.5**.
+Po instalacji sprawdź w GameMode Hub → Aktualizacje, czy wersja to **0.5.6**.
 Kolejne wydania testowe wykrywa już nowy mechanizm listy wydań.
 
 
