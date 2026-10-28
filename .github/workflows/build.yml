@@ -48,7 +48,7 @@ jobs:
       - name: Verify file manager layout and path navigation
         run: node --test tests/file-manager-layout.test.cjs
       - name: Verify Desktop Apps-style launcher with Files UI
-        run: node --test tests/desktop-apps-layout.test.cjs
+        run: node --test tests/desktop-apps-layout.test.cjs tests/desktop-catalog.test.cjs
       - name: Verify plugin identity
         run: node --test tests/gamemode-identity.test.cjs
       - name: Create Decky plugin ZIP

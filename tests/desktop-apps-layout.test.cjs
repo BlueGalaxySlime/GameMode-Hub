@@ -10,7 +10,7 @@ const bundle = fs.readFileSync("scripts/package.py", "utf8");
 
 test("Pulpit uses the Files layout with a search bar and category breadcrumb", () => {
   assert.ok(hub.includes("content: <DesktopPage />"));
-  assert.ok(page.includes('aria-label="Ścieżka pulpitu — lewo i prawo"'));
+  assert.ok(page.includes('aria-label="Ścieżka pulpitu"'));
   assert.ok(page.includes('flow-children="row"'));
   assert.ok(page.includes('flow-children="column"'));
   assert.ok(page.includes('height: "min(54vh, 540px)"'));
@@ -50,7 +50,7 @@ test("A on the search bar edits text through the shared SteamOS keyboard input",
   assert.ok(page.includes('setSearch(event.target.value)'));
   assert.ok(page.includes('finishSearch()'));
   assert.ok(page.includes('searchControlRef.current?.querySelector<HTMLElement>'));
-  assert.ok(page.includes('searchKey(app.name).includes(query)'));
+  assert.ok(page.includes('filterDesktopApps(apps, stored.apps, category, search, sortMode)'));
   assert.ok(!page.includes('aria-label="Kategorie aplikacji — lewo i prawo"'));
 });
 
@@ -68,8 +68,9 @@ test("Y on the search bar opens View and Sort submenus, without a category butto
   assert.ok(page.includes('onSelected={() => changeCategory(item.key)}'));
   assert.ok(page.includes('const [sortMode, setSortMode] = useHubSessionState<DesktopSort>'));
   assert.ok(page.includes('const activeCategory = categories.find('));
-  assert.ok(page.includes('onClick={() => changeCategory("all")}'));
-  assert.ok(page.includes('aria-label="Ścieżka pulpitu — lewo i prawo"'));
+  assert.ok(!page.includes('onClick={() => changeCategory("all")}'));
+  assert.ok(page.includes('<span>Pulpit</span><span aria-hidden="true">›</span>'));
+  assert.ok(page.includes('aria-label="Ścieżka pulpitu"'));
   assert.ok(!page.includes('cancelText="Wstecz"'));
 });
 
@@ -94,4 +95,23 @@ test("credits acknowledge Desktop Apps and XDG standards", () => {
   assert.ok(credits.includes('project: "freedesktop.org / XDG"'));
   assert.ok(credits.includes('<GamepadScrollArea>'));
   assert.ok(notices.includes('https://github.com/allmazz/decky-desktop-apps'));
+});
+
+test("B on search consumes SteamOS cancel before it can leave the Hub", () => {
+  assert.ok(page.includes('onCancelActionDescription={editingSearch ? "Zamknij wyszukiwanie" : undefined}'));
+  assert.ok(page.includes('onCancelButton={editingSearch ? event => {'));
+  assert.ok(page.includes('event.preventDefault();'));
+  assert.ok(page.includes('event.stopPropagation();'));
+  assert.ok(page.includes('finishSearch();'));
+  assert.ok(page.includes('searchControlRef.current?.querySelector<HTMLElement>'));
+});
+
+test("all View categories have their own selectable menu actions and visible labels", () => {
+  assert.ok(page.includes('onSelected={() => changeCategory(item.key)}'));
+  assert.ok(page.includes('onClick={() => changeCategory(item.key)}'));
+  assert.ok(page.includes('selected={category === item.key}'));
+  assert.ok(page.includes('const activeCategory = categories.find('));
+  assert.ok(page.includes('{activeCategory}'));
+  assert.ok(!page.includes('<DialogButton onClick={() => changeCategory("all")}'));
+  assert.ok(!page.includes('aria-label="Kategorie aplikacji — lewo i prawo"'));
 });

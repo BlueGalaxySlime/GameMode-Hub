@@ -1,3 +1,11 @@
+# GameMode Hub 0.5.20 (testowy)
+
+- **Pulpit — B podczas szukania:** przeniesiono obsługę cofania do grupy SteamOS Focusable. B zamyka edycję i przywraca fokus na pasku, nie powinno zamykać całego Huba. Escape/Enter również kończą edycję bez przekazywania klawisza do routera.
+- **Pulpit — ścieżka widoku:** usunięto niepotrzebny, pełnoszeroki przycisk „Pulpit”, który zasłaniał nazwę aktualnego widoku. Nad paskiem wyszukiwania jest tylko czytelna, nieinteraktywna informacja „Pulpit › Wszystkie” lub wybrana kategoria.
+- **Pulpit — Widok pod Y:** poprawiono wywołanie wyboru kategorii przez natywne pozycje menu. Kategorie Wszystkie, Ulubione, Systemowe, Flatpak i Ukryte korzystają ze wspólnej, niezależnie testowanej logiki filtrowania oraz sortowania; wyszukiwanie działa wewnątrz każdej kategorii.
+- **Testy:** dodano osiem testów zawartości kategorii, wyszukiwania i sortowania oraz regresyjne testy UI przechwycenia przycisku B. Działanie natywnej klawiatury i menu wymaga jeszcze sprawdzenia na urządzeniu.
+- **Pozostałe:** kolejność zakładek, ustawienia terminala, Podziękowania i zabezpieczenia Plików bez zmian.
+
 # GameMode Hub 0.5.19 (testowy)
 
 - **Pulpit — wyszukiwarka:** przycisk „Wszystkie” zastąpiono jednym paskiem wyszukiwania jak pasek adresu w Plikach. A otwiera pole wpisywania i klawiaturę SteamOS zgodnie z ustawieniem Huba; filtrowanie działa na bieżąco, również wewnątrz wybranej kategorii.

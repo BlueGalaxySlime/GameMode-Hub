@@ -7,6 +7,8 @@ import {
 import { withTimeout } from "../utils/withTimeout";
 import { useHubSessionState } from "./useHubSessionState";
 import { HubTextInput } from "./HubTextInput";
+import { filterDesktopApps } from "../core/desktopCatalog";
+import type { DesktopCategory, DesktopSort } from "../core/desktopCatalog";
 import {
   createSteamDesktopShortcut, openSteamDesktopShortcut, removeSteamDesktopShortcut
 } from "./desktopLaunch";
@@ -18,8 +20,7 @@ type SavedApp = {
   favorite?: boolean; hidden?: boolean; shortcut?: number | null; lastOpened?: number | null;
 };
 type DesktopState = { apps: Record<string, SavedApp>; temporary: number[] };
-type Category = "all" | "favorites" | "flatpak" | "system" | "hidden";
-type DesktopSort = "recommended" | "name-asc" | "name-desc" | "recent";
+type Category = DesktopCategory;
 
 const listDesktopApps = callable<[], DesktopApp[]>("desktop_list_apps");
 const readState = callable<[], DesktopState>("desktop_get_state");
@@ -41,10 +42,6 @@ const sortOptions: { key: DesktopSort; label: string }[] = [
   { key: "name-desc", label: "Nazwa Z–A" },
   { key: "recent", label: "Ostatnio uruchamiane" }
 ];
-
-function searchKey(text: string) {
-  return text.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLocaleLowerCase("pl");
-}
 
 let staleShortcutsChecked = false;
 
@@ -213,12 +210,14 @@ export function DesktopPage() {
         <MenuGroup label="Widok">
           {categories.map(item =>
             <MenuItem key={item.key} selected={category === item.key}
-              onSelected={() => changeCategory(item.key)}>{item.label}</MenuItem>)}
+              onSelected={() => changeCategory(item.key)}
+              onClick={() => changeCategory(item.key)}>{item.label}</MenuItem>)}
         </MenuGroup>
         <MenuGroup label="Sortowanie">
           {sortOptions.map(item =>
             <MenuItem key={item.key} selected={sortMode === item.key}
-              onSelected={() => setSortMode(item.key)}>{item.label}</MenuItem>)}
+              onSelected={() => setSortMode(item.key)}
+              onClick={() => setSortMode(item.key)}>{item.label}</MenuItem>)}
         </MenuGroup>
       </Menu>,
       parent,
@@ -227,35 +226,25 @@ export function DesktopPage() {
   }
 
   const activeCategory = categories.find(item => item.key === category)?.label ?? "Wszystkie";
-  const query = searchKey(search.trim());
-
-  const visible = apps.filter(app => {
-    const prefs = stored.apps[app.id] ?? {};
-    if (category === "hidden" ? !prefs.hidden : prefs.hidden) return false;
-    if (category === "favorites" && !prefs.favorite) return false;
-    if (category === "flatpak" && !app.flatpak) return false;
-    if (category === "system" && app.flatpak) return false;
-    return !query || searchKey(app.name).includes(query);
-  }).sort((a, b) => {
-    const pa = stored.apps[a.id] ?? {};
-    const pb = stored.apps[b.id] ?? {};
-    if (sortMode === "recommended" && !!pa.favorite !== !!pb.favorite) {
-      return pa.favorite ? -1 : 1;
-    }
-    if (sortMode === "recent" || sortMode === "recommended") {
-      if ((pa.lastOpened ?? 0) !== (pb.lastOpened ?? 0)) {
-        return (pb.lastOpened ?? 0) - (pa.lastOpened ?? 0);
-      }
-    }
-    const byName = a.name.localeCompare(b.name, "pl");
-    return sortMode === "name-desc" ? -byName : byName;
-  });
+  const visible = filterDesktopApps(apps, stored.apps, category, search, sortMode);
 
   return <DialogBody>
     <DialogControlsSection>
       <Focusable flow-children="column"
         style={{ display: "flex", flexDirection: "column", gap: 8, minWidth: 0, width: "100%" }}
+        onCancelActionDescription={editingSearch ? "Zamknij wyszukiwanie" : undefined}
+        onCancelButton={editingSearch ? event => {
+          event.preventDefault();
+          event.stopPropagation();
+          finishSearch();
+        } : undefined}
         onKeyDown={event => {
+          if (editingSearch && event.key === "Escape") {
+            event.preventDefault();
+            event.stopPropagation();
+            finishSearch();
+            return;
+          }
           if (event.key === "F5") { event.preventDefault(); void refresh(); }
         }}>
         <div aria-label="Stan pulpitu" style={{ display: "flex", gap: 14, flexWrap: "wrap",
@@ -264,22 +253,15 @@ export function DesktopPage() {
           <span>Aplikacje: {visible.length}</span>
           <span>Sortowanie: {sortOptions.find(item => item.key === sortMode)?.label ?? "Nazwa A–Z"}</span>
         </div>
-        {/* Like the Files breadcrumbs, but for the selected app catalogue. */}
-        <Focusable flow-children="row"
-          navEntryPreferPosition={NavEntryPositionPreferences.MAINTAIN_X}
-          aria-label="Ścieżka pulpitu — lewo i prawo"
-          style={{ display: "flex", flexDirection: "row", gap: 4,
-            flexWrap: "nowrap", alignItems: "center", minWidth: 0,
-            width: "100%", overflowX: "auto", overflowY: "hidden" }}>
-          <DialogButton onClick={() => changeCategory("all")}
-            style={{ minWidth: 0, padding: "3px 9px", fontSize: 12, flex: "0 0 auto" }}>
-            Pulpit
-          </DialogButton>
-          <span aria-hidden="true" style={{ opacity: 0.6 }}>›</span>
-          <span style={{ fontSize: 12, fontWeight: 700, whiteSpace: "nowrap" }}>
+        {/* Read-only context. There is no second action that merely resets to Wszystkie. */}
+        <div aria-label="Ścieżka pulpitu" style={{ display: "flex", gap: 6,
+          alignItems: "center", minWidth: 0, width: "100%",
+          fontSize: 12, opacity: 0.85, padding: "2px 4px" }}>
+          <span>Pulpit</span><span aria-hidden="true">›</span>
+          <strong style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
             {activeCategory}
-          </span>
-        </Focusable>
+          </strong>
+        </div>
         {/* A edits the search query; Y opens native View / Sort submenus. */}
         <div ref={searchControlRef} onContextMenu={event => {
           event.preventDefault();
@@ -295,6 +277,7 @@ export function DesktopPage() {
               onKeyDown={event => {
                 if (event.key === "Enter" || event.key === "Escape") {
                   event.preventDefault();
+                  event.stopPropagation();
                   finishSearch();
                 }
               }} />
