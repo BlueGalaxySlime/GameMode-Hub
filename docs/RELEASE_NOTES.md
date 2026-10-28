@@ -1,3 +1,14 @@
+# SteamHub 0.4.11
+
+- Usunięto niedziałającą funkcję pełnego ekranu terminala i przycisk „Ponów”, którego użycie mogło zawiesić SteamOS.
+- Zamiast przycisku „+” są trzy małe przyciski sesji 1/2/3. Fizyczne LB/RB nadal pozwalają przełączać między nimi.
+- Sesje PTY i ich ograniczony bufor wyjścia pozostają w pamięci podczas przechodzenia między sekcjami SteamHub; nie są zamykane przy opuszczeniu terminala.
+- Ikona gumki czyści wyłącznie ekran i jego lokalny bufor, nie kończy działającej sesji.
+- Przed uruchomieniem powłoki frontend sprawdza gotowość backendu i wersję protokołu. Przy braku odpowiedzi blokuje kolejne próby oraz odczyty, aby ograniczyć ryzyko zawieszenia Gaming Mode.
+- Silnik PTY jest ładowany leniwie: błąd importu terminala nie blokuje uruchomienia innych funkcji SteamHub i diagnostyki backendu.
+- Zachowano systemową klawiaturę SteamOS i natywną nawigację kontrolerem.
+- Weryfikacja połączenia terminala z backendem nadal wymaga testu na Legion Go S. W razie niezgodności wersji backendu wymagane jest przeładowanie SteamHub w Decky.
+
 # SteamHub 0.4.10
 
 - Przywrócono widoczne podświetlenie fokusu: usunięto noFocusRing, a pasek terminala jest natywną grupą Focusable z nawigacją poziomą SteamOS.

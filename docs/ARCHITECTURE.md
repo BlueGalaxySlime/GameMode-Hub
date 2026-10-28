@@ -49,3 +49,20 @@ SteamOS-Hub aims to offer a single setup experience for SteamOS gaming mode tool
   and `TextField` components; a future Linux app may provide its own.
 - `CreditsPage` explicitly separates adapted code from independent integrations.
   Legally required notices are kept in `THIRD_PARTY_NOTICES.md`.
+
+
+## Terminal session lifecycle and fail-safe behavior (0.4.11)
+
+- Three fixed PTY slots are managed by `sessionStore.ts` in the loaded frontend
+  module. Route changes do not close the shell, and up to 128 KiB of output
+  per slot can be replayed on return. Output while a panel is unmounted is
+  buffered by the backend until the frontend requests it again.
+- Terminals close only on plugin unload, when the shell exits, or on an
+  explicit close request; clearing xterm never closes the PTY.
+- The Decky adapter probes `terminal_ping` (protocol 2) before creating a shell.
+  If the backend does not answer, further terminal attempts and polling are
+  stopped for the current SteamHub plugin instance to avoid repeated stuck RPCs.
+- `terminal_core` is loaded lazily by the backend: failing to initialize the
+  PTY engine must not break unrelated plugin RPC methods.
+- Sessions persist while the plugin stays loaded, not across a Decky restart,
+  reinstallation, or operating-system reboot. This is intentional.

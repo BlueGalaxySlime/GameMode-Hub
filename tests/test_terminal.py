@@ -1,5 +1,6 @@
 """Terminal service smoke tests. No Steam, Decky, or external dependencies."""
 import base64
+import asyncio
 import os
 import time
 import unittest
@@ -8,6 +9,17 @@ from unittest.mock import patch
 from terminal_core.service import (
     MAX_BUFFER, TerminalService, decode_input, validate_dimensions
 )
+
+
+class TerminalBackendHandshakeTests(unittest.TestCase):
+    def test_handshake_is_available_without_starting_pty(self):
+        from main import Plugin
+        plugin = Plugin()
+        self.assertIsNone(plugin._terminal)
+        info = asyncio.run(plugin.terminal_ping())
+        self.assertTrue(info["ok"])
+        self.assertEqual(info["protocol"], 2)
+        self.assertIsNone(plugin._terminal)
 
 
 class TerminalValidationTests(unittest.TestCase):
