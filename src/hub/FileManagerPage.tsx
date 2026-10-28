@@ -49,6 +49,11 @@ function readableSize(size: number | null) {
   return (size / (1024 * 1024 * 1024)).toFixed(1) + " GB";
 }
 
+function favoriteLabel(path: string) {
+  const trimmed = path.replace(/\/+$/, "");
+  return trimmed.slice(trimmed.lastIndexOf("/") + 1) || "/";
+}
+
 function ParentDirectoryRow({ parent, disabled, onOpen }: {
   parent: string | null;
   disabled: boolean;
@@ -323,6 +328,21 @@ export function FileManagerPage() {
     void reloadBoth(show, sortBy, descending);
   }
 
+  // A opens the bookmarked directory. Right on that same row opens a single
+  // destructive bookmark action; no duplicate list of "Open" / "Remove" rows.
+  function openRemoveFavoriteMenu(path: string) {
+    showContextMenu(
+      <Menu label={favoriteLabel(path)} cancelText="Wstecz">
+        <MenuItem disabled={savingFavorites}
+          onSelected={() => { void changeFavorites(favorites.filter(p => p !== path)); }}>
+          Usuń
+        </MenuItem>
+      </Menu>,
+      document.activeElement ?? window,
+      { bFitToWindow: true, bShiftToFitWindow: true, bPreferPopTop: true }
+    );
+  }
+
   // Native Steam menu, like the existing menu on a folder/file row.
   // MenuGroup opens its choices in a right-hand submenu, as in Gaming Mode.
   function openBrowserMenu(parent: EventTarget) {
@@ -343,15 +363,12 @@ export function FileManagerPage() {
             onSelected={() => {
               if (currentPage && !favorites.includes(currentPage.path))
                 void changeFavorites([...favorites, currentPage.path]);
-            }}>Dodaj zakładkę bieżącego folderu</MenuItem>
+            }}>Dodaj</MenuItem>
           {favorites.map(path =>
-            <MenuItem key={"open:" + path} onSelected={() => { void load(path, hidden); }}>
-              {"Otwórz zakładkę: ★ " + path}
-            </MenuItem>)}
-          {favorites.map(path =>
-            <MenuItem key={"remove:" + path} disabled={savingFavorites}
-              onSelected={() => { void changeFavorites(favorites.filter(p => p !== path)); }}>
-              {"Usuń zakładkę (bez usuwania plików): " + path}
+            <MenuItem key={path}
+              onSelected={() => { void load(path, hidden); }}
+              onMoveRight={() => openRemoveFavoriteMenu(path)}>
+              {favoriteLabel(path)}
             </MenuItem>)}
         </MenuGroup>
         {clipboard && <MenuItem onSelected={() => { void operate("paste"); }}>
