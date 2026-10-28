@@ -5,7 +5,7 @@ import {
   DialogControlsSectionHeader, Field, Navigation, SidebarNavigation, Toggle
 } from "@decky/ui";
 import { callable } from "@decky/api";
-import { FaCog, FaFolderOpen, FaHeart, FaHome, FaPlug, FaPuzzlePiece, FaSyncAlt, FaTerminal, FaUserCircle, FaBug, FaDownload } from "react-icons/fa";
+import { FaCog, FaFolderOpen, FaHeart, FaHome, FaPlug, FaPuzzlePiece, FaSyncAlt, FaTerminal, FaUserCircle, FaBug, FaDownload, FaMedal } from "react-icons/fa";
 import { withTimeout } from "../utils/withTimeout";
 import { UpdatesPage } from "./UpdatesPage";
 import { FileManagerPage } from "./FileManagerPage";
@@ -16,6 +16,7 @@ import { useHubSessionState } from "./useHubSessionState";
 import { DeckyTerminalPage } from "./DeckyTerminalAdapter";
 import { CreditsPage } from "./CreditsPage";
 import { ReportsPage } from "./ReportsPage";
+import { ProtonDBPage } from "./ProtonDBPage";
 import { DownloadsPage } from "./DownloadsPage";
 import { DECKY_PLUGIN_NAME, HUB_ROUTE } from "../core/identity";
 import { CORE_MODULES } from "../core/modules";
@@ -246,6 +247,8 @@ export function HubPage() {
       content: <UpdatesPage /> },
     { title: "Pobieranie", route: HUB_ROUTE + "/downloads", icon: <FaDownload />,
       content: <DownloadsPage /> },
+    { title: "ProtonDB", route: HUB_ROUTE + "/protondb", icon: <FaMedal />,
+      content: <ProtonDBPage /> },
     { title: "Podziękowania", route: HUB_ROUTE + "/credits", icon: <FaHeart />,
       content: <CreditsPage /> },
     { title: "Zgłoszenia", route: HUB_ROUTE + "/reports", icon: <FaBug />,

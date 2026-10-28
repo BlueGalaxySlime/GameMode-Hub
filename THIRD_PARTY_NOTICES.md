@@ -136,3 +136,22 @@ INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
 CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
 ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 POSSIBILITY OF SUCH DAMAGE.
+
+## ProtonDB — data source (ODbL / DbCL)
+
+Data and compatibility tiers come from ProtonDB, https://www.protondb.com.
+The dataset is licensed under the Open Database License (ODbL 1.0):
+https://opendatacommons.org/licenses/odbl/1.0/
+Individual contents are licensed under the Database Contents License (DbCL):
+https://opendatacommons.org/licenses/dbcl/1.0/
+
+GameMode Hub requests only a single game summary when asked by the user,
+caches bounded metadata locally and links to the source. No bulk dataset
+is bundled or redistributed with the plugin. ProtonDB names and trademarks
+belong to their respective owners.
+
+ProtonDB Badges for Decky (OMGDuke; later bschelst) was studied as a reference:
+https://github.com/OMGDuke/protondb-decky
+https://github.com/bschelst/protondb-decky
+Source projects carry GPL licensing. No badge graphics, modified Steam UI
+patches or source code from those plugins have been copied.

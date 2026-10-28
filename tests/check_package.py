@@ -21,6 +21,7 @@ class PackageTests(unittest.TestCase):
             self.assertIn("GameMode Hub/downloads_manager.py",names)
             self.assertIn("GameMode Hub/update_checks.py",names)
             self.assertIn("GameMode Hub/runtime_state.py",names)
+            self.assertIn("GameMode Hub/protondb_badges.py",names)
             self.assertTrue(any(name.startswith("GameMode Hub/dist/") and name.endswith(".js") for name in names))
             self.assertFalse(any(name.startswith("GameMode Hub/terminal_core/") for name in names))
             self.assertFalse(any(name.startswith("GameMode Hub/desktop/") for name in names))

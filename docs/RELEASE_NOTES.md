@@ -1,3 +1,12 @@
+# GameMode Hub 0.5.38 (testowy)
+
+- **Zgłoszenia:** tytuł ma teraz widoczny licznik `0 / 110 znaków` analogicznie do opisu `0 / 1200 znaków`; bez zmiany stylu pól, układu ani obsługi B.
+- **ProtonDB — osobny moduł i zakładka:** pobiera rzeczywistą ocenę (Platinum/Gold/Silver/Bronze/Borked/Native/Pending) tylko dla wskazanego Steam AppID. Wyświetla liczbę raportów i odsyła do oryginalnej strony ProtonDB. Nie wymaga konta, tokenów, bramy ani dodatkowego serwera.
+- **Cache ocen:** zapisuje maksymalnie 80 wyników per gra w `~/.config/gamemodehub/protondb_badges.json`, ważnych 24 godziny; niepowodzenie próbuje ponownie na żądanie nie wcześniej niż po 30 minutach. Żadnego samoczynnego skanowania bibliotek.
+- **Wybór klienta:** Auto (SteamOS), Steam, Heroic, Lutris, Bottles. W tym pierwszym etapie wszystkie używają jawnie podanego Steam AppID; automatyczne kojarzenie gier w innych launcherach i odznaki na kartach SteamOS wymagają osobnych adapterów. Nie ma ryzykownych patchy interfejsu Steam.
+- **Licencje:** dodano źródło ProtonDB ODbL/DbCL do podziękowań i informacji prawnych; kod Huba napisany niezależnie od Decky ProtonDB Badges.
+- **Bez zmian:** system awaryjny, pomiary DEV, harmonogram Flatpak, pobieranie, transfer, menu Y/B oraz instalator hotfixów.
+
 # GameMode Hub 0.5.37 (testowy)
 
 - **Aktualizacje → Hub / Flatpak / Pozostałe:** osobne podzakładki obsługiwane lewo/prawo; dotychczasowy instalator i kanał Testowy dla pilnych hotfixów pozostają pod Hub. „Pozostałe” nie wywołuje żadnego sprawdzania, dopóki nie dodamy kolejnych źródeł.

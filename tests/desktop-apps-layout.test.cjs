@@ -119,10 +119,10 @@ test("all View categories have their own selectable menu actions and visible lab
 test("all sidebar tabs form one contiguous controller-navigation list", () => {
   const pages = hub.split("  const pages = [", 2)[1].split("\n  ];", 1)[0];
   assert.ok(!pages.includes('"separator" as const'));
-  const names = [...pages.matchAll(/title: "(Pulpit|Pliki|Terminal|Konta|Dodatki|Opcje Huba|Aktualizacje|Pobieranie|Podziękowania|Zgłoszenia)"/g)]
+  const names = [...pages.matchAll(/title: "(Pulpit|Pliki|Terminal|Konta|Dodatki|Opcje Huba|Aktualizacje|Pobieranie|ProtonDB|Podziękowania|Zgłoszenia)"/g)]
     .map(match => match[1]);
   assert.deepEqual(names, ["Pulpit", "Pliki", "Terminal", "Konta", "Dodatki",
-    "Opcje Huba", "Aktualizacje", "Pobieranie", "Podziękowania", "Zgłoszenia"]);
+    "Opcje Huba", "Aktualizacje", "Pobieranie", "ProtonDB", "Podziękowania", "Zgłoszenia"]);
 });
 
 test("B is captured on Desktop also outside search edit mode", () => {
@@ -378,4 +378,30 @@ test("Hub recovery shortcuts are independent of active modules and do not kill d
   assert.ok(recovery.includes('Navigation.Navigate("/library")'));
   assert.ok(!recovery.includes('shutdown'));
   assert.ok(!recovery.includes('cancelDownload'));
+});
+
+test("Reports title has a visible live counter without new custom boxes", () => {
+  const reports = fs.readFileSync("src/hub/ReportsPage.tsx", "utf8");
+  assert.ok(reports.includes('const MAX_TITLE = 110;'));
+  assert.ok(reports.includes('{title.length} / {MAX_TITLE} znaków'));
+  assert.ok(reports.includes('setTitle(event.target.value.slice(0, MAX_TITLE))'));
+});
+test("ProtonDB is independent and retrieves badges only on explicit user action", () => {
+  const page = fs.readFileSync("src/hub/ProtonDBPage.tsx", "utf8");
+  const badges = fs.readFileSync("protondb_badges.py", "utf8");
+  assert.ok(hub.includes('title: "ProtonDB"'));
+  assert.ok(hub.includes('<ProtonDBPage />'));
+  assert.ok(page.includes('Client = "auto" | "steam" | "heroic" | "lutris" | "bottles"'));
+  assert.ok(page.includes('Pokaż odznakę'));
+  assert.ok(page.includes('getBadge(appId, force)'));
+  assert.ok(page.includes('Navigation.NavigateToExternalWeb(result.url)'));
+  assert.ok(page.includes('Steam AppID'));
+  assert.ok(!page.includes('setInterval('));
+  assert.ok(!page.includes('patchAppPage'));
+  assert.ok(badges.includes('SUCCESS_TTL = 24 * 60 * 60'));
+  assert.ok(badges.includes('MAX_RESULTS = 80'));
+  assert.ok(badges.includes('www.protondb.com/api/v1/reports/summaries/'));
+  assert.ok(!badges.includes('shell=True'));
+  assert.ok(backend.includes('async def protondb_get_badge('));
+  assert.ok(bundle.includes('"protondb_badges.py"'));
 });

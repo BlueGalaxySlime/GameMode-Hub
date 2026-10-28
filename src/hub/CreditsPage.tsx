@@ -30,6 +30,18 @@ const reusedCode: Credit[] = [
 
 const externalProjects: Credit[] = [
   {
+    project: "ProtonDB",
+    authors: "bdefore i współtwórcy",
+    reason: "Źródło ocen zgodności gier z Linux/Proton. GameMode Hub pobiera jedynie ocenę dla wybranego Steam AppID i zapisuje ją lokalnie.",
+    license: "Dane: ODbL; zawartość: DbCL", source: "www.protondb.com"
+  },
+  {
+    project: "ProtonDB Badges (Decky)",
+    authors: "OMGDuke, bschelst i współtwórcy",
+    reason: "Projekt referencyjny dla sposobu prezentacji ocen; implementacja Huba jest niezależna, bez kopiowania kodu ani infrastruktury.",
+    license: "GPL-3.0 (upstream)", source: "github.com/bschelst/protondb-decky"
+  },
+  {
     project: "UniFiDeck",
     authors: "mubaraknumann i współtwórcy",
     reason: "Integracja stanu połączeń sklepów poprzez odczyt API wtyczki Decky, bez kopiowania kodu uwierzytelniania i bez dostępu do tokenów.",

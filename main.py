@@ -31,9 +31,10 @@ from lan_transfer import TransferManager
 from flatpak_manager import flatpak_overview, flatpak_update_user, flatpak_update_all_user
 from downloads_manager import DOWNLOADS
 from update_checks import UPDATE_CHECKS
+from protondb_badges import BADGES
 from runtime_state import set_hub_ui_open, get_runtime_state, diagnostics as runtime_diagnostics
 
-CURRENT_VERSION = "0.5.37"
+CURRENT_VERSION = "0.5.38"
 RELEASES_API = "https://api.github.com/repos/BlueGalaxySlime/GameMode-Hub/releases/latest"
 ASSET_NAME = "GameMode-Hub.zip"
 
@@ -151,6 +152,9 @@ class Plugin:
 
     async def hub_ui_open(self, opened):
         return set_hub_ui_open(opened)
+
+    async def protondb_get_badge(self, app_id, force=False):
+        return await asyncio.to_thread(BADGES.lookup, app_id, force)
 
     async def hub_runtime_state(self):
         active = DOWNLOADS.list()["active"]
