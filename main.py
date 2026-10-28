@@ -102,7 +102,19 @@ def _write_tab_manager_enabled(enabled):
     return enabled
 
 
+def _tabmaster_installed():
+    """Best-effort informational check; never changes another plugin's state."""
+    candidates = (
+        Path.home() / "homebrew" / "plugins" / "TabMaster",
+        Path("/home/deck/homebrew/plugins/TabMaster"),
+    )
+    return any(path.is_dir() for path in candidates)
+
+
 class Plugin:
+    async def get_tabmaster_installed(self):
+        return await asyncio.to_thread(_tabmaster_installed)
+
     async def get_tab_manager_enabled(self):
         return await asyncio.to_thread(_read_tab_manager_enabled)
 
