@@ -1,3 +1,12 @@
+# GameMode Hub 0.5.41 (testowy)
+
+- **Konta: tylko Epic Games.** Usunięto osobną pozycję UniFiDeck i listę wszystkich sklepów. Epic jest jedynym widocznym kontem w trybie testowym. Nie odinstalowuje to wtyczki UniFiDeck ani nie usuwa istniejących kont.
+- **Test logowania Epic:** „Zaloguj do Epic” wykorzystuje istniejący silnik Unifideck/Legendary, wywołuje jego `store_auth("epic","start")` i, gdy potrzebne, przygotowuje tymczasowy skrót Steam uruchamiający przeglądarkowe logowanie Epic. Po powrocie do Huba można ręcznie odświeżyć status. Brak haseł, tokenów, roota i osobnego serwera.
+- **Kolejka pobierania:** „Sprawdź pobieranie” odczytuje listę zadań Epic z istniejącego `get_download_queue` Unifideck. To podgląd, nie rozpoczyna instalacji: nie ma jeszcze wyboru gry ani niezależnego silnika pobierania.
+- **Bezpieczne działanie:** brak okresowego skanowania kont. Tymczasowy skrót ma opóźnione sprzątanie, żeby nie przerwać okna logowania. W przypadku braku Unifideck/Legendary interfejs wyjaśnia brak silnika zamiast udawać zalogowane konto.
+- **Ograniczenie:** ponieważ korzystamy z interfejsów Unifideck, logowanie Epic musi zostać potwierdzone na Lenovo. W tej wersji nie zastępujemy silnika Unifideck i nie odinstalowujemy go.
+- **Bez zmian:** działające konta i instalacje Unifideck, pliki, LAN, tryb DEV, Flatpak, aktualizacje, odznaki, sterowanie B/Y i UI kart gier.
+
 # GameMode Hub 0.5.40 (testowy)
 
 - **Jednolity model zakładek:** zamiast pojedynczego paska informacji, włączone opcjonalnie UI → Gaming Mode pokazuje dla skrótów nie-Steam cztery zakładki wzorowane na SteamOS: aktywność, własna biblioteka, społeczność/pomoc i szczegóły. Ich etykiety i dostępne działania różnią się zależnie od GOG, Epic i innych źródeł.

@@ -135,20 +135,21 @@ test("B is captured on Desktop also outside search edit mode", () => {
   assert.ok(page.includes('event.stopPropagation();'));
 });
 
-test("Konta is fourth tab without mock login buttons", () => {
+test("Konta is fourth tab and shows Epic as the only test store", () => {
   const tabs = [...hub.matchAll(/title: "(Pulpit|Pliki|Terminal|Konta|Dodatki)"/g)]
     .map(match => match[1]);
   assert.deepEqual(tabs, ["Pulpit", "Pliki", "Terminal", "Konta", "Dodatki"]);
   assert.ok(hub.includes('content: <AccountsPage installed={installed} />'));
   const source = fs.readFileSync("src/hub/AccountsPage.tsx", "utf8");
-  assert.ok(source.includes("Stan sklepów pobierany bezpośrednio z UniFiDeck"));
-  assert.ok(source.includes('readUnifideckStatuses()'));
-  assert.ok(source.includes('label={item.name}'));
+  assert.ok(source.includes('label="Epic Games"'));
+  assert.ok(source.includes('startEpicLogin()'));
+  assert.ok(source.includes('epicDownloadQueue()'));
+  assert.ok(source.includes('Zaloguj do Epic'));
   assert.ok(source.includes("<GamepadScrollArea>"));
-  assert.ok(!source.includes("oauth"));
+  assert.ok(!source.includes('label="UniFiDeck"'));
 });
 
-test("Accounts uses UniFiDeck read-only RPC, never reads credential files", () => {
+test("Epic test uses Unifideck backend but owns no credentials", () => {
   const bridge = fs.readFileSync("src/hub/unifideckBridge.ts", "utf8");
   assert.ok(bridge.includes('backend.callable("loader/call_plugin_method")'));
   assert.ok(bridge.includes('invoke("Unifideck", "check_store_status")'));
@@ -157,6 +158,16 @@ test("Accounts uses UniFiDeck read-only RPC, never reads credential files", () =
   assert.ok(!bridge.includes('gog_token.json'));
   assert.ok(bridge.includes('candidate.available'));
   assert.ok(hub.includes('content: <AccountsPage installed={installed} />'));
+  const epic = fs.readFileSync("src/hub/epicTestBridge.ts","utf8");
+  assert.ok(epic.includes('invoke("store_auth","epic","start")'));
+  assert.ok(epic.includes('invoke("get_epic_auth_shortcut_context")'));
+  assert.ok(epic.includes('invoke("get_download_queue")'));
+  assert.ok(epic.includes('UNIFIDECK_EPIC_ACTION=auth'));
+  assert.ok(epic.includes('steam.RunGame(gameId,"",-1,100)'));
+  assert.ok(epic.includes('if(!registered)throw'));
+  assert.ok(!epic.includes('writeFile'));
+  assert.ok(!epic.includes('install_game'));
+  assert.ok(!epic.includes('store_auth","epic","logout'));
 });
 
 test("Desktop View exposes readable auto rules and per-app category overrides", () => {

@@ -177,3 +177,15 @@ achievement handlers: https://github.com/mubaraknumann/unifideck
 Unifideck is copyright its respective authors and licensed under GPL-3.0-or-later.
 No Unifideck source code or assets are distributed within GameMode Hub. Its
 play, achievements and cloud-save handlers are not overridden by this feature.
+
+## Epic Accounts experimental integration
+
+The GameMode Hub Epic account test optionally delegates sign-in preparation,
+temporary Steam shortcut execution and read-only download queue inspection to
+an existing Unifideck installation (GPL-3.0-or-later). It follows the public
+integration contract documented at:
+https://github.com/mubaraknumann/unifideck
+
+No Unifideck binaries, authentication credentials or tokens are distributed,
+stored or copied by GameMode Hub. The runtime adapter only works if Unifideck
+is installed and enabled. This is not a replacement Epic/Legendary client.

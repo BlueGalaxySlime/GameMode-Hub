@@ -63,6 +63,21 @@ async function launchEpicAuthShortcut(context:AuthContext):Promise<void> {
     id=await withTimeout(steam.AddShortcut(name,exe,exe.slice(0,exe.lastIndexOf("/")),opts),6500);
     if(!Number.isInteger(id)||!id)throw new Error("Steam nie utworzył skrótu logowania.");
     steam.SetShortcutLaunchOptions(id,opts);
+    // Steam has to register a new shortcut in memory before RunGame.
+    // Without this, Gaming Mode can show "Game configuration unavailable".
+    const map=(window as Window & {
+      appStore?: {m_mapApps?: {get:(n:number)=>{gameid?:unknown}|undefined}}
+    }).appStore?.m_mapApps;
+    const until=Date.now()+5000;
+    let registered=false;
+    while(Date.now()<until){
+      const entry=map?.get(id | 0) || map?.get(id >>> 0);
+      if(typeof entry?.gameid==="string"&&entry.gameid.length>0){
+        registered=true;break;
+      }
+      await new Promise<void>(resolve=>window.setTimeout(resolve,250));
+    }
+    if(!registered)throw new Error("Steam nie zarejestrował skrótu logowania.");
     // Same formula used by Steam for non-Steam shortcut GameIDs.
     const gameId=((BigInt(id>>>0)<<32n)|0x02000000n).toString();
     steam.SpecifyCompatTool?.(id,"");
