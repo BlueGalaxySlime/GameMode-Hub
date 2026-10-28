@@ -14,6 +14,8 @@ const creditsPage = fs.readFileSync("src/hub/CreditsPage.tsx", "utf8");
 const infoField = fs.readFileSync("src/hub/FocusableInfoField.tsx", "utf8");
 const infoScroll = fs.readFileSync("src/hub/GamepadScrollArea.tsx", "utf8");
 const hubPage = fs.readFileSync("src/hub/HubPage.tsx", "utf8");
+const desktopPage = fs.readFileSync("src/hub/DesktopPage.tsx", "utf8");
+const createFolder = fs.readFileSync("src/hub/CreateFolderDialog.tsx", "utf8");
 const terminalPage = fs.readFileSync("src/hub/DeckyTerminalAdapter.tsx", "utf8");
 const compiled = ts.transpileModule(fs.readFileSync("src/core/filePath.ts", "utf8"), {
   compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2020 }
@@ -178,7 +180,8 @@ test("plain text information is never collapsed in credits, desktop, or terminal
   assert.ok(infoField.includes("focusable highlightOnFocus"));
   assert.ok(!infoField.includes("useState"));
   assert.ok(!infoField.includes("DialogButton"));
-  assert.ok(hubPage.includes("<GamepadScrollArea>"));
+  assert.ok(hubPage.includes("content: <DesktopPage />"));
+  assert.ok(desktopPage.includes('overflowY: "auto"'));
   assert.ok(terminalPage.includes("<GamepadScrollArea>"));
 });
 
@@ -196,7 +199,7 @@ test("favourites show one short row per folder; A opens, Right offers only remov
   assert.ok(ui.includes('function favoriteLabel(path: string)'));
   assert.ok(ui.includes('onSelected={() => { void load(path, hidden); }}'));
   assert.ok(ui.includes('onMoveRight={() => openRemoveFavoriteMenu(path)}'));
-  assert.ok(ui.includes('<Menu label={favoriteLabel(path)} cancelText="Wstecz">'));
+  assert.ok(ui.includes('<Menu label={favoriteLabel(path)}>'));
   assert.ok(ui.includes('changeFavorites(favorites.filter(p => p !== path))'));
   assert.ok(ui.includes('>\n          Usuń\n        </MenuItem>'));
   assert.ok(!ui.includes('Otwórz zakładkę:'));
@@ -204,4 +207,16 @@ test("favourites show one short row per folder; A opens, Right offers only remov
   assert.ok(!ui.includes('Dodaj zakładkę bieżącego folderu'));
   assert.ok(!ui.includes('unlink('));
   assert.ok(!ui.includes('rmdir('));
+});
+
+test("file menus have no redundant Back label; new folder opens keyboard modal", () => {
+  assert.ok(!ui.includes('cancelText="Wstecz"'));
+  assert.ok(ui.includes('<MenuItem disabled={!currentPage} onSelected={openCreateFolderDialog}>'));
+  assert.ok(ui.includes('showModal(<CreateFolderDialog folder={folder}'));
+  assert.ok(!ui.includes('action === "folder" &&'));
+  assert.ok(createFolder.includes("<ModalRoot"));
+  assert.ok(createFolder.includes('focusOnMount aria-label="Nazwa nowego folderu"'));
+  assert.ok(createFolder.includes('event.key === "Enter"'));
+  assert.ok(createFolder.includes('makeFolder(folder, proposed)'));
+  assert.ok(createFolder.includes('closeModal?.()'));
 });

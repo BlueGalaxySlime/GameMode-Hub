@@ -1,3 +1,11 @@
+# GameMode Hub 0.5.17 (testowy)
+
+- **Pliki:** usunięto zbędny tekst „Wstecz” z menu kontekstowych. Przycisk B i krzyżak/pad nadal obsługują cofanie i nawigację.
+- **Pliki — Nowy folder:** wybranie z menu Y otwiera osobne okno z polem nazwy i klawiaturą SteamOS (zgodnie z globalną opcją klawiatury); Enter lub „Utwórz” tworzy katalog, a po sukcesie lista jest odświeżana. B zamyka okno bez zmian.
+- **Pulpit:** natywna lista aplikacji desktopowych (.desktop, Flatpak) w stylistyce zakładki Pliki: pasek stanu, poziome tagi kategorii, pełna lista nawigowana padem. A uruchamia aplikację przez Steam; Y otwiera krótkie menu Ulubione / Biblioteka Steam / Ukryj. Zapis ulubionych i skrótów pozostaje po aktualizacji.
+- **Uruchamianie:** aplikacje uruchamiane są przez API Steam jako skróty, bez wykonywania poleceń powłoki w backendzie. Tymczasowe skróty są sprzątane po zakończeniu i po awaryjnym restarcie Huba.
+- **Testy:** dodano testy odkrywania aplikacji, preferencji, układu pulpitu i okna nowego folderu. Wymagany test na rzeczywistym SteamOS/Decky.
+
 # GameMode Hub 0.5.16 (testowy)
 
 - **Pliki — Ulubione:** uproszczono listę do jednej pozycji „Dodaj” i nazw zapisanych folderów. Nie ma już powtarzanych sformułowań „Otwórz zakładkę” i „Usuń zakładkę” ani długich ścieżek przy każdym wpisie.

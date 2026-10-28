@@ -32,7 +32,7 @@ jobs:
       - name: Build Decky frontend
         run: npm run build
       - name: Check Python syntax
-        run: python3 -m py_compile main.py hub_settings.py release_catalog.py file_manager.py terminal_core/*.py
+        run: python3 -m py_compile main.py hub_settings.py release_catalog.py file_manager.py desktop_apps.py terminal_core/*.py
       - name: Test backend
         run: python3 -m unittest discover -s tests -v
       - name: Verify channel classification and downgrade safeguards
@@ -47,6 +47,8 @@ jobs:
         run: node --test tests/hub-session.test.cjs
       - name: Verify file manager layout and path navigation
         run: node --test tests/file-manager-layout.test.cjs
+      - name: Verify Desktop Apps-style launcher with Files UI
+        run: node --test tests/desktop-apps-layout.test.cjs
       - name: Verify plugin identity
         run: node --test tests/gamemode-identity.test.cjs
       - name: Create Decky plugin ZIP

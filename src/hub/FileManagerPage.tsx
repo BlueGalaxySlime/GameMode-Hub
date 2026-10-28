@@ -1,12 +1,13 @@
 import { useEffect, useLayoutEffect, useRef, useState, useSyncExternalStore } from "react";
 import { callable } from "@decky/api";
-import { DialogBody, DialogButton, DialogControlsSection, Focusable, Menu, MenuGroup, MenuItem, NavEntryPositionPreferences, showContextMenu } from "@decky/ui";
+import { DialogBody, DialogButton, DialogControlsSection, Focusable, Menu, MenuGroup, MenuItem, NavEntryPositionPreferences, showContextMenu, showModal } from "@decky/ui";
 import { withTimeout } from "../utils/withTimeout";
 import { breadcrumbs } from "../core/filePath";
 import { applyHubPreferences, getHubPreferences, readHubSession, subscribeHubPreferences, writeHubSession } from "../core/hubSession";
 import type { HubPreferences } from "../core/hubSession";
 import { useHubSessionState } from "./useHubSessionState";
 import { HubTextInput } from "./HubTextInput";
+import { CreateFolderDialog } from "./CreateFolderDialog";
 
 type SortBy = "name" | "type" | "size" | "date";
 type Entry = {
@@ -332,7 +333,7 @@ export function FileManagerPage() {
   // destructive bookmark action; no duplicate list of "Open" / "Remove" rows.
   function openRemoveFavoriteMenu(path: string) {
     showContextMenu(
-      <Menu label={favoriteLabel(path)} cancelText="Wstecz">
+      <Menu label={favoriteLabel(path)}>
         <MenuItem disabled={savingFavorites}
           onSelected={() => { void changeFavorites(favorites.filter(p => p !== path)); }}>
           Usuń
@@ -343,6 +344,28 @@ export function FileManagerPage() {
     );
   }
 
+  async function refreshAfterFolderCreated(folder: string, pane: "left" | "right") {
+    try {
+      const fresh = await withTimeout(fileList(folder, hidden, 0, sortBy, descending), 8000);
+      if (pane === "left" && page?.path === folder) setPage(fresh);
+      if (pane === "right" && (rightPage ?? page)?.path === folder) setRightPage(fresh);
+      setMessage("Utworzono folder.");
+    } catch (error) {
+      setMessage("Folder powstał, ale nie udało się odświeżyć listy: " + String(error));
+    }
+  }
+
+  function openCreateFolderDialog() {
+    if (!currentPage) return;
+    const folder = currentPage.path;
+    const pane = currentPane;
+    // Defer until the native Steam menu closes, so the modal receives focus.
+    window.setTimeout(() => {
+      showModal(<CreateFolderDialog folder={folder}
+        onCreated={() => { void refreshAfterFolderCreated(folder, pane); }} />);
+    }, 0);
+  }
+
   // Native Steam menu, like the existing menu on a folder/file row.
   // MenuGroup opens its choices in a right-hand submenu, as in Gaming Mode.
   function openBrowserMenu(parent: EventTarget) {
@@ -350,13 +373,8 @@ export function FileManagerPage() {
     const shortcuts = currentPage?.roots.filter(root => !breadcrumbs(currentPage.path, currentPage.roots)
       .some(part => part.path === root.path)) ?? [];
     showContextMenu(
-      <Menu label="Opcje plików" cancelText="Wstecz">
-        <MenuItem disabled={!currentPage} onSelected={() => {
-          setAction("folder");
-          setName("");
-          setSelected(null);
-          setMessage("");
-        }}>Nowy folder...</MenuItem>
+      <Menu label="Opcje plików">
+        <MenuItem disabled={!currentPage} onSelected={openCreateFolderDialog}>Nowy folder...</MenuItem>
         <MenuGroup label="Ulubione">
           <MenuItem disabled={!currentPage || savingFavorites ||
             (favorites.length >= 32 && !favorites.includes(currentPage.path))}
@@ -415,7 +433,7 @@ export function FileManagerPage() {
     setAction(null);
     setName(entry.name);
     showContextMenu(
-      <Menu label={entry.name} cancelText="Wstecz">
+      <Menu label={entry.name}>
         <MenuItem onSelected={() => {
           setSelected(entry);
           setName(entry.name);
@@ -531,15 +549,6 @@ export function FileManagerPage() {
             </div>)}
         </Focusable>}
 
-        {action === "folder" && <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-          <HubTextInput value={name} placeholder="Nazwa folderu"
-            onChange={event => setName(event.target.value)} />
-          <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
-            <DialogButton disabled={busy || !name.trim()}
-              onClick={() => { void operate("mkdir"); }}>Utwórz</DialogButton>
-            <DialogButton disabled={busy} onClick={() => setAction(null)}>Anuluj</DialogButton>
-          </div>
-        </div>}
         {/* The one address bar sits immediately above the tree; Y opens its native menu
             used by entries; A enables text editing of the path. */}
         <div onContextMenu={event => {

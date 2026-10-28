@@ -23,8 +23,10 @@ from hub_settings import (
 )
 from release_catalog import RELEASES_API as RELEASE_CATALOG_API, catalog, validate_channel
 from file_manager import listing as list_files, create_folder, rename_entry, paste_entry, paste_entries
+from desktop_apps import (list_desktop_apps, get_desktop_state, set_desktop_setting,
+                          remember_temporary_shortcut, forget_temporary_shortcut)
 
-CURRENT_VERSION = "0.5.16"
+CURRENT_VERSION = "0.5.17"
 RELEASES_API = "https://api.github.com/repos/BlueGalaxySlime/GameMode-Hub/releases/latest"
 ASSET_NAME = "GameMode-Hub.zip"
 
@@ -165,6 +167,21 @@ class Plugin:
 
     async def files_paste_many(self, sources, destination, mode):
         return await asyncio.to_thread(paste_entries, sources, destination, mode)
+
+    async def desktop_list_apps(self):
+        return await asyncio.to_thread(list_desktop_apps)
+
+    async def desktop_get_state(self):
+        return await asyncio.to_thread(get_desktop_state)
+
+    async def desktop_set_setting(self, app_id, key, value):
+        return await asyncio.to_thread(set_desktop_setting, app_id, key, value)
+
+    async def desktop_remember_temporary(self, shortcut_id):
+        return await asyncio.to_thread(remember_temporary_shortcut, shortcut_id)
+
+    async def desktop_forget_temporary(self, shortcut_id):
+        return await asyncio.to_thread(forget_temporary_shortcut, shortcut_id)
 
     async def get_favorite_folders(self):
         return await asyncio.to_thread(get_favorite_folders)

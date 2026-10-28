@@ -9,13 +9,12 @@ import { FaCog, FaFolderOpen, FaHeart, FaHome, FaPlug, FaPuzzlePiece, FaSyncAlt,
 import { withTimeout } from "../utils/withTimeout";
 import { UpdaterPage } from "./UpdaterPage";
 import { FileManagerPage } from "./FileManagerPage";
+import { DesktopPage } from "./DesktopPage";
 import { HubOptionsPage, initializeHubOptions } from "./HubOptionsPage";
 import { useHubSessionState } from "./useHubSessionState";
 import { DeckyTerminalPage, TerminalOptionsPage } from "./DeckyTerminalAdapter";
 import { CreditsPage } from "./CreditsPage";
-import { FocusableInfoField } from "./FocusableInfoField";
-import { GamepadScrollArea } from "./GamepadScrollArea";
-import { APP_NAME, DECKY_PLUGIN_NAME, HUB_ROUTE } from "../core/identity";
+import { DECKY_PLUGIN_NAME, HUB_ROUTE } from "../core/identity";
 import { CORE_MODULES } from "../core/modules";
 
 type InstalledAddon = {
@@ -47,38 +46,6 @@ async function listInstalledAddons(): Promise<InstalledAddon[]> {
     disabled: plugin.disabled === true,
     version: typeof plugin.version === "string" ? plugin.version : undefined
   })).sort((a, b) => a.name.localeCompare(b.name));
-}
-
-function Overview({ selected, installed }: {
-  selected: string[];
-  installed: InstalledAddon[];
-}) {
-  return <DialogBody>
-    <GamepadScrollArea>
-      <DialogControlsSection>
-      <DialogControlsSectionHeader>{APP_NAME}</DialogControlsSectionHeader>
-      <Field label="Moje dodatki" description="Wybrane dodatki pojawiają się w menu po lewej stronie.">
-        <div>{selected.length}</div>
-      </Field>
-      {selected.map(name => {
-        const addon = installed.find(plugin => plugin.name === name);
-        return <Field key={name} label={name}
-          description={addon ? (addon.disabled ? "Wyłączony w Decky" : "Zainstalowany i aktywny") : "Niedostępny"}>
-          <DialogButton onClick={() => Navigation.Navigate(HUB_ROUTE + "/addon/" + encodeURIComponent(name))}>
-            Opcje
-          </DialogButton>
-        </Field>;
-      })}
-      <FocusableInfoField label="Tryb"
-        description="SteamOS Gaming Mode — otwierany z Quick Access. Integrację zapewnia niewielki adapter Decky." />
-      {!selected.length && <FocusableInfoField label="Brak wybranych dodatków"
-        description="Otwórz Dodatki, aby wybrać te, które mają być widoczne w GameMode Hub." />}
-      <DialogButton onClick={() => Navigation.Navigate(HUB_ROUTE + "/addons")}>
-        Przejdź do dodatków
-      </DialogButton>
-      </DialogControlsSection>
-    </GamepadScrollArea>
-  </DialogBody>;
 }
 
 function AddonSelector({ installed, selected, pending, error, toggle, reload }: {
@@ -252,7 +219,7 @@ export function HubPage() {
   const registered = CORE_MODULES.map(module => module.id);
   const pages = [
     { title: "Pulpit", route: HUB_ROUTE + "/home", icon: <FaHome />,
-      content: <Overview selected={selected} installed={installed} /> },
+      content: <DesktopPage /> },
     { title: "Dodatki", route: HUB_ROUTE + "/addons", icon: <FaPuzzlePiece />,
       content: <AddonSelector installed={installed} selected={selected} pending={busy}
         error={error} toggle={toggle} reload={() => { void refresh(); }} /> },
