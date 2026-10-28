@@ -1,3 +1,14 @@
+# SteamHub 0.4.13
+
+## Naprawa uruchamiania backendu Decky
+
+- Naprawiono importowanie `hub_settings` i `terminal_core` z katalogu wtyczki w procesie Decky. Loader używa `spec_from_file_location` i nie dodaje katalogu wtyczki do `sys.path` — przez co `main.py` mógł zakończyć uruchamianie przed obsłużeniem `terminal_ping`.
+- Dodano test integracyjny uruchamiający `main.py` w osobnym procesie Pythona z katalogu poza repozytorium, tak jak robi to Decky. Test sprawdza, że import `hub_settings` działa i wywołanie `terminal_ping` zwraca protokół 2.
+- Nie zmieniono wyglądu terminala, trzech sesji ani sposobu czyszczenia wyjścia. Nie przywracamy funkcji pełnego ekranu ani przycisku ponawiania, które wcześniej prowadziły do zawieszenia interfejsu.
+- Po aktualizacji trzeba przeładować backend SteamHub w Decky, aby proces Pythona uruchomił się z poprawionym `main.py`.
+
+**Uwaga:** poprawność pakowania i testów uruchamiania backendu sprawdza CI; działanie z aktualną wersją Decky na Legion Go S wymaga jeszcze testu na urządzeniu.
+
 # SteamHub 0.4.12
 
 - Dopracowano zachowanie sesji podczas szybkiego przełączania terminali oraz powrotu do Huba w trakcie łączenia z backendem.

@@ -1,14 +1,24 @@
 """SteamHub release checker. Installation is delegated to Decky Loader."""
 import asyncio
-from hub_settings import get_selected_addons, set_selected_addons
 import json
 import re
 import ssl
+import sys
 from pathlib import Path
 import urllib.error
 import urllib.request
 
-CURRENT_VERSION = "0.4.12"
+# Decky executes main.py via importlib.spec_from_file_location in a sandbox
+# and adds only DECKY_PLUGIN_DIR/py_modules to sys.path. The plugin root is
+# NOT automatically importable. Register it before importing bundled modules,
+# otherwise the entire Python backend exits at startup (all RPCs time out).
+_PLUGIN_ROOT = str(Path(__file__).resolve().parent)
+if _PLUGIN_ROOT not in sys.path:
+    sys.path.insert(0, _PLUGIN_ROOT)
+
+from hub_settings import get_selected_addons, set_selected_addons
+
+CURRENT_VERSION = "0.4.13"
 RELEASES_API = "https://api.github.com/repos/BlueGalaxySlime/SteamOS-Hub/releases/latest"
 ASSET_NAME = "SteamHub.zip"
 
@@ -50,7 +60,7 @@ def _fetch_latest_release():
         RELEASES_API,
         headers={
             "Accept": "application/vnd.github+json",
-            "User-Agent": "SteamHub/0.4.12",
+            "User-Agent": "SteamHub/0.4.13",
             "X-GitHub-Api-Version": "2022-11-28",
         },
     )

@@ -66,3 +66,14 @@ SteamOS-Hub aims to offer a single setup experience for SteamOS gaming mode tool
   PTY engine must not break unrelated plugin RPC methods.
 - Sessions persist while the plugin stays loaded, not across a Decky restart,
   reinstallation, or operating-system reboot. This is intentional.
+
+
+## Decky sandbox import path
+
+The Decky plugin loader executes `main.py` using Python
+`importlib.util.spec_from_file_location` in a separate sandbox process.
+It adds `DECKY_PLUGIN_DIR/py_modules` but **not** the plugin directory itself
+to `sys.path`. Therefore `main.py` registers its own resolved directory
+before importing `hub_settings` and `terminal_core`. The isolated-loader
+regression test in `tests/test_decky_loader.py` reproduces this behavior
+using an interpreter started outside the project directory.
