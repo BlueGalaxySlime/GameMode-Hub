@@ -330,3 +330,36 @@ test("B on Pulpit search remains inside Hub, with visible root feedback", () => 
   assert.ok(source.includes("'button, [role=\"button\"]'"));
   assert.ok(!source.includes("'button, [role=\"button\"], [tabindex]'"));
 });
+
+test("Updates groups Hub hotfix, Flatpak and future independent sources", () => {
+  const tabs = fs.readFileSync("src/hub/UpdatesPage.tsx", "utf8");
+  const hook = fs.readFileSync("src/hub/flatpakChecks.ts", "utf8");
+  const checks = fs.readFileSync("update_checks.py", "utf8");
+  assert.ok(hub.includes('content: <UpdatesPage />'));
+  assert.ok(tabs.includes('<UpdaterPage />')); // no changes to hotfix installer
+  assert.ok(tabs.includes('>Flatpak</DialogButton>'));
+  assert.ok(tabs.includes('>Pozostałe</DialogButton>'));
+  assert.ok(tabs.includes('NavEntryPositionPreferences.MAINTAIN_X'));
+  assert.ok(tabs.includes('Sprawdź teraz'));
+  assert.ok(hook.includes('next.state === "checking"'));
+  assert.ok(checks.includes('CHECK_INTERVALS = {"flatpak": 24 * 60 * 60}'));
+  assert.ok(checks.includes('"checked_at":'));
+  assert.ok(checks.includes('"next_check_at":'));
+  assert.ok(bundle.includes('"update_checks.py"'));
+});
+test("Three runtime states and opt-in DEV are independent of the UI", () => {
+  const opts = fs.readFileSync("src/hub/HubOptionsPage.tsx", "utf8");
+  const runtime = fs.readFileSync("runtime_state.py", "utf8");
+  const prefs = fs.readFileSync("hub_settings.py", "utf8");
+  assert.ok(opts.includes('label="Tryb DEV"'));
+  assert.ok(opts.includes('options.developerMode'));
+  assert.ok(runtime.includes('"active" if ui_open else "background" if active_downloads else "sleeping"'));
+  assert.ok(prefs.includes('"developerMode": False'));
+  assert.ok(backend.includes('async def hub_dev_diagnostics('));
+  assert.ok(backend.includes('async def hub_ui_open('));
+});
+test("Empty Downloads queue does not poll every two seconds", () => {
+  const source = fs.readFileSync("src/hub/downloads.ts", "utf8");
+  assert.ok(source.includes('active ? interval : 30000'));
+  assert.ok(source.includes('gamemodehub-downloads-changed'));
+});

@@ -1,3 +1,13 @@
+# GameMode Hub 0.5.37 (testowy)
+
+- **Aktualizacje → Hub / Flatpak / Pozostałe:** osobne podzakładki obsługiwane lewo/prawo; dotychczasowy instalator i kanał Testowy dla pilnych hotfixów pozostają pod Hub. „Pozostałe” nie wywołuje żadnego sprawdzania, dopóki nie dodamy kolejnych źródeł.
+- **Moduł sprawdzania:** nowy `update_checks.py` zapisuje listę i datę sprawdzenia Flatpak w `~/.config/gamemodehub/update_checks.json`. Przy wejściu do Pulpitu lub podzakładki Flatpak sprawdza ponownie dopiero po 24 godzinach albo przy pierwszym użyciu. „Sprawdź teraz” wymusza ręczną kontrolę. Nie ma stałego skanowania sieci podczas grania.
+- **Osobny wątek i cache:** przeglądanie Huba nie czeka na sieć. Wynik jest wspólny dla Pulpitu i Aktualizacji; błędy mają 30-minutowy odstęp między ponowieniami, a udana instalacja oznacza wynik jako nieaktualny bez natychmiastowego pobierania.
+- **Trzy stany:** Uśpiony, Aktywny i Praca w tle, wyliczane z otwarcia Huba i liczby aktywnych pobrań. Bez uruchamiania dodatkowej usługi.
+- **DEV w Opcjach Huba:** domyślnie wyłączony. Pokazuje zużycie CPU/RAM samego procesu backendu Decky, stan i daty sprawdzeń; pomiar tylko podczas widocznej strony ustawień z włączonym trybem DEV.
+- **Lżejsze Pobieranie:** gdy kolejka jest pusta, kontrola widoku co 30 s zamiast co około 2 s; przy dodaniu zadania aktualizacja widoku następuje natychmiast.
+- **Bez zmian:** menu Y, B, transfer, sposób instalowania hotfixów i autoryzacja Flatpak/Polkit. Integracja ProtonDB na różne klienty wymaga odrębnego modułu i testów, nie włączono ryzykownych modyfikacji widoków Steam w tym wydaniu.
+
 # GameMode Hub 0.5.36 (testowy)
 
 - **Pulpit — B na Szukaj:** naprawiono dwa przypadki: B na zaznaczonym pasku wyszukiwania ma teraz widoczną reakcję, a po A i anulowaniu edycji fokus powraca do przycisku Szukaj zamiast wysyłać użytkownika poza Hub.

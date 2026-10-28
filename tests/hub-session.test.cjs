@@ -34,3 +34,11 @@ test("legacy two-key preferences preserve the keyboard default",()=>{
   assert.equal(getHubPreferences().splitFileTree,true);
   assert.equal(getHubPreferences().autoKeyboard,true);
 });
+
+test("Developer measurements are opt-in and not enabled by legacy settings",()=>{
+  applyHubPreferences({developerMode:false});
+  assert.equal(getHubPreferences().developerMode,false);
+  applyHubPreferences({developerMode:true});
+  assert.equal(getHubPreferences().developerMode,true);
+  applyHubPreferences({developerMode:false});
+});
