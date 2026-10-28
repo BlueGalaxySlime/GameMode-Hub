@@ -169,7 +169,7 @@ export function FlatpakManagerDialog({ selectedId, bulkRequested = false, onUpda
         <DialogButton disabled={checking}
           onClick={() => setConfirmAll(true)}>
           Aktualizuj wszystkie dostępne ({total})
-        </DialogButton>
+        </DialogButton>}
       {confirmAll && !checking &&
         <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
           <strong>Aktualizować wszystkie dostępne Flatpaki?</strong>
