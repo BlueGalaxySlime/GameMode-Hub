@@ -17,7 +17,7 @@ test("Decky manifest and frontend share the exact plugin identity",()=>{
 test("new lightweight release points to the renamed repo and ZIP",()=>{
   assert.match(backend,/ASSET_NAME = "GameMode-Hub.zip"/);
   assert.match(backend,/BlueGalaxySlime\/GameMode-Hub/);
-  assert.match(catalog,/GameMode-Hub\\.zip/);
+  assert.match(catalog,/GameMode-Hub\.zip/);
   assert.match(updater,/compareVersions|selectReleases/);
   assert.match(workflow,/release\/GameMode-Hub.zip/);
   assert.doesNotMatch(workflow,/npm run package --prefix desktop|needs: \[build, desktop\]/);
