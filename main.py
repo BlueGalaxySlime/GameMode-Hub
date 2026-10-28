@@ -19,7 +19,7 @@ if _PLUGIN_ROOT not in sys.path:
 from hub_settings import get_selected_addons, set_selected_addons, get_update_channel, set_update_channel
 from release_catalog import RELEASES_API as RELEASE_CATALOG_API, catalog, validate_channel
 
-CURRENT_VERSION = "0.5.4"
+CURRENT_VERSION = "0.5.5"
 RELEASES_API = "https://api.github.com/repos/BlueGalaxySlime/GameMode-Hub/releases/latest"
 ASSET_NAME = "GameMode-Hub.zip"
 

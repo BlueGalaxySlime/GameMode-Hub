@@ -54,3 +54,11 @@ test("channel is defined by GitHub prerelease metadata, not a tag suffix",()=>{
   assert.equal(testRelease[0].version,"0.5.4");
   assert.equal(selectReleases([item("v0.5.4",true)],"stable","0.5.4").length,0);
 });
+
+test("old stable latest 0.5.2 must not mask a newer test release",()=>{
+  const githubListing = [item("v0.5.5", true), item("v0.5.4", true), item("v0.5.2", false)];
+  const rows = selectReleases(githubListing, "test", "0.5.4");
+  assert.deepEqual(Array.from(rows, r => r.version), ["0.5.5", "0.5.4", "0.5.2"]);
+  assert.equal(rows[0].action,"upgrade");
+  assert.equal(selectReleases(githubListing, "stable", "0.5.4").length, 0);
+});

@@ -2,7 +2,7 @@
 
 **GameMode Hub** to lekki panel rozszerzeń do **SteamOS Gaming Mode**, otwierany z menu **Quick Access (⋯)**. Nie jest osobnym launcherem ani zamiennikiem Steam w domyślnym trybie.
 
-## Instalacja na SteamOS — GameMode Hub 0.5.4
+## Instalacja na SteamOS — GameMode Hub 0.5.5
 
 1. Jeśli masz starą wtyczkę **SteamHub**, usuń ją w Decky. Nazwa identyfikatora wtyczki uległa zmianie.
 2. Pobierz **[GameMode-Hub.zip](https://github.com/BlueGalaxySlime/GameMode-Hub/releases/latest)** z *Releases → Assets*. Nie rozpakowuj archiwum.
@@ -22,6 +22,10 @@
 - `desktop/` — wcześniejszy eksperyment z Electronem, **nie jest już budowany ani publikowany**. Opcjonalny niezależny launcher pozostaje osobnym przyszłym etapem.
 
 **Terminal jest tymczasowo wyłączony** ze względu na wcześniejsze restarty interfejsu Steam na Legion Go S. Nie uruchamia procesów po otwarciu panelu. Nie ma jeszcze niezależnego zamiennika Quick Access bez Decky — to cel długoterminowy.
+
+## Aktualizator nie widzi nowej wersji w 0.5.2?
+
+W 0.5.2 była błędna metoda sprawdzania: GitHub `/releases/latest` pomija wydania testowe. Wymagana jest **jednorazowa ręczna aktualizacja**, bez usuwania Decky: [instrukcja](docs/UPDATES.md).
 
 ## Pobieranie
 

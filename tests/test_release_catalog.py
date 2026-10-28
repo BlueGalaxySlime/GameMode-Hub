@@ -38,6 +38,13 @@ class ReleaseCatalogTests(unittest.TestCase):
         self.assertEqual(entries[0]["version"],"0.5.4")
         self.assertEqual(release_catalog.catalog([entry("v0.5.4", True)],"stable","0.5.4"),[])
 
+    def test_test_channel_sees_newer_versions_despite_stable_latest_052(self):
+        releases=[entry("v0.5.5",True),entry("v0.5.4",True),entry("v0.5.2",False)]
+        options=release_catalog.catalog(releases,"test","0.5.4")
+        self.assertEqual([item["version"] for item in options],["0.5.5","0.5.4","0.5.2"])
+        self.assertEqual(options[0]["action"],"upgrade")
+        self.assertEqual(release_catalog.catalog(releases,"stable","0.5.4"),[])
+
     def test_unknown_channels_rejected(self):
         for choice in ("nightly","stable-ish","",None):
             with self.subTest(choice=choice), self.assertRaises(ValueError):

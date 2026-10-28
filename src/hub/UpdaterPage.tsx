@@ -8,7 +8,7 @@ import { RequestTimeoutError, withTimeout } from "../utils/withTimeout";
 import { APP_NAME, DECKY_PLUGIN_NAME } from "../core/identity";
 import { ReleaseEntry, UpdateChannel, selectReleases } from "../core/releaseCatalog";
 
-const VERSION = "0.5.4";
+const VERSION = "0.5.5";
 const URL = "https://api.github.com/repos/BlueGalaxySlime/GameMode-Hub/releases?per_page=50";
 const getChannel = callable<[], UpdateChannel>("get_update_channel");
 const saveChannel = callable<[UpdateChannel], UpdateChannel>("set_update_channel");
@@ -84,9 +84,19 @@ export function UpdaterPage() {
       let result: ReleaseEntry[];
       try {
         result = await fetchVersions(channel);
+        // Steam's embedded browser can occasionally return a successful but
+        // empty/stale response. In the test channel try the Python backend too,
+        // rather than incorrectly claiming there are no newer releases.
+        if (channel === "test" && result.length === 0) {
+          throw new Error("Przeglądarka zwróciła pusty katalog testowy.");
+        }
       } catch (browserError) {
         try {
-          result = await withTimeout(backendList(channel), 11000);
+          const fallback: unknown = await withTimeout(backendList(channel), 11000);
+          if (!Array.isArray(fallback)) {
+            throw new Error("Backend zwrócił nieprawidłową listę wersji.");
+          }
+          result = fallback as ReleaseEntry[];
         } catch (backendError) {
           throw new Error("Nie udało się pobrać listy wersji przez Steam ani Decky: " +
             String(browserError) + " / " + String(backendError));

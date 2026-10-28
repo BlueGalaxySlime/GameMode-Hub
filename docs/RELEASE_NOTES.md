@@ -1,3 +1,12 @@
+# GameMode Hub 0.5.5 — hotfix aktualizatora
+
+- Poprawiono obsługę pustej lub nieaktualnej odpowiedzi GitHub w przeglądarce Steam: kanał Testowy próbuje wtedy ponownie przez backend Decky.
+- Zabezpieczono nieprawidłową odpowiedź backendu przed błędem interfejsu.
+- Dodano jednoznaczną instrukcję aktualizacji z 0.5.2: wcześniejsze `/releases/latest` nie wykrywa wydań testowych i wymaga jednorazowej instalacji ZIP przez Decky.
+- Zachowano kanały Stabilny (pusty) i Testowy, możliwość wyboru wersji i downgrade.
+- Numer wydania zawiera tylko cyfry i kropki; GitHub oznacza wydanie jako prerelease poza nazwą.
+- Terminal pozostaje wyłączony dla bezpieczeństwa SteamOS Gaming Mode.
+
 # GameMode Hub 0.5.4 — zwykłe numery wersji
 
 - Kanały Testowy i Stabilny pozostają w aktualizatorze, ale nowe wydania mają **wyłącznie numer**, np. `v0.5.4`, bez nazw i dopisków w tagu.

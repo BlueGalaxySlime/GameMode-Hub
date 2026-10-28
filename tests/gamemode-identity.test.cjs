@@ -27,3 +27,9 @@ test("native SteamOS route and no standalone window are used",()=>{
   assert.match(index,/routerHook.addRoute/);
   assert.doesNotMatch(index,/Electron|BrowserWindow/);
 });
+
+test("current updater uses release catalog rather than stable-only latest",()=>{
+  assert.match(updater,/releases\\?per_page=50/);
+  assert.doesNotMatch(updater,/releases\\/latest/);
+  assert.match(updater,/backendList\\(channel\\)/);
+});

@@ -1,5 +1,22 @@
 # GameMode Hub — kanały i wybór wersji
 
+## Ważne: migracja z 0.5.2 (jednorazowa)
+
+Wersja 0.5.2 pobiera `/releases/latest`, który **pomija GitHub prerelease**.
+Dlatego pokazuje "aktualna" mimo że istnieją nowsze wersje testowe. Nie da się naprawić
+już zainstalowanego kodu zdalnie bez wydania stabilnego, a kanał Stabilny celowo pozostaje pusty.
+
+Aby naprawić aktualizator, **zainstaluj ręcznie z Decky → Developer → Install Plugin from URL**
+bez odinstalowywania GameMode Hub:
+
+`https://github.com/BlueGalaxySlime/GameMode-Hub/releases/download/v0.5.5/GameMode-Hub.zip`
+
+Można również pobrać ZIP i użyć **Install Plugin from ZIP File**.
+Po instalacji sprawdź w GameMode Hub → Aktualizacje, czy wersja to **0.5.5**.
+Kolejne wydania testowe wykrywa już nowy mechanizm listy wydań.
+
+
+
 ## Testowy (domyślny)
 - Wydania mają wyłącznie numer `vX.Y.Z`, bez nazw i dopisków takich jak `-test`. O kanale decyduje status **prerelease** w GitHub Releases.
 - Starsze, już opublikowane tagi z dopiskiem `-test.N` pozostają w historii, aby zachować możliwość powrotu.
