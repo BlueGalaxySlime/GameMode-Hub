@@ -8,6 +8,8 @@ const vm = require("node:vm");
 const ui = fs.readFileSync("src/hub/FileManagerPage.tsx", "utf8");
 const updater = fs.readFileSync("src/hub/UpdaterPage.tsx", "utf8");
 const hubOptions = fs.readFileSync("src/hub/HubOptionsPage.tsx", "utf8");
+const hubTextInput = fs.readFileSync("src/hub/HubTextInput.tsx", "utf8");
+const terminalInput = fs.readFileSync("src/modules/terminal/TerminalView.tsx", "utf8");
 const compiled = ts.transpileModule(fs.readFileSync("src/core/filePath.ts", "utf8"), {
   compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2020 }
 }).outputText;
@@ -115,4 +117,14 @@ test("updater opens native channel/version menus without inline version list", (
   assert.ok(updater.includes("selected={selected?.version === entry.version}"));
   assert.ok(updater.includes("confirmDowngrade"));
   assert.ok(!updater.includes('entries.map(entry =>\n            <DialogButton'));
+});
+
+test("one Hub keyboard preference switches between Steam and physical input", () => {
+  assert.ok(hubOptions.includes('value={options.autoKeyboard}'));
+  assert.ok(hubTextInput.includes('getHubPreferences, subscribeHubPreferences'));
+  assert.ok(hubTextInput.includes('if (options.autoKeyboard)'));
+  assert.ok(hubTextInput.includes('<TextField {...fieldProps}'));
+  assert.ok(hubTextInput.includes('inputMode="none"'));
+  assert.ok(ui.includes('import { HubTextInput } from "./HubTextInput"'));
+  assert.ok(terminalInput.includes('keyboardOptions.autoKeyboard ? "text" : "none"'));
 });
