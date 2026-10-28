@@ -1,7 +1,7 @@
-import { useState } from "react";
 import {
-  DialogBody, DialogButton, DialogControlsSection, DialogControlsSectionHeader, Field
+  DialogBody, DialogControlsSection, DialogControlsSectionHeader, Field
 } from "@decky/ui";
+import { GamepadScrollArea } from "./GamepadScrollArea";
 
 type Credit = { project: string; authors: string; reason: string; license: string; source: string };
 
@@ -40,30 +40,19 @@ const externalProjects: Credit[] = [
 ];
 
 function CreditRow({ credit }: { credit: Credit }) {
-  const [expanded, setExpanded] = useState(true);
-  // Focusable Steam button gives the controller a real navigation target.
-  // Moving through credits with D-pad scrolls the dialog with focus.
-  return <div style={{ display: "flex", flexDirection: "column", gap: 3 }}>
-    <DialogButton onClick={() => setExpanded(value => !value)}
-      onOKActionDescription={expanded ? "Zwiń opis" : "Rozwiń opis"}
-      style={{ width: "100%", textAlign: "left", minWidth: 0,
-        fontWeight: 600, padding: "7px 9px" }}>
-      {credit.project + (expanded ? " ▴" : " ▾")}
-    </DialogButton>
-    {expanded && <div style={{ padding: "1px 8px 12px", fontSize: 12,
-      opacity: 0.86, overflowWrap: "anywhere" }}>
-      {credit.authors + " — " + credit.reason + " Licencja: " +
-        credit.license + ". Źródło: " + credit.source}
-    </div>}
-  </div>;
+  return <Field label={credit.project}
+    description={credit.authors + " — " + credit.reason + " Licencja: " +
+      credit.license + ". Źródło: " + credit.source}
+    focusable highlightOnFocus />;
 }
 
 export function CreditsPage() {
   return <DialogBody>
+    <GamepadScrollArea>
     <DialogControlsSection>
       <DialogControlsSectionHeader>Podziękowania</DialogControlsSectionHeader>
       <Field label="Twórcy oprogramowania open source"
-        description="Dziękujemy autorom za pracę wykorzystaną w GameMode Hub. Przechodź po projektach krzyżakiem; A rozwija lub zwija szczegóły." />
+        description="Dziękujemy autorom za pracę wykorzystaną w GameMode Hub. Przesuwaj krzyżak w dół, aby czytać kolejne projekty." focusable />
     </DialogControlsSection>
     <DialogControlsSection>
       <DialogControlsSectionHeader>Wykorzystany lub zaadaptowany kod</DialogControlsSectionHeader>
@@ -72,7 +61,9 @@ export function CreditsPage() {
     <DialogControlsSection>
       <DialogControlsSectionHeader>Platforma i integracje zewnętrzne</DialogControlsSectionHeader>
       {externalProjects.map(credit => <CreditRow key={credit.project} credit={credit} />)}
-      <Field label="Pełne licencje" description="Warunki licencyjne znajdują się w THIRD_PARTY_NOTICES.md. Sekcja będzie uzupełniana przy dodawaniu modułów." />
+      <Field label="Pełne licencje" focusable
+        description="Warunki licencyjne znajdują się w THIRD_PARTY_NOTICES.md. Sekcja będzie uzupełniana przy dodawaniu modułów." />
     </DialogControlsSection>
+    </GamepadScrollArea>
   </DialogBody>;
 }
