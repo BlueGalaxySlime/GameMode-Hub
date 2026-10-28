@@ -1,11 +1,12 @@
 import { useEffect, useRef, useState, useSyncExternalStore } from "react";
 import { callable } from "@decky/api";
-import { DialogBody, DialogButton, DialogControlsSection, Focusable, Menu, MenuGroup, MenuItem, NavEntryPositionPreferences, showContextMenu, TextField } from "@decky/ui";
+import { DialogBody, DialogButton, DialogControlsSection, Focusable, Menu, MenuGroup, MenuItem, NavEntryPositionPreferences, showContextMenu } from "@decky/ui";
 import { withTimeout } from "../utils/withTimeout";
 import { breadcrumbs } from "../core/filePath";
 import { applyHubPreferences, getHubPreferences, readHubSession, subscribeHubPreferences, writeHubSession } from "../core/hubSession";
 import type { HubPreferences } from "../core/hubSession";
 import { useHubSessionState } from "./useHubSessionState";
+import { HubTextInput } from "./HubTextInput";
 
 type SortBy = "name" | "type" | "size" | "date";
 type Entry = {
@@ -320,8 +321,13 @@ export function FileManagerPage() {
     <DialogControlsSection>
       <Focusable
         style={{ display: "flex", flexDirection: "column", gap: 8, width: "100%", minWidth: 0 }}
-        onCancelActionDescription={currentPage?.parent ? "W górę" : "Wstecz"}
-        onCancelButton={currentPage?.parent ? event => {
+        onCancelActionDescription={editingPath ? "Zamknij edycję" : currentPage?.parent ? "W górę" : "Wstecz"}
+        onCancelButton={editingPath ? event => {
+          event.preventDefault();
+          event.stopPropagation();
+          setPathDraft(currentPage?.path ?? "");
+          setEditingPath(false);
+        } : currentPage?.parent ? event => {
           event.preventDefault();
           event.stopPropagation();
           void load(currentPage.parent, hidden, 0, sortBy, descending, currentPane);
@@ -339,31 +345,20 @@ export function FileManagerPage() {
           openBrowserMenu(event.currentTarget);
         }}>
           {editingPath ? (
-            <Focusable flow-children="row"
-              navEntryPreferPosition={NavEntryPositionPreferences.MAINTAIN_X}
-              style={{ display: "flex", alignItems: "center", gap: 5 }}>
-              <div style={{ flex: "1 1 0", minWidth: 0 }}>
-                <TextField value={pathDraft} placeholder="/home/deck/…"
-                  aria-label="Edytuj ścieżkę katalogu"
-                  onChange={event => setPathDraft(event.target.value)}
-                  onKeyDown={event => {
-                    if (event.key === "Enter") {
-                      event.preventDefault();
-                      void load(pathDraft, hidden);
-                    }
-                    if (event.key === "Escape") {
-                      setPathDraft(currentPage?.path ?? "");
-                      setEditingPath(false);
-                    }
-                  }} />
-              </div>
-              <DialogButton disabled={busy} onClick={() => { void load(pathDraft, hidden); }}
-                style={{ width: "auto", minWidth: 0, padding: "6px 10px" }}>Przejdź</DialogButton>
-              <DialogButton disabled={busy} onClick={() => {
-                setPathDraft(currentPage?.path ?? "");
-                setEditingPath(false);
-              }} style={{ width: "auto", minWidth: 0, padding: "6px 10px" }}>Anuluj</DialogButton>
-            </Focusable>
+            <HubTextInput value={pathDraft} placeholder="/home/deck/…"
+              aria-label="Edytuj ścieżkę katalogu" focusOnMount
+              disabled={busy}
+              onChange={event => setPathDraft(event.target.value)}
+              onKeyDown={event => {
+                if (event.key === "Enter") {
+                  event.preventDefault();
+                  void load(pathDraft, hidden, 0, sortBy, descending, currentPane);
+                } else if (event.key === "Escape") {
+                  event.preventDefault();
+                  setPathDraft(currentPage?.path ?? "");
+                  setEditingPath(false);
+                }
+              }} />
           ) : (
             <DialogButton disabled={busy}
               onOKActionDescription="Edytuj ścieżkę"
@@ -407,7 +402,7 @@ export function FileManagerPage() {
         </div>
 
         {action === "folder" && <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-          <TextField value={name} placeholder="Nazwa folderu"
+          <HubTextInput value={name} placeholder="Nazwa folderu"
             onChange={event => setName(event.target.value)} />
           <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
             <DialogButton disabled={busy || !name.trim()}
@@ -464,7 +459,7 @@ export function FileManagerPage() {
                         navEntryPreferPosition={NavEntryPositionPreferences.MAINTAIN_X}
                         style={{ display: "flex", alignItems: "center", gap: 4, minWidth: 0 }}>
                         <div style={{ flex: "1 1 0", minWidth: 0 }}>
-                          <TextField value={name} aria-label="Nowa nazwa"
+                          <HubTextInput value={name} aria-label="Nowa nazwa"
                             onChange={event => setName(event.target.value)}
                             onKeyDown={event => {
                               if (event.key === "Enter" && name.trim()) {
