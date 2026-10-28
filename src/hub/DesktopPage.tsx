@@ -474,7 +474,7 @@ export function DesktopPage() {
               event.preventDefault();
               event.stopPropagation();
               returnToSearchBar();
-            }
+            }}
             style={{ width: "100%", minWidth: 0 }}>
           {editingSearch ? (
             <HubTextInput value={search} focusOnMount
@@ -504,7 +504,7 @@ export function DesktopPage() {
                 event.preventDefault();
                 event.stopPropagation();
                 returnToSearchBar();
-              }
+              }}
               onOptionsActionDescription="Opcje pulpitu"
               onOptionsButton={event => {
                 event.preventDefault();
