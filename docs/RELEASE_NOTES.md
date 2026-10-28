@@ -1,3 +1,11 @@
+# GameMode Hub 0.5.44 (testowy)
+
+- **X wraca do paska:** w Pulpicie X przenosi fokus na Szukaj, a w Plikach X przenosi go na pasek ścieżki. Działa na liście i bez zmiany aktualnego folderu, wyszukiwania ani kategorii.
+- **Zgłoszenia:** X przenosi fokus do pierwszego pola (Tytuł) z dowolnej sekcji formularza, bez usuwania tytułu i opisu.
+- **B to cofanie:** B w Pulpicie kończy edycję tekstu lub cofa filtr. W Plikach kończy zaznaczanie/edycję albo przechodzi do folderu nadrzędnego. Na najwyższym poziomie obie zakładki pozwalają SteamOS obsłużyć B normalnie, zamiast automatycznie przenosić fokus do paska.
+- **Inne zakładki:** nie zmieniono B w oknach potwierdzeń, menu, aktualizacjach, kontach ani pozostałych stronach, które nie miały własnego skrótu powrotu do paska. X nie jest podmieniane na globalny klawisz Back.
+- **Kontroler:** obsługa X wykorzystuje natywne zdarzenie Secondary w Decky i wskazówkę w dolnej legendzie Steam. Wymaga sprawdzenia na Lenovo, szczególnie z klawiaturą ekranową i po edycji tekstu.
+
 # GameMode Hub 0.5.43 (testowy)
 
 - **Pulpit / Flatpak:** naprawiono wykrywanie rzeczywistych aplikacji Flatpak, których eksportowane pliki .desktop są dowiązaniami symbolicznymi. Wcześniej Hub pomijał takie skróty, przez co Firefox mógł być widoczny jako „Install Firefox”, ale nie jako zainstalowana aplikacja.
