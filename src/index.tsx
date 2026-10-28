@@ -3,6 +3,7 @@ import { FaTools } from "react-icons/fa";
 import { ButtonItem, PanelSection, PanelSectionRow, staticClasses } from "@decky/ui";
 import { callable, definePlugin } from "@decky/api";
 import { TabManagerModule } from "./modules/tab-manager/TabManagerModule";
+import { startTabManager, stopTabManager } from "./modules/tab-manager/LibraryIntegration";
 
 type UpdateResult = {
   current: string; latest: string | null; url: string | null; sha256: string | null;
@@ -83,9 +84,13 @@ function Content() {
   </>;
 }
 
-export default definePlugin(() => ({
+export default definePlugin(() => {
+  void startTabManager();
+  return {
   name: "SteamHub",
   titleView: <div className={staticClasses.Title}>SteamHub</div>,
   content: <Content />,
   icon: <FaTools />,
-}));
+  onDismount: stopTabManager,
+  };
+});
