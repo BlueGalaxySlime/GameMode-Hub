@@ -2,6 +2,7 @@ import { useRef, useState } from "react";
 import { FaTools } from "react-icons/fa";
 import { ButtonItem, PanelSection, PanelSectionRow, staticClasses } from "@decky/ui";
 import { callable, definePlugin } from "@decky/api";
+import { TabManagerModule } from "./modules/tab-manager/TabManagerModule";
 
 type UpdateResult = {
   current: string; latest: string | null; url: string | null; sha256: string | null;
@@ -19,7 +20,6 @@ function Content() {
   const [busy, setBusy] = useState(false);
   const [lastChecked, setLastChecked] = useState<string | null>(null);
   const inProgress = useRef(false);
-
   async function check() {
     if (inProgress.current) return;
     inProgress.current = true;
@@ -73,6 +73,7 @@ function Content() {
     <PanelSection title="Moduły (w przygotowaniu)">
       <PanelSectionRow><div>Game Manager · Library Manager · Terminal</div></PanelSectionRow>
     </PanelSection>
+    <TabManagerModule />
     <PanelSection title="Aktualizacje">
       <PanelSectionRow><div role="status" aria-live="polite">{message}</div></PanelSectionRow>
       <PanelSectionRow><div>{lastChecked ? "Ostatnia próba: " + lastChecked : "Nie wykonano jeszcze sprawdzenia."}</div></PanelSectionRow>
