@@ -21,6 +21,13 @@ class TerminalBackendHandshakeTests(unittest.TestCase):
         self.assertEqual(info["protocol"], 2)
         self.assertIsNone(plugin._terminal)
 
+    def test_no_terminal_process_can_start_in_safe_mode(self):
+        from main import Plugin
+        plugin = Plugin()
+        with self.assertRaisesRegex(RuntimeError, "tymczasowo"):
+            asyncio.run(plugin.terminal_start(80, 24))
+        self.assertIsNone(plugin._terminal)
+
 
 class TerminalValidationTests(unittest.TestCase):
     def test_reject_invalid_size(self):

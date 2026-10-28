@@ -18,7 +18,7 @@ if _PLUGIN_ROOT not in sys.path:
 
 from hub_settings import get_selected_addons, set_selected_addons
 
-CURRENT_VERSION = "0.4.13"
+CURRENT_VERSION = "0.4.14"
 RELEASES_API = "https://api.github.com/repos/BlueGalaxySlime/SteamOS-Hub/releases/latest"
 ASSET_NAME = "SteamHub.zip"
 
@@ -60,7 +60,7 @@ def _fetch_latest_release():
         RELEASES_API,
         headers={
             "Accept": "application/vnd.github+json",
-            "User-Agent": "SteamHub/0.4.13",
+            "User-Agent": "SteamHub/0.4.14",
             "X-GitHub-Api-Version": "2022-11-28",
         },
     )
@@ -98,10 +98,14 @@ class Plugin:
 
     async def terminal_ping(self):
         # Lightweight handshake works even when the Linux PTY engine is broken.
-        return {"ok": True, "version": CURRENT_VERSION, "protocol": 2}
+        return {"ok": True, "version": CURRENT_VERSION, "protocol": 2, "terminal_enabled": False}
 
     async def terminal_start(self, cols=80, rows=24):
-        return await asyncio.to_thread(self._engine().start, cols, rows)
+        # Hardware fail-safe: even a stale Steam/Decky frontend must not start
+        # PTYs while the reported Steam UI reset is being investigated.
+        raise RuntimeError(
+            "Terminal SteamHub tymczasowo wylaczony: ryzyko restartu Gaming Mode."
+        )
 
     async def terminal_read(self, session_id):
         return await asyncio.to_thread(self._engine().read, session_id)

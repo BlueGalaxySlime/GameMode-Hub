@@ -77,3 +77,14 @@ to `sys.path`. Therefore `main.py` registers its own resolved directory
 before importing `hub_settings` and `terminal_core`. The isolated-loader
 regression test in `tests/test_decky_loader.py` reproduces this behavior
 using an interpreter started outside the project directory.
+
+
+## Hardware crash protection (0.4.14)
+
+On a Lenovo Legion Go S, an interactive PTY view showed a Python traceback
+containing Unifideck paths and was followed by a Steam UI restart. This
+is not sufficient to attribute the crash to Unifideck. As a precaution,
+the Decky terminal adapter no longer mounts xterm or calls the backend,
+and backend `terminal_start` refuses requests even from old cached UIs.
+This is an intentional temporary capability reduction. Restore only after
+the regression can be reproduced and isolated under safe test conditions.

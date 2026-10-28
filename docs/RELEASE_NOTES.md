@@ -1,3 +1,13 @@
+# SteamHub 0.4.14 — bezpieczeństwo Gaming Mode
+
+- Tymczasowo wstrzymano uruchamianie terminala i emulatora xterm.js. Na nagraniu użytkownika uruchomienie modułu poprzedzało restart interfejsu Steam.
+- Zostawiono w menu pozycje Terminal i Opcje terminala; dostępne są trzy przyciski sesji, ale nie uruchamiają procesów ani nie wysyłają żądań RPC.
+- Backend odrzuca `terminal_start` również dla starych frontendów z pamięci podręcznej Steam, aby ograniczyć ryzyko ponownego uruchomienia powłoki.
+- Zachowano silnik Linux PTY w kodzie źródłowym, do dalszego odizolowanego debugowania, bez narażania Gaming Mode.
+- Na nagraniu widać traceback bibliotek Pythona z katalogu Unifideck tuż przed restartem. Jest to wskazówka do diagnostyki, **nie potwierdzona przyczyna awarii**.
+- Pozostałe sekcje Huba działają tak jak dotychczas.
+- Przywrócenie terminala będzie wymagało ustalenia przyczyny restartu oraz testu kompatybilności dodatków.
+
 # SteamHub 0.4.13
 
 ## Naprawa uruchamiania backendu Decky
