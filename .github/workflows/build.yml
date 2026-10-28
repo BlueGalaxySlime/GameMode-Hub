@@ -49,6 +49,47 @@ jobs:
           path: release/SteamHub.zip
           if-no-files-found: error
 
+
+  desktop:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Test independent Linux app
+        run: |
+          node --check desktop/main.cjs
+          node --check desktop/preload.cjs
+          node --check desktop/ui/app.js
+          node --check desktop/lib/install.cjs
+          node --check desktop/lib/files.cjs
+          node --test desktop/tests/*.test.cjs
+      - name: Create SteamHub icon
+        run: python3 desktop/scripts/make_icon.py
+      - name: Install Linux Flatpak packaging tools
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y flatpak flatpak-builder fuse3
+          flatpak remote-add --user --if-not-exists flathub https://dl.flathub.org/repo/flathub.flatpakrepo
+      - name: Install Electron packaging dependencies
+        run: npm install --prefix desktop --no-audit --no-fund
+      - name: Build independent AppImage and Flatpak
+        run: npm run package --prefix desktop
+      - name: Check desktop installer outputs
+        run: |
+          test -s desktop/out/SteamHub-0.5.0-x86_64.AppImage
+          test -s desktop/out/SteamHub-0.5.0-x86_64.flatpak
+          sha256sum desktop/out/*.AppImage desktop/out/*.flatpak
+      - uses: actions/upload-artifact@v4
+        with:
+          name: SteamHub-Linux
+          path: |
+            desktop/out/*.AppImage
+            desktop/out/*.flatpak
+          if-no-files-found: error
+
   release:
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     needs: build
