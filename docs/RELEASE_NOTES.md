@@ -1,3 +1,10 @@
+# GameMode Hub 0.5.16 (testowy)
+
+- **Pliki — Ulubione:** uproszczono listę do jednej pozycji „Dodaj” i nazw zapisanych folderów. Nie ma już powtarzanych sformułowań „Otwórz zakładkę” i „Usuń zakładkę” ani długich ścieżek przy każdym wpisie.
+- **Sterowanie padem:** A otwiera zaznaczoną zakładkę, prawo otwiera opcję „Usuń”, a B cofa. Usunięcie wpisu z Ulubionych nie usuwa katalogu ani plików.
+- **Testy:** dostosowano kontrole nawigacji i niedestrukcyjnego usuwania zakładek.
+- **Zakres:** pozostałe ekrany, w tym Pulpit, bez nowych zmian w tej wersji.
+
 # GameMode Hub 0.5.15 (testowy)
 
 - **Podziękowania, Pulpit, Terminal:** cofnięto rozwijane opisy. Cały tekst jest zawsze widoczny, jak dawniej. Wiersze tekstu są dostępne dla krzyżaka; fokus automatycznie przewija stronę w dół i w górę, bez używania dotyku.
