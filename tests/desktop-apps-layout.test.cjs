@@ -120,10 +120,10 @@ test("all View categories have their own selectable menu actions and visible lab
 test("all sidebar tabs form one contiguous controller-navigation list", () => {
   const pages = hub.split("  const pages = [", 2)[1].split("\n  ];", 1)[0];
   assert.ok(!pages.includes('"separator" as const'));
-  const names = [...pages.matchAll(/title: "(Pulpit|Pliki|Terminal|Konta|Dodatki|Opcje Huba|Aktualizacje|Pobieranie|UI|Podziękowania|Zgłoszenia)"/g)]
+  const names = [...pages.matchAll(/title: "(Pulpit|Pliki|Terminal|Konta|Dodatki|Opcje Huba|Aktualizacje|Pobieranie|Optymalizacja|Podziękowania|Zgłoszenia)"/g)]
     .map(match => match[1]);
   assert.deepEqual(names, ["Pulpit", "Pliki", "Terminal", "Konta", "Dodatki",
-    "Opcje Huba", "Aktualizacje", "Pobieranie", "UI", "Podziękowania", "Zgłoszenia"]);
+    "Opcje Huba", "Aktualizacje", "Pobieranie", "Optymalizacja", "Podziękowania", "Zgłoszenia"]);
 });
 
 test("B on Desktop backs out of edit and filters, then releases SteamOS Back", () => {
@@ -399,7 +399,7 @@ test("Reports title has a visible live counter without new custom boxes", () => 
 test("ProtonDB is independent and retrieves badges only on explicit user action", () => {
   const page = fs.readFileSync("src/hub/ProtonDBPage.tsx", "utf8");
   const badges = fs.readFileSync("protondb_badges.py", "utf8");
-  assert.ok(hub.includes('title: "UI"'));
+  assert.ok(hub.includes('title: "Optymalizacja"'));
   assert.ok(fs.readFileSync("src/hub/UiPage.tsx", "utf8").includes('<ProtonDBPage />'));
   assert.ok(page.includes('Client = "auto" | "steam" | "gog" | "epic" | "heroic" | "lutris" | "bottles"'));
   assert.ok(page.includes('Pokaż odznakę'));
