@@ -31,6 +31,8 @@ function SteamKeyboard({ state, buttonStyle }: {
   buttonStyle: React.CSSProperties;
 }) {
   const inputRef = useRef<any>(null);
+  // Decky TextField forwards a private native-input ref, as used by Decky Terminal.
+  const NativeTextField = TextField as any;
   const valueRef = useRef("");
   const open = () => {
     const native = inputRef.current?.m_elInput as HTMLInputElement | undefined;
@@ -59,9 +61,8 @@ function SteamKeyboard({ state, buttonStyle }: {
     }
   };
   return <>
-    <TextField ref={inputRef} id="steamhub-steam-keyboard"
-      style={{ position: "absolute", width: "1px", height: "1px",
-        opacity: 0, pointerEvents: "none", left: "-9999px" }}
+    <NativeTextField ref={inputRef} id="steamhub-steam-keyboard"
+      style={{ display: "none" }}
       value={valueRef.current}
       onChange={event => changed(event.target.value)}
       onKeyDown={event => {
