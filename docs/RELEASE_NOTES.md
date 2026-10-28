@@ -1,13 +1,16 @@
-# SteamHub 0.3.1
+# SteamHub 0.3.2
 
-## Poprawka Tab Managera
+## Sprawdzanie aktualizacji
 
-- **TabMaster zainstalowany, lecz wyłączony w Decky, nie blokuje Tab Managera.**
-- Sprawdzanie konfliktu korzysta z listy aktualnie załadowanych wtyczek Decky, nie z folderu instalacyjnego.
-- Gdy TabMaster jest uruchomiony, wstrzymujemy integrację jego zakładek, nie zmieniając żadnych ustawień ani plików drugiej wtyczki.
-- Gdy stan Decky Loader nie jest dostępny, pokazujemy jasny komunikat i przycisk ponownego sprawdzenia.
-- Testy sprawdzają przypadki: TabMaster aktywny, wyłączony, nieobecny oraz niedostępny loader.
+- Naprawiono sytuację, w której przycisk **„Sprawdź aktualizacje”** pozostawał bez końca w stanie **„Czekaj…”**.
+- Po przekroczeniu czasu oczekiwania SteamHub wyświetla komunikat i ponownie odblokowuje przycisk.
+- Dodano limit czasu także po stronie backendu, aby brak odpowiedzi GitHub nie blokował modułu.
+- Zachowano zwykłą numerację wydań i dotychczasowy mechanizm instalowania aktualizacji.
+- Dodano testy prawidłowej odpowiedzi, błędu oraz braku odpowiedzi usługi.
 
-Wersja 0.3.1 zachowuje numerację zgodną z mechanizmem aktualizacji SteamHub.
+Dotychczas zablokowana wersja może wymagać jednorazowej ręcznej instalacji
+`SteamHub.zip` z tego wydania przez Decky Loader. Kolejne wersje można
+sprawdzać z poziomu SteamHub.
 
-Tab Manager wciąż korzysta z nieoficjalnego interfejsu biblioteki SteamOS; integracja pozostaje do zweryfikowania na urządzeniu.
+Tab Manager pozostaje oddzielnym modułem. Ta aktualizacja nie zmienia jego
+ustawień ani zakładek.
