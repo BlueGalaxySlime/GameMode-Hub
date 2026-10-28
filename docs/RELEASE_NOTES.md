@@ -1,3 +1,10 @@
+# GameMode Hub 0.5.36 (testowy)
+
+- **Pulpit — B na Szukaj:** naprawiono dwa przypadki: B na zaznaczonym pasku wyszukiwania ma teraz widoczną reakcję, a po A i anulowaniu edycji fokus powraca do przycisku Szukaj zamiast wysyłać użytkownika poza Hub.
+- **Nawigacja SteamOS:** pasek Szukaj ma własny kontener Focusable i obsługę przycisku B z zabezpieczeniem przed podwójną reakcją. Wykorzystuje ten sam mechanizm B co Pliki, z awaryjną obsługą zdarzenia w czasie edycji TextField.
+- **Bez zmiany wyglądu:** żadnych nowych przycisków, kolorów, rozwijanych list ani zmian Flatpak, Pobierania czy transferu Wi-Fi.
+- **Test regresji:** kontrole obsługi B, powrotu fokusu po edycji i informacji o poziomie głównym. Zachowanie na fizycznym Lenovo wymaga jeszcze potwierdzenia.
+
 # GameMode Hub 0.5.35 (testowy)
 
 - **Naprawiony martwy przycisk aktualizacji:** gdy aktualizacja dotyczy tylko systemowego Firefoksa, można ją teraz wybrać i wysłać do Pobierania.

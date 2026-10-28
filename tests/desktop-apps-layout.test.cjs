@@ -314,3 +314,19 @@ test("System Firefox can be updated and bulk includes all installations", () => 
   assert.ok(backend.includes('args = ["flatpak", "--" + scope, "update"'));
   assert.ok(queue.includes('def enqueue_flatpak(self, target=None, scope="user")'));
 });
+
+test("B on Pulpit search remains inside Hub, with visible root feedback", () => {
+  const source = fs.readFileSync("src/hub/DesktopPage.tsx", "utf8");
+  assert.ok(source.includes('const restoreSearchFocusRef = useRef(false)'));
+  assert.ok(source.includes('restoreSearchFocusRef.current = true;'));
+  assert.ok(source.includes('if (editingSearch || !restoreSearchFocusRef.current) return;'));
+  assert.ok(source.includes('focusSearchBar();'));
+  assert.ok(source.includes('navEntryPreferPosition={NavEntryPositionPreferences.PREFERRED_CHILD}'));
+  assert.ok(source.includes('GamepadButton.CANCEL'));
+  assert.ok(source.includes('onCancelActionDescription="Wróć w Pulpicie"'));
+  assert.ok(source.includes('onCancelButton={event => {'));
+  assert.ok(source.includes('Jesteś w głównym widoku Pulpitu.'));
+  assert.ok(source.includes('Wyczyszczono wyszukiwanie.'));
+  assert.ok(source.includes("'button, [role=\"button\"]'"));
+  assert.ok(!source.includes("'button, [role=\"button\"], [tabindex]'"));
+});

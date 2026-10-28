@@ -31,7 +31,7 @@ from lan_transfer import TransferManager
 from flatpak_manager import flatpak_overview, flatpak_update_user, flatpak_update_all_user
 from downloads_manager import DOWNLOADS
 
-CURRENT_VERSION = "0.5.35"
+CURRENT_VERSION = "0.5.36"
 RELEASES_API = "https://api.github.com/repos/BlueGalaxySlime/GameMode-Hub/releases/latest"
 ASSET_NAME = "GameMode-Hub.zip"
 

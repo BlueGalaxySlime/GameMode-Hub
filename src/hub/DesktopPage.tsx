@@ -2,7 +2,8 @@ import { useEffect, useRef, useState } from "react";
 import { callable } from "@decky/api";
 import {
   DialogBody, DialogButton, DialogControlsSection, Focusable,
-  Menu, MenuGroup, MenuItem, NavEntryPositionPreferences, showContextMenu, showModal
+  GamepadButton, Menu, MenuGroup, MenuItem, NavEntryPositionPreferences,
+  showContextMenu, showModal
 } from "@decky/ui";
 import { withTimeout } from "../utils/withTimeout";
 import { useHubSessionState } from "./useHubSessionState";
@@ -64,6 +65,7 @@ export function DesktopPage() {
   const [working, setWorking] = useState<string | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
   const searchControlRef = useRef<HTMLDivElement>(null);
+  const restoreSearchFocusRef = useRef(false);
   const categorySavingRef = useRef(false);
   const rulesModalOpenRef = useRef(false);
   const flatpakModalOpenRef = useRef(false);
@@ -320,34 +322,43 @@ export function DesktopPage() {
   }
 
   function finishSearch() {
+    // The Steam TextField is about to unmount. Recover gamepad focus only
+    // after React mounts the replacement DialogButton.
+    restoreSearchFocusRef.current = true;
     setEditingSearch(false);
-    // The input unmounts on Enter/B. Keep focus on the new search button,
-    // rather than letting Steam navigation jump back to the sidebar.
-    window.setTimeout(() => {
-      searchControlRef.current?.querySelector<HTMLElement>(
-        'button, [role="button"], [tabindex]'
-      )?.focus({ preventScroll: true });
-    }, 0);
   }
+
+  useEffect(() => {
+    if (editingSearch || !restoreSearchFocusRef.current) return;
+    restoreSearchFocusRef.current = false;
+    const timer = window.setTimeout(() => {
+      focusSearchBar();
+    }, 0);
+    return () => window.clearTimeout(timer);
+  }, [editingSearch]);
 
   function backInDesktop() {
     if (editingSearch) {
       finishSearch();
     } else if (category !== "all") {
       changeCategory("all");
+      setMessage("Widok: Wszystkie.");
       focusSearchBar();
     } else if (search) {
       setSearch("");
+      setMessage("Wyczyszczono wyszukiwanie.");
       focusSearchBar();
     } else {
-      // At the catalogue root B moves focus to search instead of leaving Hub.
+      // At the catalogue root there is no parent. Provide visible feedback,
+      // without navigating out of the Hub or leaving B apparently broken.
+      setMessage("Jesteś w głównym widoku Pulpitu.");
       focusSearchBar();
     }
   }
 
   function focusSearchBar() {
     searchControlRef.current?.querySelector<HTMLElement>(
-      'button, [role="button"], [tabindex]'
+      'button, [role="button"]'
     )?.focus({ preventScroll: true });
   }
 
@@ -404,6 +415,7 @@ export function DesktopPage() {
         style={{ display: "flex", flexDirection: "column", gap: 8, minWidth: 0, width: "100%" }}
         onCancelActionDescription={editingSearch ? "Zamknij wyszukiwanie" : "Wróć do wyszukiwania"}
         onCancelButton={event => {
+          if (event.defaultPrevented) return;
           event.preventDefault();
           event.stopPropagation();
           backInDesktop();
@@ -444,6 +456,23 @@ export function DesktopPage() {
           event.preventDefault();
           openDesktopMenu(event.currentTarget);
         }}>
+          <Focusable flow-children="column"
+            navEntryPreferPosition={NavEntryPositionPreferences.PREFERRED_CHILD}
+            onCancelButton={event => {
+              if (event.defaultPrevented) return;
+              event.preventDefault();
+              event.stopPropagation();
+              backInDesktop();
+            }}
+            onButtonDown={event => {
+              // Some Steam TextField versions consume B before the parent
+              // cancel callback. Handle only B, never A/Y or arrow navigation.
+              if (event.detail.button !== GamepadButton.CANCEL || event.defaultPrevented) return;
+              event.preventDefault();
+              event.stopPropagation();
+              backInDesktop();
+            }}
+            style={{ width: "100%", minWidth: 0 }}>
           {editingSearch ? (
             <HubTextInput value={search} focusOnMount
               aria-label="Szukaj aplikacji" placeholder="Szukaj aplikacji…"
@@ -459,7 +488,14 @@ export function DesktopPage() {
                 }
               }} />
           ) : (
-            <DialogButton onOKActionDescription="Szukaj"
+            <DialogButton preferredFocus onOKActionDescription="Szukaj"
+              onCancelActionDescription="Wróć w Pulpicie"
+              onCancelButton={event => {
+                if (event.defaultPrevented) return;
+                event.preventDefault();
+                event.stopPropagation();
+                backInDesktop();
+              }}
               onOptionsActionDescription="Opcje pulpitu"
               onOptionsButton={event => {
                 event.preventDefault();
@@ -473,6 +509,7 @@ export function DesktopPage() {
               {search || "Szukaj aplikacji…"}
             </DialogButton>
           )}
+          </Focusable>
         </div>
         <div aria-label="Aplikacje pulpitu" ref={scrollRef}
           style={{ minHeight: 160, height: "min(54vh, 540px)", width: "100%",
