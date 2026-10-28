@@ -43,6 +43,8 @@ jobs:
         run: node --test tests/update-timeout.test.cjs
       - name: Verify terminal safe mode
         run: node --test tests/terminal-safe-mode.test.cjs
+      - name: Verify file manager layout and path navigation
+        run: node --test tests/file-manager-layout.test.cjs
       - name: Verify plugin identity
         run: node --test tests/gamemode-identity.test.cjs
       - name: Create Decky plugin ZIP
