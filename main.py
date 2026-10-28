@@ -43,7 +43,7 @@ import tab_manager
 import collection_manager
 import library_backup
 
-CURRENT_VERSION = "0.5.48"
+CURRENT_VERSION = "0.5.49"
 RELEASES_API = "https://api.github.com/repos/BlueGalaxySlime/GameMode-Hub/releases/latest"
 ASSET_NAME = "GameMode-Hub.zip"
 
@@ -183,6 +183,12 @@ class Plugin:
 
     async def set_tab_manager_enabled(self, enabled):
         return await asyncio.to_thread(tab_manager._write_tab_manager_enabled, enabled)
+
+    async def get_hidden_steam_tabs(self):
+        return await asyncio.to_thread(tab_manager.read_hidden_steam_tabs)
+
+    async def save_hidden_steam_tabs(self, ids):
+        return await asyncio.to_thread(tab_manager.save_hidden_steam_tabs, ids)
 
     async def get_tab_definitions(self):
         return await asyncio.to_thread(tab_manager.read_tabs)

@@ -20,6 +20,7 @@ class LibraryBackupTests(unittest.TestCase):
             (tab_manager, "SETTINGS_FILE", base / "steamhub" / "modules.json"),
             (tab_manager, "TABS_FILE", base / "steamhub" / "tabs.json"),
             (tab_manager, "PROFILES_FILE", base / "steamhub" / "tab_profiles.json"),
+            (tab_manager, "HIDDEN_STEAM_TABS_FILE", base / "steamhub" / "hidden_steam_tabs.json"),
             (collection_manager, "FILE", base / "gamemodehub" / "collections.json"),
             (library_backup, "BACKUP_DIR", base / "gamemodehub" / "backups" / "library"),
         )
@@ -36,20 +37,24 @@ class LibraryBackupTests(unittest.TestCase):
             {"id": "gog", "title": "GOG", "filter": "manual", "app_ids": ["1234"]}
         ])
         tab_manager.save_tab_profile("Mój układ")
+        tab_manager.save_hidden_steam_tabs(["Installed"])
         backup = library_backup.create_backup()
         self.assertEqual(backup["tabs"], 1)
+        self.assertEqual(backup["hidden_steam_tabs"], 1)
         self.assertEqual(backup["collections"], 1)
         self.assertEqual(backup["profiles"], 1)
 
         tab_manager.save_tabs([])
         collection_manager.save_collections([])
         tab_manager._write_profiles({})
+        tab_manager.save_hidden_steam_tabs([])
 
         result = library_backup.restore_backup(backup["id"])
         self.assertTrue(result["ok"])
         self.assertEqual(tab_manager.read_tabs(), original_tabs)
         self.assertEqual(collection_manager.read_collections(), original_collections)
         self.assertEqual(tab_manager.list_tab_profiles(), ["Mój układ"])
+        self.assertEqual(tab_manager.read_hidden_steam_tabs(), ["Installed"])
         self.assertEqual(len(library_backup.list_backups()), 2)
         self.assertCountEqual(
             [x["kind"] for x in library_backup.list_backups()],

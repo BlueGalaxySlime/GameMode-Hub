@@ -1,69 +1,126 @@
 import { useEffect, useState } from "react";
 import { callable } from "@decky/api";
-import { DialogButton, DialogControlsSection, DialogControlsSectionHeader, Field, Toggle } from "@decky/ui";
 import {
-  tabManagerEnabledChanged, tabManagerConflictChanged, detectTabMasterActivity
+  DialogButton, DialogControlsSection, DialogControlsSectionHeader,
+  Field, Menu, MenuItem, Navigation, showContextMenu
+} from "@decky/ui";
+import type { TabDefinition } from "./LibraryIntegration";
+import {
+  tabManagerEnabledChanged, tabManagerTabsChanged,
+  tabManagerConflictChanged, detectTabMasterActivity,
+  availableSteamLibraryTabs, setSystemTabHidden
 } from "./LibraryIntegration";
 import type { TabMasterActivity } from "./TabMasterDetection";
 
 const readEnabled = callable<[], boolean>("get_tab_manager_enabled");
 const saveEnabled = callable<[boolean], boolean>("set_tab_manager_enabled");
+const readTabs = callable<[], TabDefinition[]>("get_tab_definitions");
+const saveTabs = callable<[TabDefinition[]], TabDefinition[]>("save_tab_definitions");
 
-/** Library cards are edited inside Steam's library. Only options live in Optimization. */
+/** Only options here. Card editing lives on Steam's library tabs via Menu. */
 export function TabManagerModule() {
   const [enabled, setEnabled] = useState(false);
   const [activity, setActivity] = useState<TabMasterActivity>("unknown");
+  const [tabs, setTabs] = useState<TabDefinition[]>([]);
   const [busy, setBusy] = useState(true);
   const [error, setError] = useState("");
 
-  function refreshConflict() {
-    const next = detectTabMasterActivity();
-    setActivity(next);
-    tabManagerConflictChanged(next !== "inactive");
-  }
-
   useEffect(() => {
-    let mounted = true;
+    let alive = true;
     const status = detectTabMasterActivity();
     setActivity(status);
     tabManagerConflictChanged(status !== "inactive");
-    readEnabled().then(value => {
-      if (mounted) setEnabled(value);
+    Promise.all([readEnabled(), readTabs()]).then(([value, definitions]) => {
+      if (!alive) return;
+      setEnabled(value);
+      setTabs(definitions);
     }).catch(() => {
-      if (mounted) setError("Nie udało się odczytać ustawień kart.");
-    }).finally(() => {
-      if (mounted) setBusy(false);
-    });
-    return () => { mounted = false; };
+      if (alive) setError("Nie udało się odczytać ustawień kart.");
+    }).finally(() => { if (alive) setBusy(false); });
+    return () => { alive = false; };
   }, []);
 
-  async function toggle(value: boolean) {
+  async function prepareLibrary(): Promise<boolean> {
+    if (busy) return false;
+    const status = detectTabMasterActivity();
+    setActivity(status);
+    tabManagerConflictChanged(status !== "inactive");
+    if (status !== "inactive") {
+      setError(status === "active"
+        ? "Wyłącz TabMaster w Decky, aby uniknąć konfliktu."
+        : "Nie można sprawdzić stanu dodatków Decky. Integracja pozostaje wstrzymana.");
+      return false;
+    }
+    if (enabled) return true;
+    setBusy(true); setError("");
+    try {
+      const saved = await saveEnabled(true);
+      setEnabled(saved);
+      tabManagerEnabledChanged(saved);
+      return saved;
+    } catch {
+      setError("Nie udało się włączyć obsługi kart biblioteki.");
+      return false;
+    } finally { setBusy(false); }
+  }
+
+  async function manage() {
+    if (!(await prepareLibrary())) return;
+    Navigation.Navigate("/library");
+    Navigation.CloseSideMenus();
+  }
+
+  async function visibility(id: string, show: boolean) {
     if (busy) return;
     setBusy(true); setError("");
     try {
-      refreshConflict();
-      const saved = await saveEnabled(value);
-      setEnabled(saved);
-      tabManagerEnabledChanged(saved);
+      const existing = await readTabs();
+      const stored = await saveTabs(existing.map(tab =>
+        tab.id === id ? { ...tab, hidden: !show } : tab));
+      setTabs(stored);
+      tabManagerTabsChanged(stored);
     } catch {
-      setError("Nie udało się zapisać ustawienia.");
-    } finally {
-      setBusy(false);
-    }
+      setError("Nie udało się zapisać widoczności karty.");
+    } finally { setBusy(false); }
+  }
+
+  function openVisibility(parent: EventTarget | null) {
+    if (!parent) return;
+    const systemTabs = availableSteamLibraryTabs();
+    showContextMenu(
+      <Menu label="Wyświetlaj karty">
+        {tabs.length === 0 && <MenuItem disabled>Brak własnych kart</MenuItem>}
+        {systemTabs.map(tab => <MenuItem key={tab.id}
+          onClick={() => { void setSystemTabHidden(tab.id, !tab.hidden).catch(() =>
+            setError("Nie można zmienić widoczności tej karty Steam.")); }}>
+          {tab.hidden ? "Pokaż" : "Ukryj"} · Steam · {tab.title}
+        </MenuItem>)}
+        {tabs.map(tab => <MenuItem key={tab.id} disabled={busy}
+          onClick={() => { void visibility(tab.id, tab.hidden); }}>
+          {tab.hidden ? "Pokaż" : "Ukryj"} · {tab.title}
+        </MenuItem>)}
+      </Menu>,
+      parent,
+      { bFitToWindow: true, bShiftToFitWindow: true, bPreferPopTop: true }
+    );
   }
 
   return <DialogControlsSection>
     <DialogControlsSectionHeader>Karty</DialogControlsSectionHeader>
-    <Field label="Własne karty biblioteki"
-      description="Dodawaj i edytuj karty bezpośrednio w bibliotece Gaming Mode, przez przycisk + na pasku kart.">
-      <Toggle value={enabled} disabled={busy} onChange={value => { void toggle(value); }} />
+    <Field label="Zarządzaj"
+      description="Otwórz bibliotekę. Na zaznaczonej karcie naciśnij ☰, aby wyświetlić menu kart.">
+      <DialogButton disabled={busy} onClick={() => { void manage(); }}>
+        Biblioteka
+      </DialogButton>
     </Field>
-    {enabled && activity !== "inactive" && <Field label="Integracja wstrzymana"
-      description={activity === "active"
-        ? "TabMaster jest aktywny. Wyłącz go w Decky."
-        : "Nie można sprawdzić stanu TabMastera. Dla bezpieczeństwa biblioteka nie jest modyfikowana."}>
-      <DialogButton disabled={busy} onClick={refreshConflict}>Sprawdź ponownie</DialogButton>
-    </Field>}
+    <Field label="Wyświetlaj"
+      description="Ukryj lub przywróć karty systemowe Steam i własne karty Huba.">
+      <DialogButton disabled={busy} onClick={event => openVisibility(event.currentTarget)}>
+        Karty
+      </DialogButton>
+    </Field>
+    {activity === "active" && <Field label="Konflikt"
+      description="TabMaster zarządza obecnie biblioteką. Hub nie modyfikuje jej kart." />}
     {error && <Field label="Błąd" description={error} />}
   </DialogControlsSection>;
 }
