@@ -14,7 +14,7 @@ Na stronie wydania rozwiń **Assets** i pobierz **`SteamHub.zip`**.
 
 ## Aktualny stan
 
-SteamHub 0.3.3 przywraca na chwilę **sam aktualizator**. Wtyczka nie zmienia zakładek biblioteki SteamOS. Trwa przygotowanie osobnego, pełnoekranowego panelu modułów w stylu ustawień SteamOS, uruchamianego przyciskiem w Quick Access. Ustawienia modułów pozostają zapisane na urządzeniu.
+SteamHub otwiera **pełnoekranowy panel** w stylu Ustawień SteamOS. W Quick Access jest tylko przycisk **Otwórz SteamHub**. W pełnym oknie możesz wybrać zainstalowane dodatki Decky, zobaczyć ich stan i zarządzać wyborem. Aktualizacje znajdują się w osobnej zakładce panelu. Opcje innych wtyczek wymagają odrębnych adapterów — ich własny interfejs nie jest kopiowany.
 
 ## Instalacja
 
@@ -32,7 +32,7 @@ Wtyczka ma przyciski **Sprawdź aktualizacje** i **Aktualizuj**. Aktualizacje ni
 
 ## Stan projektu
 
-Aktualna wersja zawiera tylko aktualizator. Modułowy interfejs pełnoekranowy jest rozwijany osobno.
+Modułowy interfejs pełnoekranowy jest dostępny. Ustawienia wybranych dodatków będą stopniowo integrowane przez niezależne adaptery.
 
 - [Wszystkie wydania](https://github.com/BlueGalaxySlime/SteamOS-Hub/releases)
 - [Instrukcje instalacji](docs/INSTALL.md)
