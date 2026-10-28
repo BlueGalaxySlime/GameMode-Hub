@@ -1,3 +1,12 @@
+# GameMode Hub 0.5.10
+
+- Menedżer plików: **Y** przy wskazanym pliku lub folderze otwiera natywne menu SteamOS na wierzchu listy, bez rozciągania wiersza i bez dodawania wysokości.
+- Menu pliku: Zmień nazwę, Kopiuj (pliki), Przenieś; wraca standardowym B. Nie ma osobnego „Zamknij”, ikon ⋯ ani dodatkowego ekranu.
+- A otwiera folder lub zaznacza plik. Systemowy pasek sterowania wyświetla Y — Opcje na pozycji w liście.
+- „Sortuj” otwiera natywne menu na wierzchu, z pozycjami Nazwa A–Z/Z–A, Typ A–Z/Z–A, Rozmiar ↑/↓ i Data ↑/↓. Sortowanie nie przesuwa listy plików.
+- Zmiana nazwy odbywa się w tym samym wierszu. Zachowano wybieranie katalogów przez klikalne segmenty ścieżki, ukryte pliki i aktualizator.
+- Brak zmian w wyłączonym terminalu. Testy automatyczne nie zastępują sprawdzenia kontrolera na Legion Go S.
+
 # GameMode Hub 0.5.9
 
 - Pliki: A otwiera katalog lub zaznacza plik. X pokazuje działania w tym samym wierszu, bez osobnego menu.

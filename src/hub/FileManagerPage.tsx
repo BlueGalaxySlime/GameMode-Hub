@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { callable } from "@decky/api";
-import { DialogBody, DialogButton, DialogControlsSection, Dropdown, Focusable, TextField, Toggle } from "@decky/ui";
+import { DialogBody, DialogButton, DialogControlsSection, Focusable, Menu, MenuItem, showContextMenu, TextField, Toggle } from "@decky/ui";
 import { withTimeout } from "../utils/withTimeout";
 import { breadcrumbs } from "../core/filePath";
 
@@ -125,14 +125,13 @@ export function FileManagerPage() {
     }
   }
 
-  function clipboardAction(mode: "copy" | "move") {
-    if (!selected || selected.symlink) return;
-    if (selected.directory && mode === "copy") {
-      setMessage("Kopiowanie całych folderów będzie dostępne później.");
-      return;
-    }
-    setClipboard({ path: selected.path, name: selected.name, mode });
-    setMessage("Wybierz folder docelowy i użyj Wklej.");
+  function clipboardAction(entry: Entry, mode: "copy" | "move") {
+    if (entry.symlink) return;
+    if (entry.directory && mode === "copy") return;
+    setClipboard({ path: entry.path, name: entry.name, mode });
+    setSelected(null);
+    setAction(null);
+    setMessage("");
   }
 
   function changeSort(option: typeof sortOptions[number]) {
@@ -142,14 +141,50 @@ export function FileManagerPage() {
     void load(page?.path ?? null, hidden, 0, option.by, option.descending);
   }
 
+  // The same native SteamOS popup is used for sort and file actions.
+  // It overlays the browser rather than adding scrollable rows or a new page.
+  function openSortMenu(parent: EventTarget) {
+    if (busy) return;
+    showContextMenu(
+      <Menu label="Sortuj" cancelText="Wstecz">
+        {sortOptions.map(option =>
+          <MenuItem key={option.data} selected={sortMode === option.data}
+            onSelected={() => changeSort(option)}>
+            {option.label}
+          </MenuItem>)}
+      </Menu>,
+      parent,
+      { bFitToWindow: true, bShiftToFitWindow: true, bPreferPopTop: true }
+    );
+  }
+
+  function openFileMenu(entry: Entry, parent: EventTarget) {
+    if (busy || entry.symlink) return;
+    setSelected(entry);
+    setAction(null);
+    setName(entry.name);
+    showContextMenu(
+      <Menu label={entry.name} cancelText="Wstecz">
+        <MenuItem onSelected={() => {
+          setSelected(entry);
+          setName(entry.name);
+          setAction("rename");
+        }}>Zmień nazwę</MenuItem>
+        {!entry.directory &&
+          <MenuItem onSelected={() => clipboardAction(entry, "copy")}>Kopiuj</MenuItem>}
+        <MenuItem onSelected={() => clipboardAction(entry, "move")}>Przenieś</MenuItem>
+      </Menu>,
+      parent,
+      { bFitToWindow: true, bShiftToFitWindow: true, bPreferPopTop: true }
+    );
+  }
+
   // SteamOS owns the black footer. Expose controller hints through the
   // focus/navigation API, not duplicate text buttons or a custom footer.
   return <DialogBody>
     <DialogControlsSection>
       <Focusable
         style={{ display: "flex", flexDirection: "column", gap: 8, width: "100%", minWidth: 0 }}
-        onOptionsActionDescription="Odśwież"
-        onOptionsButton={() => { void load(page?.path ?? null, hidden, page?.offset ?? 0); }}
         onCancelActionDescription={page?.parent ? "W górę" : "Wstecz"}
         onCancelButton={page?.parent ? event => {
           event.preventDefault();
@@ -212,14 +247,13 @@ export function FileManagerPage() {
               void load(page?.path ?? null, value);
             }} />
           </label>
-          <div style={{ flex: "0 0 154px", width: 154, minWidth: 0 }}>
-            <Dropdown menuLabel="Sortuj" disabled={busy}
-              rgOptions={sortOptions.map(option => ({ data: option.data, label: option.label }))}
-              selectedOption={sortMode}
-              onChange={value => {
-                const option = sortOptions.find(item => item.data === value.data);
-                if (option) changeSort(option);
-              }} />
+          <div style={{ flex: "0 0 auto", width: "auto", maxWidth: 205 }}>
+            <DialogButton disabled={busy}
+              onOKActionDescription="Sortuj"
+              style={{ minWidth: 0, width: "auto", padding: "5px 9px" }}
+              onClick={event => openSortMenu(event.currentTarget ?? window)}>
+              Sortuj: {sortOptions.find(option => option.data === sortMode)?.label ?? "Nazwa A–Z"} ▾
+            </DialogButton>
           </div>
         </div>
 
@@ -244,79 +278,67 @@ export function FileManagerPage() {
           </DialogButton>
         </div>}
 
-        {/* A opens folder / selects file, X toggles inline operations.
-            No submenu, no "Zamknij" and no extra screen height. */}
-        {page && <div style={{ display: "flex", flexDirection: "column", gap: 3, width: "100%", minWidth: 0 }}>
-          {page.items.map(entry => <div key={entry.path} style={{ width: "100%", minWidth: 0 }}>
-            <div style={{ display: "flex", alignItems: "center", gap: 4, width: "100%", minWidth: 0 }}>
-              <div style={{ flex: "1 1 0", minWidth: 0 }}>
-                <DialogButton disabled={busy || entry.symlink}
-                  onOKActionDescription={entry.directory ? "Otwórz" : "Opcje"}
-                  onSecondaryActionDescription="Opcje"
-                  onSecondaryButton={() => {
-                    setSelected(current => current?.path === entry.path ? null : entry);
-                    setAction(null); setName(entry.name); setMessage("");
-                  }}
-                  onOptionsActionDescription="Odśwież"
-                  onOptionsButton={() => { void load(page.path, hidden, page.offset); }}
-                  style={{ textAlign: "left", width: "100%", minWidth: 0, padding: "6px 8px",
-                    background: selected?.path === entry.path ? "#426b99" : undefined }}
-                  onClick={() => {
-                    if (entry.directory) void load(entry.path, hidden);
-                    else {
-                      setSelected(current => current?.path === entry.path ? null : entry);
-                      setAction(null); setName(entry.name); setMessage("");
-                    }
-                  }}>
-                  <span style={{ display: "flex", alignItems: "center", gap: 6, width: "100%", minWidth: 0 }}>
-                    <span aria-hidden="true">{entry.directory ? "📁" : entry.symlink ? "🔗" : "📄"}</span>
-                    <span style={{ flex: 1, minWidth: 0, textAlign: "left",
-                      overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{entry.name}</span>
-                    {!entry.directory && !entry.symlink && selected?.path !== entry.path &&
-                      <span style={{ fontSize: 11, opacity: 0.7, flexShrink: 0 }}>
-                        {readableSize(entry.size)}
-                      </span>}
-                  </span>
-                </DialogButton>
-              </div>
-              {selected?.path === entry.path && !entry.symlink && action !== "rename" &&
-                <div style={{ display: "flex", gap: 3, flex: "0 0 auto", alignItems: "center" }}>
-                  <div style={{ flex: "0 0 auto" }}>
-                    <DialogButton disabled={busy}
-                      style={{ minWidth: 0, width: "auto", padding: "5px 7px" }}
-                      onClick={() => { setAction("rename"); setName(entry.name); }}>Zmień</DialogButton>
-                  </div>
-                  {!entry.directory && <div style={{ flex: "0 0 auto" }}>
-                    <DialogButton disabled={busy}
-                      style={{ minWidth: 0, width: "auto", padding: "5px 7px" }}
-                      onClick={() => clipboardAction("copy")}>Kopiuj</DialogButton>
-                  </div>}
-                  <div style={{ flex: "0 0 auto" }}>
-                    <DialogButton disabled={busy}
-                      style={{ minWidth: 0, width: "auto", padding: "5px 7px" }}
-                      onClick={() => clipboardAction("move")}>Przenieś</DialogButton>
-                  </div>
-                </div>}
-              {selected?.path === entry.path && action === "rename" &&
-                <div style={{ display: "flex", flex: "2 1 0", gap: 3, alignItems: "center", minWidth: 0 }}>
-                  <div style={{ flex: 1, minWidth: 0 }}>
+        {/* A opens folders or marks a file. Y opens SteamOS popup options.
+            The list never expands when selecting a file. */}
+        {page && <div style={{ display: "flex", flexDirection: "column", gap: 3,
+          width: "100%", minWidth: 0 }}>
+          {page.items.map(entry =>
+            <div key={entry.path} style={{ width: "100%", minWidth: 0 }}>
+              {selected?.path === entry.path && action === "rename" ? (
+                <div style={{ display: "flex", alignItems: "center", gap: 5, minWidth: 0 }}>
+                  <div style={{ flex: "1 1 0", minWidth: 0 }}>
                     <TextField value={name} aria-label="Nowa nazwa"
                       onChange={event => setName(event.target.value)}
                       onKeyDown={event => {
                         if (event.key === "Enter" && name.trim()) {
-                          event.preventDefault(); void operate("rename");
+                          event.preventDefault();
+                          void operate("rename");
                         }
                         if (event.key === "Escape") setAction(null);
                       }} />
                   </div>
                   <div style={{ flex: "0 0 auto" }}>
                     <DialogButton disabled={busy || !name.trim()}
-                      style={{ minWidth: 0, width: "auto", padding: "5px 7px" }}
-                      onClick={() => void operate("rename")}>✓</DialogButton>
+                      style={{ minWidth: 0, width: "auto", padding: "5px 9px" }}
+                      aria-label="Zapisz nazwę" onClick={() => void operate("rename")}>✓</DialogButton>
                   </div>
-                </div>}
-            </div>
-          </div>)}
+                  <div style={{ flex: "0 0 auto" }}>
+                    <DialogButton disabled={busy}
+                      style={{ minWidth: 0, width: "auto", padding: "5px 9px" }}
+                      aria-label="Anuluj zmianę nazwy" onClick={() => setAction(null)}>×</DialogButton>
+                  </div>
+                </div>
+              ) : (
+                <DialogButton disabled={busy || entry.symlink}
+                  onOKActionDescription={entry.directory ? "Otwórz" : "Zaznacz"}
+                  onOptionsActionDescription="Opcje"
+                  onOptionsButton={event => openFileMenu(entry, event.currentTarget ?? window)}
+                  style={{ width: "100%", minWidth: 0, textAlign: "left",
+                    padding: "7px 9px",
+                    background: selected?.path === entry.path ? "#426b99" : undefined }}
+                  onClick={() => {
+                    if (entry.directory) void load(entry.path, hidden);
+                    else {
+                      setSelected(entry);
+                      setAction(null);
+                      setName(entry.name);
+                    }
+                  }}>
+                  <span style={{ display: "flex", gap: 7, alignItems: "center",
+                    width: "100%", minWidth: 0 }}>
+                    <span aria-hidden="true">{entry.directory ? "📁" :
+                      entry.symlink ? "🔗" : "📄"}</span>
+                    <span style={{ flex: 1, minWidth: 0, textAlign: "left",
+                      overflow: "hidden", whiteSpace: "nowrap",
+                      textOverflow: "ellipsis" }}>{entry.name}</span>
+                    {!entry.directory && !entry.symlink &&
+                      <span style={{ fontSize: 11, opacity: 0.7, flexShrink: 0 }}>
+                        {readableSize(entry.size)}
+                      </span>}
+                  </span>
+                </DialogButton>
+              )}
+            </div>)}
           {page.items.length === 0 && !busy &&
             <div style={{ opacity: 0.7, padding: 6 }}>Pusty folder</div>}
         </div>}

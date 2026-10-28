@@ -1,39 +1,48 @@
 "use strict";
-const test=require("node:test"),assert=require("node:assert/strict"),fs=require("node:fs"),ts=require("typescript"),vm=require("node:vm");
-const ui=fs.readFileSync("src/hub/FileManagerPage.tsx","utf8");
-const compiled=ts.transpileModule(fs.readFileSync("src/core/filePath.ts","utf8"),{compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2020}}).outputText;
-const context={exports:{}};vm.runInNewContext(compiled,context);const {breadcrumbs}=context.exports;
-test("no extra navigation or close buttons",()=>{
-  for(const word of [">Przejdź</DialogButton>",">Odśwież</DialogButton>",">Zamknij</DialogButton>",">⋯</DialogButton>"])
-    assert.ok(!ui.includes(word));
-  assert.ok(ui.includes('event.key === "Enter"'));
-  assert.ok(ui.includes('void load(pathDraft, hidden)'));
+const test = require("node:test");
+const assert = require("node:assert/strict");
+const fs = require("node:fs");
+const ts = require("typescript");
+const vm = require("node:vm");
+const ui = fs.readFileSync("src/hub/FileManagerPage.tsx", "utf8");
+const compiled = ts.transpileModule(fs.readFileSync("src/core/filePath.ts","utf8"),
+  { compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2020 } }).outputText;
+const context = { exports: {} };
+vm.runInNewContext(compiled, context);
+const { breadcrumbs } = context.exports;
+
+test("Y opens the native overlay menu for the focused file", () => {
+  assert.ok(ui.includes("showContextMenu("));
+  assert.ok(ui.includes('onOptionsActionDescription="Opcje"'));
+  assert.ok(ui.includes("onOptionsButton={event => openFileMenu(entry, event.currentTarget ?? window)}"));
+  assert.ok(ui.includes("<Menu label={entry.name}"));
+  assert.ok(ui.includes("<MenuItem onSelected={() => {"));
+  assert.ok(ui.includes('clipboardAction(entry, "copy")'));
+  assert.ok(ui.includes('clipboardAction(entry, "move")'));
+  assert.ok(!ui.includes("onSecondaryButton="));
 });
-test("breadcrumb tags stay within allowed roots",()=>{
-  const parts=breadcrumbs("/home/deck/Downloads/sub",[{name:"Dom",path:"/home/deck"}]);
-  assert.deepEqual(Array.from(parts,x=>x.path),["/home/deck","/home/deck/Downloads","/home/deck/Downloads/sub"]);
-  assert.equal(breadcrumbs("/etc",[{name:"Dom",path:"/home/deck"}]).length,0);
+test("native overlay sort menu, no inline expanded list or extra sorting arrows", () => {
+  assert.ok(ui.includes('openSortMenu(event.currentTarget ?? window)'));
+  assert.ok(ui.includes('<Menu label="Sortuj"'));
+  assert.ok(ui.includes('selected={sortMode === option.data}'));
+  for(const name of ["Nazwa A–Z", "Nazwa Z–A", "Typ A–Z", "Typ Z–A", "Rozmiar ↑", "Data ↓"])
+    assert.ok(ui.includes(name));
+  assert.ok(!ui.includes("<Dropdown"));
 });
-test("one native sorting dropdown with combined direction and type",()=>{
-  assert.ok(ui.includes("<Dropdown"));
-  assert.ok(ui.includes('menuLabel="Sortuj"'));
-  assert.ok(ui.includes('selectedOption={sortMode}'));
-  for(const label of ["Nazwa A–Z","Nazwa Z–A","Typ A–Z","Typ Z–A","Rozmiar ↑","Data ↓"])
-    assert.ok(ui.includes(label));
-  assert.ok(!ui.includes("changeSort(sortBy, !descending)"));
-});
-test("file actions stay in the same row",()=>{
-  assert.ok(ui.includes('onSecondaryActionDescription="Opcje"'));
-  assert.ok(ui.includes('onSecondaryButton={() => {'));
+test("selecting a file never expands action buttons", () => {
   assert.ok(ui.includes('if (entry.directory) void load(entry.path, hidden)'));
-  assert.ok(ui.includes('selected?.path === entry.path'));
-  for(const text of [">Zmień</DialogButton>",">Kopiuj</DialogButton>",">Przenieś</DialogButton>"])
-    assert.ok(ui.includes(text));
-  assert.ok(!ui.includes("showContextMenu"));
+  assert.ok(ui.includes("setSelected(entry)"));
+  assert.ok(!ui.includes(">Zmień</DialogButton>"));
+  assert.ok(!ui.includes(">Kopiuj</DialogButton>"));
+  assert.ok(!ui.includes(">Przenieś</DialogButton>"));
+  assert.ok(!ui.includes(">⋯</DialogButton>"));
+  assert.ok(!ui.includes(">Zamknij</DialogButton>"));
 });
-test("Steam footer handles back and refresh without UI buttons",()=>{
-  assert.ok(ui.includes("<Focusable"));
-  assert.ok(ui.includes("onCancelActionDescription="));
-  assert.ok(ui.includes("onOptionsButton="));
-  assert.ok(ui.includes("setHidden(value)"));
+test("no redundant command UI; path tags are constrained", () => {
+  assert.ok(!ui.includes(">Przejdź</DialogButton>"));
+  assert.ok(!ui.includes(">Odśwież</DialogButton>"));
+  assert.ok(ui.includes('event.key === "Enter"'));
+  const path = breadcrumbs("/home/deck/Downloads/sub", [{ name: "Dom", path: "/home/deck" }]);
+  assert.deepEqual(Array.from(path, x => x.path), ["/home/deck","/home/deck/Downloads","/home/deck/Downloads/sub"]);
+  assert.equal(breadcrumbs("/etc", [{name:"Dom",path:"/home/deck"}]).length, 0);
 });
