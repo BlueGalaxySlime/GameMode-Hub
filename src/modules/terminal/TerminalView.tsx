@@ -1,10 +1,11 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, useSyncExternalStore } from "react";
 import { appendOutput, clearOutput, getBackendError, getSlot, markBackendUnavailable } from "./sessionStore";
 import type { ReactNode } from "react";
 import { Terminal } from "@xterm/xterm";
 import { FitAddon } from "@xterm/addon-fit";
 import type { TerminalBridge } from "./bridge";
 import { ensureTerminalStyles } from "./terminalStyles";
+import { getHubPreferences, subscribeHubPreferences } from "../../core/hubSession";
 
 function decodeBytes(value: string): Uint8Array {
   const binary = atob(value);
@@ -50,6 +51,7 @@ export function TerminalView({ bridge, render, fontSize = 15, autoStart = false,
   const [pending, setPending] = useState(slot.phase === "starting");
   const [status, setStatus] = useState(slot.error || (slot.phase === "connected" ? "Sesja aktywna" : "Przygotowywanie terminala…"));
   const [command, setCommand] = useState("");
+  const keyboardOptions = useSyncExternalStore(subscribeHubPreferences, getHubPreferences);
   const [advanced, setAdvanced] = useState(false);
 
   function send(value: string) {
@@ -319,7 +321,8 @@ export function TerminalView({ bridge, render, fontSize = 15, autoStart = false,
     <label style={{ display: "flex", flexDirection: "column", gap: 6, fontSize: "0.9rem" }}>
       Polecenie (możesz też pisać bezpośrednio w terminalu)
       <span style={{ display: "flex", gap: 8 }}>
-        <input aria-label="Polecenie terminala" type="text" value={command}
+        <input aria-label="Polecenie terminala" type="text"
+          inputMode={keyboardOptions.autoKeyboard ? "text" : "none"} value={command}
           onChange={e => setCommand(e.target.value)}
           onKeyDown={e => { if (e.key === "Enter") submitCommand(); }}
           disabled={!active} style={{ flex: 1, minWidth: 0, borderRadius: 4, padding: 8 }} />
