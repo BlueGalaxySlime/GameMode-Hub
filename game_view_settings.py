@@ -5,7 +5,8 @@ from pathlib import Path
 
 FILE = Path.home() / ".config" / "gamemodehub" / "game_view.json"
 LOCK = threading.RLock()
-SOURCES = frozenset(("steam", "gog", "epic", "heroic", "lutris", "bottles", "external"))
+SOURCES = frozenset(("steam", "gog", "epic", "heroic", "lutris", "bottles",
+                     "amazon", "ubisoft", "battlenet", "itch", "xcloud", "external"))
 DEFAULT = {"enabled": False, "show_protondb": True}
 MAX_MAPPINGS = 512
 

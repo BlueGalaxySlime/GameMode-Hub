@@ -1,5 +1,5 @@
 /** Source-neutral game details. This file has no Steam or Decky imports. */
-export type GameSource = "steam" | "gog" | "epic" | "heroic" | "lutris" | "bottles" | "external";
+export type GameSource = "steam" | "gog" | "epic" | "heroic" | "lutris" | "bottles" | "amazon" | "ubisoft" | "battlenet" | "itch" | "xcloud" | "external";
 export type UnifiedGame = {
   appId: number; title: string; source: GameSource; shortcut: boolean;
   playedMinutes: number | null; lastPlayed: number | null; protonDbAppId: string | null;
@@ -10,7 +10,9 @@ export const GAME_SOURCES: { value: GameSource; label: string }[] = [
   {value:"steam",label:"Steam"}, {value:"gog",label:"GOG"},
   {value:"epic",label:"Epic"}, {value:"heroic",label:"Heroic"},
   {value:"lutris",label:"Lutris"}, {value:"bottles",label:"Bottles"},
-  {value:"external",label:"Inny launcher"}
+  {value:"amazon",label:"Amazon Games"}, {value:"ubisoft",label:"Ubisoft"},
+  {value:"battlenet",label:"Battle.net"}, {value:"itch",label:"itch.io"},
+  {value:"xcloud",label:"Xbox Cloud"}, {value:"external",label:"Inny launcher"}
 ];
 const object = (v: unknown): Record<string, unknown> =>
   v !== null && typeof v === "object" ? v as Record<string,unknown> : {};
@@ -26,8 +28,13 @@ export function detectSource(shortcut: boolean, launchOptions: unknown): GameSou
   if (!shortcut) return "steam";
   if (typeof launchOptions !== "string") return "external";
   const value = launchOptions.toLowerCase();
-  if (/goggalaxy|gogdl|gog:\/\/|--store[= ]gog|--gog/.test(value)) return "gog";
-  if (/epicgames|epic:\/\/|--store[= ]epic|--epic/.test(value)) return "epic";
+  if (/goggalaxy|gogdl|gog:\/\/|(?:^|\s)gog:[^\s]+|--store[= ]gog|--gog/.test(value)) return "gog";
+  if (/epicgames|epic:\/\/|(?:^|\s)epic:[^\s]+|--store[= ]epic|--epic/.test(value)) return "epic";
+  if (/(?:^|\s)amazon:[^\s]+|--store[= ]amazon|nile/.test(value)) return "amazon";
+  if (/(?:^|\s)ubisoft:[^\s]+|uplay:/.test(value)) return "ubisoft";
+  if (/(?:^|\s)battlenet:[^\s]+|battle\.net/.test(value)) return "battlenet";
+  if (/(?:^|\s)itch:[^\s]+|itch\.io/.test(value)) return "itch";
+  if (/(?:^|\s)(?:xcloud|microsoft):[^\s]+/.test(value)) return "xcloud";
   if (value.includes("heroic")) return "heroic";
   if (value.includes("lutris")) return "lutris";
   if (value.includes("bottles")) return "bottles";
@@ -42,7 +49,7 @@ export function normalizeGame(overview: unknown, details: unknown): UnifiedGame 
   const minutes = Math.max(numberOrNull(o.minutes_playtime_forever) ?? 0,
                            numberOrNull(d.nPlaytimeForever) ?? 0);
   return {appId, title:name || "Gra", shortcut,
-          source:detectSource(shortcut, d.strShortcutLaunchOptions),
+          source:detectSource(shortcut, d.strShortcutLaunchOptions ?? d.strLaunchOptions),
           playedMinutes:minutes || null, lastPlayed:numberOrNull(o.rt_last_time_played),
           protonDbAppId: shortcut ? null : String(appId)};
 }
