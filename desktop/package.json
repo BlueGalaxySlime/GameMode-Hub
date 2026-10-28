@@ -61,15 +61,8 @@
         "--share=ipc",
         "--device=dri",
         "--filesystem=home:ro"
-      ],
-      "additionalArgs": {
-        "flatpakBuilder": [
-          "--disable-rofiles-fuse"
-        ],
-        "buildExport": [
-          "--disable-sandbox"
-        ]
-      }
+      ]
     }
-  }
+  },
+  "author": "SteamHub contributors"
 }
