@@ -1,6 +1,6 @@
 """SteamHub release checker. Installation is delegated to Decky Loader."""
 import asyncio
-from tab_manager import _read_tab_manager_enabled, _write_tab_manager_enabled, _tabmaster_installed
+from tab_manager import _read_tab_manager_enabled, _write_tab_manager_enabled, _tabmaster_installed, read_tabs, save_tabs
 import json
 import re
 import ssl
@@ -77,6 +77,12 @@ def _fetch_latest_release():
 
 
 class Plugin:
+    async def get_tab_definitions(self):
+        return await asyncio.to_thread(read_tabs)
+
+    async def save_tab_definitions(self, tabs):
+        return await asyncio.to_thread(save_tabs, tabs)
+
     async def get_tabmaster_installed(self):
         return await asyncio.to_thread(_tabmaster_installed)
 
