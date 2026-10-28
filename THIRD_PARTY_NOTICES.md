@@ -23,3 +23,15 @@ individual files carrying additional or different copyright/license notices.
 
 The library integration has not yet been validated on real SteamOS hardware;
 this development branch must not be presented as a stable TabMaster replacement.
+
+
+## xterm.js and FitAddon — MIT
+
+Terminal rendering uses the upstream packages `@xterm/xterm` and
+`@xterm/addon-fit`, maintained by the xterm.js contributors.
+Upstream: https://github.com/xtermjs/xterm.js
+License: MIT, copyright xterm.js contributors and applicable earlier authors.
+The bundled JS retains upstream licenses through package distribution.
+`src/modules/terminal/terminalStyles.ts` adapts portions of xterm.js's
+MIT-licensed default stylesheet. Include upstream license text in any
+redistribution of copied or modified stylesheet code.
