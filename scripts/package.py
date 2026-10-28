@@ -12,6 +12,9 @@ if not DIST.is_dir() or not any(DIST.rglob("*.js")):
 
 files = [ROOT / "plugin.json", ROOT / "main.py", ROOT / "hub_settings.py", ROOT / "package.json", ROOT / "THIRD_PARTY_NOTICES.md", ROOT / "LICENSE"]
 files += sorted(path for path in DIST.rglob("*") if path.is_file())
+files += sorted(path for path in (ROOT / "terminal_core").glob("*.py") if path.is_file())
+if len([path for path in files if "terminal_core" in path.parts]) != 3:
+    raise SystemExit("Missing terminal core Python files")
 for path in files:
     if not path.is_file():
         raise SystemExit(f"Missing required file: {path}")
