@@ -240,7 +240,7 @@ export function HubPage() {
       content: <DeckyTerminalPage /> },
     { title: "Aktualizacje", route: "/steamhub/updates", icon: <FaSyncAlt />,
       content: <UpdaterPage /> },
-    ...selected.filter(name => name !== "Decky Terminal").map(name => ({
+    ...selected.map(name => ({
       title: featureName(name),
       route: "/steamhub/addon/" + encodeURIComponent(name),
       icon: name === "Decky Manager" ? <FaFolderOpen /> : name === "Decky Terminal" ? <FaTerminal /> : <FaPlug />,

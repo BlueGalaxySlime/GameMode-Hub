@@ -1,4 +1,16 @@
-# SteamHub 0.4.4
+# SteamHub 0.4.5
+
+## Niezależny terminal Linux
+
+- Terminal w bocznym menu SteamHub nie wymaga zewnętrznej wtyczki Decky Terminal.
+- Silnik PTY w Pythonie jest niezależny od Steam i Decky; adapter transportowy dla Decky jest oddzielny.
+- Wbudowany interfejs oparty na xterm.js, sesja uruchamiana ręcznie, obsługa klawiatury i przycisków Ctrl+C/Tab/Enter.
+- Ochrona: uruchamianie bez uprawnień root, limit liczby sesji i bufora, zamykanie procesów po wyjściu z ekranu.
+- Zachowano Decky Manager bez zmian; stary Decky Terminal może nadal istnieć jako osobny dodatek.
+- Nie jest to hotfix ani wersja preview. Działanie wymaga testu na urządzeniu SteamOS.
+
+## Poprzednie zmiany
+
 
 - Pliki (Decky Manager) i Terminal (Decky Terminal) mają dedykowane sekcje w menu.
 - Po wybraniu sekcji panel wtyczki wyświetla się bezpośrednio po prawej, jeśli Decky udostępnia jej interfejs.
@@ -24,3 +36,4 @@ Nowy układ w stylu ustawień SteamOS:
 - Usunięto modyfikowanie zakładek biblioteki SteamOS; nie kolidujemy z TabMaster.
 
 Wersja jest wydaniem standardowym. Nie wymaga żadnego trybu preview.
+
