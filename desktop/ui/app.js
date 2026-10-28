@@ -72,7 +72,7 @@ function navigate(page,{focus=false}={}){
   state.page=page;
   renderNav();
   renderPage();
-  if(focus) nav.querySelector('.active')?.focus();
+  if(focus || document.activeElement===document.body) nav.querySelector('.active')?.focus();
 }
 function fileItem(item) {
   return button((item.directory?"▣  ":"·  ")+item.name,()=>{
@@ -82,6 +82,7 @@ function fileItem(item) {
 }
 async function loadFiles(path) {
   state.busy=true;
+  state.fileError="";
   renderPage();
   try {
     state.files=await window.steamHub.listFiles(path);
@@ -249,5 +250,6 @@ function tickGamepad(){
     systemMeta.textContent=state.info.platform.name+" · "+state.info.version;
   }catch(err){systemMeta.textContent="Linux · tryb ograniczony";notice(String(err.message||err),true);}
   renderPage();
+  nav.querySelector(".active")?.focus();
   requestAnimationFrame(tickGamepad);
 })();

@@ -12,7 +12,7 @@
     "package": "electron-builder --linux AppImage flatpak --x64 --publish never"
   },
   "devDependencies": {
-    "electron": "45.1.0",
+    "electron": "45.0.0",
     "electron-builder": "26.18.0"
   },
   "build": {
@@ -29,9 +29,6 @@
     "directories": {
       "output": "out"
     },
-    "toolsets": {
-      "appimage": "1.0.3"
-    },
     "linux": {
       "target": [
         "AppImage",
@@ -45,7 +42,8 @@
           "Comment": "Niezależny panel SteamOS Hub",
           "Categories": "Utility;System;"
         }
-      }
+      },
+      "icon": "build/icon.png"
     },
     "appImage": {
       "artifactName": "SteamHub-${version}-x86_64.AppImage"
@@ -55,16 +53,23 @@
       "branch": "stable",
       "runtime": "org.freedesktop.Platform",
       "sdk": "org.freedesktop.Sdk",
-      "runtimeVersion": "24.08",
-      "baseVersion": "24.08",
+      "runtimeVersion": "26.08",
+      "baseVersion": "26.08",
       "finishArgs": [
         "--socket=wayland",
         "--socket=x11",
         "--share=ipc",
         "--device=dri",
-        "--filesystem=home:ro",
-        "--share=network"
-      ]
+        "--filesystem=home:ro"
+      ],
+      "additionalArgs": {
+        "flatpakBuilder": [
+          "--disable-rofiles-fuse"
+        ],
+        "buildExport": [
+          "--disable-sandbox"
+        ]
+      }
     }
   }
 }

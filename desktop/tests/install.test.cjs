@@ -35,3 +35,21 @@ test("platform detector gracefully provides Linux OS information",()=>{
   assert.equal(typeof readOsRelease().id,"string");
   assert.equal(typeof platformInfo().arch,"string");
 });
+
+const {browseFolder}=require("../lib/files.cjs");
+test("read-only browser refuses paths and symlinks outside home",async()=>{
+  const root=fs.mkdtempSync(path.join(os.tmpdir(),"steamhub-files-"));
+  const home=path.join(root,"home");
+  const outside=path.join(root,"private");
+  fs.mkdirSync(home);
+  fs.mkdirSync(outside);
+  fs.writeFileSync(path.join(home,"hello.txt"),"sample");
+  fs.writeFileSync(path.join(outside,"secret"),"private");
+  fs.symlinkSync(outside,path.join(home,"escape"));
+  try{
+    const listing=await browseFolder(home,home);
+    assert.ok(listing.items.some(f=>f.name==="hello.txt"));
+    assert.ok(!listing.items.some(f=>f.name==="escape"));
+    await assert.rejects(browseFolder(outside,home),/domowy/);
+  }finally{fs.rmSync(root,{recursive:true,force:true});}
+});

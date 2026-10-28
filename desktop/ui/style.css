@@ -29,3 +29,5 @@ button.action:disabled{opacity:.5;cursor:not-allowed}
 .fileitem:hover,.fileitem:focus-visible{background:#39618b}
 .footer{height:35px;flex:none;display:flex;justify-content:space-between;align-items:center;background:#141c28;padding:0 18px}
 @media(max-width:850px){.sidebar{width:190px}.navrow{font-size:13px;padding:10px}.content{padding:18px}.footer span:last-child{display:none}}
+
+.navrow:focus-visible{background:#397bb0;outline:2px solid white;outline-offset:-2px}
