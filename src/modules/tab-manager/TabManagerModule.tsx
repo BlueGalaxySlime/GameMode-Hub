@@ -4,7 +4,7 @@ import { callable } from "@decky/api";
 
 import {
   TabDefinition, TabFilter, tabManagerEnabledChanged,
-  tabManagerTabsChanged, tabManagerConflictChanged
+  tabManagerTabsChanged, tabManagerConflictChanged, detectTabMasterConflict
 } from "./LibraryIntegration";
 
 const FILTER_LABELS: Record<TabFilter, string> = {
@@ -17,7 +17,6 @@ const FILTER_LABELS: Record<TabFilter, string> = {
 const SIMPLE_FILTERS: TabFilter[] = ["all", "installed", "favorites", "non_steam"];
 const getEnabled = callable<[], boolean>("get_tab_manager_enabled");
 const setEnabled = callable<[boolean], boolean>("set_tab_manager_enabled");
-const detectTabMaster = callable<[], boolean>("get_tabmaster_installed");
 const getTabs = callable<[], TabDefinition[]>("get_tab_definitions");
 const saveTabs = callable<[TabDefinition[]], TabDefinition[]>("save_tab_definitions");
 const listProfiles = callable<[], string[]>("list_tab_profiles");
@@ -25,7 +24,7 @@ const saveProfile = callable<[string], string[]>("save_tab_profile");
 const loadProfile = callable<[string], TabDefinition[]>("load_tab_profile");
 const deleteProfile = callable<[string], string[]>("delete_tab_profile");
 
-/** Independent Tab Manager UI. Does not patch Steam's library until the engine is ready. */
+/** Independent settings UI for the optional native library patch. */
 export function TabManagerModule() {
   const [enabled, updateEnabled] = useState(false);
   const [busy, setBusy] = useState(true);
@@ -40,7 +39,7 @@ export function TabManagerModule() {
 
   useEffect(() => {
     let mounted = true;
-    detectTabMaster().then(value => { if (mounted) { setConflict(value); tabManagerConflictChanged(value); } }).catch(() => {});
+    detectTabMasterConflict().then(value => { if (mounted) { setConflict(value); tabManagerConflictChanged(value); } }).catch(() => {});
     Promise.all([getEnabled(), getTabs(), listProfiles()])
       .then(([value, definitions, savedProfiles]) => { if (mounted) { updateEnabled(value); setTabs(definitions); setProfiles(savedProfiles); } })
       .catch(() => { if (mounted) setError("Nie udało się odczytać ustawień zakładek."); })
@@ -51,7 +50,14 @@ export function TabManagerModule() {
   async function toggle(value: boolean) {
     setBusy(true);
     setError("");
-    try { const stored = await setEnabled(value); updateEnabled(stored); tabManagerEnabledChanged(stored); }
+    try {
+      const currentlyConflicting = await detectTabMasterConflict();
+      setConflict(currentlyConflicting);
+      tabManagerConflictChanged(currentlyConflicting);
+      const stored = await setEnabled(value);
+      updateEnabled(stored);
+      tabManagerEnabledChanged(stored);
+    }
     catch { setError("Błąd zapisu ustawienia."); }
     finally { setBusy(false); }
   }
@@ -137,7 +143,7 @@ export function TabManagerModule() {
     <PanelSectionRow>
       <ToggleField label="Tab Manager" checked={enabled} disabled={busy} onChange={toggle} />
     </PanelSectionRow>
-    {conflict && <PanelSectionRow><div>Wykryto TabMaster. Równoczesne zarządzanie zakładkami może powodować konflikt.</div></PanelSectionRow>}
+    {conflict && <PanelSectionRow><div>Wykryto aktywny TabMaster. Integracja zakładek jest wstrzymana, by uniknąć konfliktu.</div></PanelSectionRow>}
     {enabled && <>
       <PanelSectionRow><TextField label="Nazwa zakładki" value={name} onChange={event => setName(event.target.value)} /></PanelSectionRow>
       <PanelSectionRow><ButtonItem disabled={busy || !name.trim()} onClick={add}>Dodaj zakładkę</ButtonItem></PanelSectionRow>
