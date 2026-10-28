@@ -68,10 +68,16 @@ export function UpdaterPage() {
     setChecking(true);
     setMessage("Przekazywanie aktualizacji do Decky Loader…");
     try {
-      await withTimeout(\n        decky.callable("utilities/install_plugin")(candidate.url, "SteamHub", candidate.latest, candidate.sha256, 2),\n        30000\n      );
-      setCandidate(null);\n      setMessage("Żądanie instalacji zostało przyjęte przez Decky Loader. Potwierdź instalację, jeśli Decky wyświetli okno.");
+      await withTimeout(
+        decky.callable("utilities/install_plugin")(candidate.url, "SteamHub", candidate.latest, candidate.sha256, 2),
+        30000
+      );
+      setCandidate(null);
+      setMessage("Żądanie instalacji zostało przyjęte przez Decky Loader. Potwierdź instalację, jeśli Decky wyświetli okno.");
     } catch (error) {
-      setMessage(error instanceof RequestTimeoutError\n        ? "Decky nie potwierdził instalacji w ciągu 30 sekund. Sprawdź wersję w Decky przed ponowieniem, aby nie uruchomić dwóch instalacji."\n        : "Instalacja nie powiodła się: " + (error instanceof Error ? error.message : String(error)));
+      setMessage(error instanceof RequestTimeoutError
+        ? "Decky nie potwierdził instalacji w ciągu 30 sekund. Sprawdź wersję w Decky przed ponowieniem, aby nie uruchomić dwóch instalacji."
+        : "Instalacja nie powiodła się: " + (error instanceof Error ? error.message : String(error)));
     } finally {
       busy.current = false;
       setChecking(false);
