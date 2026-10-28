@@ -4,7 +4,8 @@ import {
   ConfirmModal, Field, Menu, MenuGroup, MenuItem, TextField, showModal
 } from "@decky/ui";
 import {
-  availableHubCollections, availableSteamCollections, tabManagerTabsChanged
+  availableHubCollections, availableSteamCollections, availableSteamLibraryTabs,
+  setSystemTabHidden, tabManagerTabsChanged
 } from "./LibraryIntegration";
 import type { TabDefinition, TabFilter } from "./LibraryIntegration";
 
@@ -102,6 +103,8 @@ export function LibraryCardsContextMenu({ selectedTabId }: { selectedTabId: stri
   const index = tabs.findIndex(tab => tab.id === selectedId);
   const steamCollections = availableSteamCollections();
   const hubCollections = availableHubCollections();
+  const systemTabs = availableSteamLibraryTabs();
+  const selectedSystem = systemTabs.find(tab => tab.id === selectedTabId);
 
   useEffect(() => {
     let alive = true;
@@ -158,6 +161,21 @@ export function LibraryCardsContextMenu({ selectedTabId }: { selectedTabId: stri
     />);
   }
 
+  async function aliasSystemTab(title: string, originalId: string) {
+    // Persist the Hub-owned duplicate FIRST. If hide fails the original remains
+    // visible, so no system card or its content can disappear unexpectedly.
+    const id = newId();
+    await mutate(current => [...current, {
+      id, title, hidden: false, filter: "system_tab", collection_id: originalId
+    }]);
+    try {
+      await setSystemTabHidden(originalId, true);
+    } catch (error) {
+      // Leave the new visible alias in place; user may hide the original later.
+      setError("Nowa karta została zapisana, ale nie można ukryć oryginału.");
+    }
+  }
+
   async function saveNamedProfile(name: string) {
     setProfiles(await saveProfile(name));
   }
@@ -168,7 +186,7 @@ export function LibraryCardsContextMenu({ selectedTabId }: { selectedTabId: stri
     tabManagerTabsChanged(stored);
   }
 
-  return <Menu label={selected?.title ? "Karty · " + selected.title : "Karty biblioteki"}>
+  return <Menu label={"Karty · " + (selected?.title ?? selectedSystem?.title ?? "Biblioteka")}>
     {error && <MenuItem disabled>{error}</MenuItem>}
     <MenuItem disabled={busy} onClick={() => nameEditor()}>
       Dodaj kartę
@@ -226,11 +244,23 @@ export function LibraryCardsContextMenu({ selectedTabId }: { selectedTabId: stri
       </MenuGroup>)}
       {!tabs.some(tab => !tab.hidden) && <MenuItem disabled>Brak własnych kart</MenuItem>}
     </MenuGroup>
+    {selectedSystem && <>
+      <MenuItem disabled={busy} onClick={() => showModal(<NameModal
+        title={"Utwórz kartę Huba z „" + selectedSystem.title + "”"}
+        initial={selectedSystem.title}
+        onSave={title => aliasSystemTab(title, selectedSystem.id)} />)}>
+        Utwórz własną wersję z nową nazwą
+      </MenuItem>
+      <MenuItem disabled={busy} onClick={() => {
+        void setSystemTabHidden(selectedSystem.id, true).catch(() =>
+          setError("Nie można ukryć ostatniej karty systemowej."));
+      }}>Ukryj kartę systemową</MenuItem>
+    </>}
     {selected && <>
       <MenuItem disabled={busy} onClick={() => nameEditor(selected.title, selected.id)}>
         Zmień nazwę
       </MenuItem>
-      <MenuGroup label="Filtr karty">
+      {selected.filter !== "system_tab" && <MenuGroup label="Filtr karty">
         {([
           ["all", "Wszystkie gry"], ["installed", "Zainstalowane"],
           ["favorites", "Ulubione"], ["non_steam", "Spoza Steam"]
@@ -246,7 +276,7 @@ export function LibraryCardsContextMenu({ selectedTabId }: { selectedTabId: stri
             ? { ...item, filter: "hub_collection", collection_id: collection.id } : item)); }}>
           {collection.title}
         </MenuItem>)}
-      </MenuGroup>
+      </MenuGroup>}
       <MenuItem disabled={busy || index <= 0} onClick={() => { void move(selected.id, -1); }}>
         Przesuń w lewo
       </MenuItem>
@@ -263,12 +293,18 @@ export function LibraryCardsContextMenu({ selectedTabId }: { selectedTabId: stri
         Usuń kartę
       </MenuItem>
     </>}
-    {tabs.some(tab => tab.hidden) && <MenuGroup label="Pokaż ukryte">
+    {(tabs.some(tab => tab.hidden) || systemTabs.some(tab => tab.hidden)) && <MenuGroup label="Pokaż ukryte">
       {tabs.filter(tab => tab.hidden).map(tab => <MenuItem key={tab.id}
         disabled={busy}
         onClick={() => { void mutate(current => current.map(item =>
           item.id === tab.id ? { ...item, hidden: false } : item)); }}>
         {tab.title}
+      </MenuItem>)}
+      {systemTabs.filter(tab => tab.hidden).map(tab => <MenuItem key={tab.id}
+        disabled={busy}
+        onClick={() => { void setSystemTabHidden(tab.id, false).catch(() =>
+          setError("Nie można pokazać karty Steam.")); }}>
+        Steam · {tab.title}
       </MenuItem>)}
     </MenuGroup>}
   </Menu>;
