@@ -55,7 +55,7 @@ test("path can be edited with A, while status strip is read only", () => {
   assert.ok(ui.includes('event.key === "Escape"'));
   assert.ok(ui.includes('<HubTextInput value={pathDraft}'));
   assert.ok(!ui.includes('>Przejdź</DialogButton>'));
-  assert.ok(ui.includes('onCancelActionDescription={editingPath ? "Zamknij edycję"'));
+  assert.ok(ui.includes('onCancelActionDescription={multiSelect ? "Zakończ zaznaczanie"'));
   assert.ok(ui.includes('aria-label="Stan przeglądarki plików"'));
   assert.ok(ui.includes("Sortowanie: {sortOptions.find("));
   assert.ok(ui.includes('Ukryte: {hidden ? "widoczne" : "niewidoczne"}'));
@@ -127,4 +127,16 @@ test("one Hub keyboard preference switches between Steam and physical input", ()
   assert.ok(hubTextInput.includes('inputMode="none"'));
   assert.ok(ui.includes('import { HubTextInput } from "./HubTextInput"'));
   assert.ok(terminalInput.includes('keyboardOptions.autoKeyboard ? "text" : "none"'));
+});
+
+test("favourites and multi-selection live in Steam menus; B cancels selection", () => {
+  assert.ok(ui.includes('MenuGroup label="Ulubione"'));
+  assert.ok(ui.includes('get_favorite_folders'));
+  assert.ok(ui.includes('set_favorite_folders'));
+  assert.ok(ui.includes('MenuItem onSelected={() => startMultiSelect(entry)}'));
+  assert.ok(ui.includes('markedPaths.includes(entry.path)'));
+  assert.ok(ui.includes('toggleMarked(entry.path)'));
+  assert.ok(ui.includes('pasteMany(clipboard.paths'));
+  assert.ok(ui.includes('Wklej do folderu'));
+  assert.ok(ui.includes('exitMultiSelect()'));
 });
