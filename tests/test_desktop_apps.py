@@ -73,14 +73,14 @@ class DesktopAppsTests(unittest.TestCase):
             "app/org.mozilla.firefox/x86_64/stable/active/export/share/applications/org.mozilla.firefox.desktop")
         installed_file.parent.mkdir(parents=True)
         installed_file.write_text(
-            "[Desktop Entry]\\nType=Application\\nName=Firefox\\n"
-            "Exec=/usr/bin/flatpak run --branch=stable org.mozilla.firefox %U\\n"
-            "X-Flatpak=org.mozilla.firefox\\n", encoding="utf-8"
+            "[Desktop Entry]\nType=Application\nName=Firefox\n"
+            "Exec=/usr/bin/flatpak run --branch=stable org.mozilla.firefox %U\n"
+            "X-Flatpak=org.mozilla.firefox\n", encoding="utf-8"
         )
         (exported / "org.mozilla.firefox.desktop").symlink_to(installed_file)
         self.desktop_file("install-firefox.desktop",
-            "Type=Application\\nName=Install Firefox\\nExec=discover\\n")
-        with patch.dict("os.environ", {"DECKY_USER_HOME": str(self.root)}), \\
+            "Type=Application\nName=Install Firefox\nExec=discover\n")
+        with patch.dict("os.environ", {"DECKY_USER_HOME": str(self.root)}), \
              patch.object(desktop_apps, "application_directories",
                           return_value=[self.apps, exported]):
             found = desktop_apps.list_desktop_apps()
@@ -97,12 +97,12 @@ class DesktopAppsTests(unittest.TestCase):
         exported.mkdir(parents=True)
         target = self.root / "untrusted.desktop"
         target.write_text(
-            "[Desktop Entry]\\nType=Application\\nName=Untrusted\\nExec=anything\\n",
+            "[Desktop Entry]\nType=Application\nName=Untrusted\nExec=anything\n",
             encoding="utf-8"
         )
         (self.apps / "untrusted.desktop").symlink_to(target)
         (exported / "org.example.Evil.desktop").symlink_to(target)
-        with patch.dict("os.environ", {"DECKY_USER_HOME": str(self.root)}), \\
+        with patch.dict("os.environ", {"DECKY_USER_HOME": str(self.root)}), \
              patch.object(desktop_apps, "application_directories",
                           return_value=[self.apps, exported]):
             self.assertEqual(desktop_apps.list_desktop_apps(), [])
@@ -114,7 +114,7 @@ class DesktopAppsTests(unittest.TestCase):
         (exported / "org.example.Missing.desktop").symlink_to(
             install_root / "app/org.example.Missing/missing.desktop"
         )
-        with patch.dict("os.environ", {"DECKY_USER_HOME": str(self.root)}), \\
+        with patch.dict("os.environ", {"DECKY_USER_HOME": str(self.root)}), \
              patch.object(desktop_apps, "application_directories",
                           return_value=[exported]):
             self.assertEqual(desktop_apps.list_desktop_apps(), [])
