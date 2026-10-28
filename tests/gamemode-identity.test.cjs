@@ -29,7 +29,7 @@ test("native SteamOS route and no standalone window are used",()=>{
 });
 
 test("current updater uses release catalog rather than stable-only latest",()=>{
-  assert.match(updater,/releases\\?per_page=50/);
-  assert.doesNotMatch(updater,/releases\\/latest/);
-  assert.match(updater,/backendList\\(channel\\)/);
+  assert.ok(updater.includes("releases?per_page=50"));
+  assert.ok(!updater.includes("releases/latest"));
+  assert.ok(updater.includes("backendList(channel)"));
 });
