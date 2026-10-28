@@ -2,7 +2,19 @@ import { useEffect, useState } from "react";
 import { ButtonItem, PanelSection, PanelSectionRow, TextField, ToggleField } from "@decky/ui";
 import { callable } from "@decky/api";
 
-type TabDefinition = { id: string; title: string; hidden: boolean };
+import {
+  TabDefinition, TabFilter, tabManagerEnabledChanged,
+  tabManagerTabsChanged, tabManagerConflictChanged
+} from "./LibraryIntegration";
+
+const FILTER_LABELS: Record<TabFilter, string> = {
+  all: "Wszystkie gry",
+  installed: "Zainstalowane",
+  favorites: "Ulubione",
+  non_steam: "Spoza Steam",
+  collection: "Kolekcja Steam"
+};
+const SIMPLE_FILTERS: TabFilter[] = ["all", "installed", "favorites", "non_steam"];
 const getEnabled = callable<[], boolean>("get_tab_manager_enabled");
 const setEnabled = callable<[boolean], boolean>("set_tab_manager_enabled");
 const detectTabMaster = callable<[], boolean>("get_tabmaster_installed");
@@ -22,7 +34,7 @@ export function TabManagerModule() {
 
   useEffect(() => {
     let mounted = true;
-    detectTabMaster().then(value => { if (mounted) setConflict(value); }).catch(() => {});
+    detectTabMaster().then(value => { if (mounted) { setConflict(value); tabManagerConflictChanged(value); } }).catch(() => {});
     Promise.all([getEnabled(), getTabs()])
       .then(([value, definitions]) => { if (mounted) { updateEnabled(value); setTabs(definitions); } })
       .catch(() => { if (mounted) setError("Nie udało się odczytać ustawień zakładek."); })
@@ -33,7 +45,7 @@ export function TabManagerModule() {
   async function toggle(value: boolean) {
     setBusy(true);
     setError("");
-    try { updateEnabled(await setEnabled(value)); }
+    try { const stored = await setEnabled(value); updateEnabled(stored); tabManagerEnabledChanged(stored); }
     catch { setError("Błąd zapisu ustawienia."); }
     finally { setBusy(false); }
   }
@@ -41,7 +53,7 @@ export function TabManagerModule() {
   async function persist(next: TabDefinition[]) {
     setBusy(true);
     setError("");
-    try { setTabs(await saveTabs(next)); }
+    try { const stored = await saveTabs(next); setTabs(stored); tabManagerTabsChanged(stored); }
     catch { setError("Błąd zapisu zakładek."); }
     finally { setBusy(false); }
   }
@@ -50,8 +62,19 @@ export function TabManagerModule() {
     const title = name.trim();
     if (!title) return;
     const id = "custom-" + Date.now().toString(36) + "-" + Math.random().toString(36).slice(2, 9);
-    void persist([...tabs, { id, title, hidden: false }]);
+    void persist([...tabs, { id, title, hidden: false, filter: "all", collection_id: "" }]);
     setName("");
+  }
+
+  function quickTab(title: string, filter: TabFilter) {
+    const id = "quick-" + Date.now().toString(36) + "-" + Math.random().toString(36).slice(2, 9);
+    void persist([...tabs, { id, title, hidden: false, filter, collection_id: "" }]);
+  }
+
+  function cycleFilter(tab: TabDefinition) {
+    const index = SIMPLE_FILTERS.indexOf(tab.filter);
+    const next = SIMPLE_FILTERS[(index + 1) % SIMPLE_FILTERS.length];
+    void persist(tabs.map(item => item.id === tab.id ? { ...item, filter: next, collection_id: "" } : item));
   }
 
   function rename(id: string) {
@@ -78,6 +101,8 @@ export function TabManagerModule() {
     {enabled && <>
       <PanelSectionRow><TextField label="Nazwa zakładki" value={name} onChange={event => setName(event.target.value)} /></PanelSectionRow>
       <PanelSectionRow><ButtonItem disabled={busy || !name.trim()} onClick={add}>Dodaj zakładkę</ButtonItem></PanelSectionRow>
+      <PanelSectionRow><ButtonItem disabled={busy} onClick={() => quickTab("Zainstalowane", "installed")}>Quick Tab · Zainstalowane</ButtonItem></PanelSectionRow>
+      <PanelSectionRow><ButtonItem disabled={busy} onClick={() => quickTab("Ulubione", "favorites")}>Quick Tab · Ulubione</ButtonItem></PanelSectionRow>
       {tabs.map((tab, index) => <PanelSectionRow key={tab.id}>
         {editingId === tab.id ? <>
           <TextField label="Nowa nazwa" value={editingTitle} onChange={event => setEditingTitle(event.target.value)} />
@@ -87,13 +112,14 @@ export function TabManagerModule() {
           <div>{tab.title}</div>
           <ButtonItem disabled={busy} onClick={() => { setEditingId(tab.id); setEditingTitle(tab.title); }}>Zmień nazwę</ButtonItem>
         </>}
+        <ButtonItem disabled={busy} onClick={() => cycleFilter(tab)}>Filtr: {FILTER_LABELS[tab.filter] ?? "Wszystkie gry"}</ButtonItem>
         <ToggleField label="Widoczna" checked={!tab.hidden} disabled={busy} onChange={visible => void persist(tabs.map(t => t.id === tab.id ? { ...t, hidden: !visible } : t))} />
         <ButtonItem disabled={busy || index === 0} onClick={() => move(index, -1)}>W górę</ButtonItem>
         <ButtonItem disabled={busy || index === tabs.length - 1} onClick={() => move(index, 1)}>W dół</ButtonItem>
         <ButtonItem disabled={busy} onClick={() => void persist(tabs.filter(t => t.id !== tab.id))}>Usuń</ButtonItem>
       </PanelSectionRow>)}
     </>}
-    <PanelSectionRow><div>Zakładki są obecnie zapisywane w SteamHub. Wyświetlanie ich w bibliotece SteamOS wymaga jeszcze integracji.</div></PanelSectionRow>
+    {conflict && enabled && <PanelSectionRow><div>Integracja z biblioteką jest wstrzymana, dopóki wykrywany jest TabMaster.</div></PanelSectionRow>}
     {error && <PanelSectionRow><div role="alert">{error}</div></PanelSectionRow>}
   </PanelSection>;
 }
