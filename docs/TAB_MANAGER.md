@@ -1,21 +1,18 @@
 # Karty i kolekcje — GameMode Hub
 
-## W bibliotece Steam
+## Biblioteka Gaming Mode
+Zaznacz kartę Steam lub Huba i naciśnij **☰ (Menu)**. Otworzy się natywne menu na wierzchu, podobne do TabMastera (bez niestandardowej zieleni): dodawanie kart, szybkie karty, profile, kolejność oraz ukrywanie/pokazywanie.
 
-Karty dodaje się i edytuje bezpośrednio na ekranie biblioteki Gaming Mode: po włączeniu integracji w **Optymalizacja → Karty** na pasku kart pojawia się **+**. Umożliwia zmianę nazw, kolejności, widoczności, filtrów i przypisywanie kolekcji. To edytor w natywnej bibliotece, nie osobny launcher.
+**Steam:** oryginalne karty są zawsze zachowane; Hub może je tylko ukryć. „Utwórz własną wersję z nową nazwą” zapisuje **nową kartę Huba** z zawartością oryginału i dopiero wtedy ukrywa kartę systemową. Oryginał nie jest przemianowywany ani usuwany. Odtworzenie jest odwracalne.
 
-Natywna integracja jest eksperymentalna i domyślnie wyłączona; nie zmienia istniejących kart Steam. Konflikt z TabMasterem albo brak informacji o aktywnych wtyczkach bezpiecznie ją blokuje.
+**Hub:** karty stworzone przez użytkownika można zmieniać, ukrywać, przenosić, kopiować i usuwać. Kolekcje pozostają niezależne; usunięcie karty nie usuwa kolekcji ani gry.
 
 ## Optymalizacja
+Jeden prosty ekran jak w Opcjach Huba. Sekcja **Karty** zawiera **Zarządzaj** (otwiera bibliotekę i aktywuje integrację, jeśli jest bezpieczna) oraz **Wyświetlaj** (menu ukrywania/pokazywania). Nie ma przełącznika włącz/wyłącz ani dodatkowych zakładek. Stan kart i profile są zapisywane poza UI, aby mogły służyć także przyszłemu launcherowi.
 
-Pojedynczy ekran, analogiczny do Opcji Huba: sekcje Gaming Mode, Karty (włącz/wyłącz), Kolekcje (ich niezależne definicje) i Kopia zapasowa. Nie ma dodatkowych poziomych przycisków Ogólne / Karty / Kolekcje ani pustych podstron.
+## Bezpieczeństwo, konflikt i backup
+TabMaster musi być wyłączony; gdy stan konfliktu jest nieznany, integracja pozostaje wstrzymana. Biblioteka Steam używa niepublicznej struktury, więc niezbędny jest test na Lenovo.
 
-## Kopia zapasowa
+Kopia zapasowa w `~/.config/gamemodehub/backups/library/` zapisuje karty Huba, kolekcje, profile i listę ukrytych kart Steam. Nie zapisuje gier, tokenów ani własnych danych Steam. Przed przywróceniem zapisywana jest dodatkowa kopia bezpieczeństwa.
 
-Ustawienia kart, kolekcji Huba i profile są zapisywane w kopiach JSON pod `~/.config/gamemodehub/backups/library/`. Maksymalnie 20 kopii. Można je skopiować przez Pliki. Przywrócenie tworzy wcześniej dodatkową kopię bezpieczeństwa. Dane logowania, gry, prefixy i oryginalne kolekcje Steam nie są kopiowane.
-
-## Oddzielenie danych
-
-Kolekcje Huba są w `~/.config/gamemodehub/collections.json`. Starsze ustawienia kart i profili nadal w `~/.config/steamhub/` dla zgodności. Usunięcie karty nie usuwa kolekcji; usunięcie kolekcji nie usuwa samej karty.
-
-Technika integracji z niepubliczną strukturą biblioteki Steam pochodzi z adaptacji TabMastera, zgodnie z `THIRD_PARTY_NOTICES.md`. Test na urządzeniu SteamOS nadal obowiązkowy.
+Technika patchowania biblioteki jest adaptacją TabMastera, zgodnie z `THIRD_PARTY_NOTICES.md`.
