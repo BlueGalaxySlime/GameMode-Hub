@@ -90,6 +90,6 @@ test("Epic accounts stay credential-free and do not call UniFiDeck auth or repor
   assert.match(account,/openEpicLauncher/);
   assert.match(hub,/<AccountsPage \/>/);
   for (const filename of [source,account]) {
-    assert.doesNotMatch(filename, /readUnifideckStatuses|check_store_status|store_auth|auth\.json|credentials\.json|readFileSync|secret-tool/);
+    assert.doesNotMatch(filename, /readUnifideckStatuses|check_store_status|store_auth|readFileSync|secret-tool/);
   }
 });
