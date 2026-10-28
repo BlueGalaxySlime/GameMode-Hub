@@ -2,8 +2,6 @@ import { useRef, useState } from "react";
 import { FaTools } from "react-icons/fa";
 import { ButtonItem, PanelSection, PanelSectionRow, staticClasses } from "@decky/ui";
 import { callable, definePlugin } from "@decky/api";
-import { TabManagerModule } from "./modules/tab-manager/TabManagerModule";
-import { startTabManager, stopTabManager } from "./modules/tab-manager/LibraryIntegration";
 import { RequestTimeoutError, withTimeout } from "./utils/withTimeout";
 
 type UpdateResult = {
@@ -14,7 +12,7 @@ type DeckyInstaller = {
   callable: (method: string) => (...args: unknown[]) => Promise<unknown>;
 };
 const checkUpdates = callable<[], UpdateResult>("check_updates");
-const VERSION = "0.3.2";
+const VERSION = "0.3.3";
 
 function Content() {
   const [message, setMessage] = useState("Nie sprawdzono aktualizacji.");
@@ -22,6 +20,7 @@ function Content() {
   const [busy, setBusy] = useState(false);
   const [lastChecked, setLastChecked] = useState<string | null>(null);
   const inProgress = useRef(false);
+
   async function check() {
     if (inProgress.current) return;
     inProgress.current = true;
@@ -40,7 +39,7 @@ function Content() {
       } else setMessage("SteamHub " + VERSION + " jest aktualny. Korzystasz z najnowszej wersji.");
     } catch (error) {
       setMessage(error instanceof RequestTimeoutError
-        ? "Sprawdzanie trwało zbyt długo. Spróbuj ponownie lub sprawdź połączenie z Internetem."
+        ? "Upłynął czas oczekiwania na odpowiedź. Możesz sprawdzić ponownie."
         : "Błąd komunikacji z wtyczką: " + (error instanceof Error ? error.message : String(error)));
     } finally {
       setLastChecked(new Date().toLocaleString("pl-PL"));
@@ -71,13 +70,9 @@ function Content() {
   }
 
   return <>
-    <PanelSection title="SteamHub · 0.3.2">
-      <PanelSectionRow><div>Tab Manager jest eksperymentalny i wymaga weryfikacji na SteamOS.</div></PanelSectionRow>
+    <PanelSection title="SteamHub · 0.3.3">
+      <PanelSectionRow><div>Przywrócony aktualizator. Moduły zostaną udostępnione w kolejnym wydaniu.</div></PanelSectionRow>
     </PanelSection>
-    <PanelSection title="Moduły (w przygotowaniu)">
-      <PanelSectionRow><div>Game Manager · Library Manager · Terminal</div></PanelSectionRow>
-    </PanelSection>
-    <TabManagerModule />
     <PanelSection title="Aktualizacje">
       <PanelSectionRow><div role="status" aria-live="polite">{message}</div></PanelSectionRow>
       <PanelSectionRow><div>{lastChecked ? "Ostatnia próba: " + lastChecked : "Nie wykonano jeszcze sprawdzenia."}</div></PanelSectionRow>
@@ -87,13 +82,9 @@ function Content() {
   </>;
 }
 
-export default definePlugin(() => {
-  void startTabManager();
-  return {
+export default definePlugin(() => ({
   name: "SteamHub",
   titleView: <div className={staticClasses.Title}>SteamHub</div>,
   content: <Content />,
   icon: <FaTools />,
-  onDismount: stopTabManager,
-  };
-});
+}));
