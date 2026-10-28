@@ -1,9 +1,10 @@
 import { useEffect, useRef, useState, useSyncExternalStore } from "react";
 import { callable } from "@decky/api";
-import { DialogBody, DialogButton, DialogControlsSection, Focusable, Menu, MenuItem, NavEntryPositionPreferences, showContextMenu, TextField, Toggle } from "@decky/ui";
+import { DialogBody, DialogButton, DialogControlsSection, Focusable, Menu, MenuGroup, MenuItem, NavEntryPositionPreferences, showContextMenu, TextField } from "@decky/ui";
 import { withTimeout } from "../utils/withTimeout";
 import { breadcrumbs } from "../core/filePath";
-import { getHubPreferences, subscribeHubPreferences } from "../core/hubSession";
+import { applyHubPreferences, getHubPreferences, readHubSession, subscribeHubPreferences, writeHubSession } from "../core/hubSession";
+import type { HubPreferences } from "../core/hubSession";
 import { useHubSessionState } from "./useHubSessionState";
 
 type SortBy = "name" | "type" | "size" | "date";
@@ -24,6 +25,7 @@ const fileList = callable<
 const makeFolder = callable<[string, string], { path: string }>("files_mkdir");
 const renameFile = callable<[string, string], { path: string }>("files_rename");
 const pasteFile = callable<[string, string, "copy" | "move"], { path: string }>("files_paste");
+const saveHubOptions = callable<[HubPreferences], HubPreferences>("set_hub_preferences");
 
 const sortOptions = [
   { data:"name-asc", label:"Nazwa A–Z", by:"name", descending:false },
@@ -44,6 +46,23 @@ function readableSize(size: number | null) {
   return (size / (1024 * 1024 * 1024)).toFixed(1) + " GB";
 }
 
+function ParentDirectoryRow({ parent, disabled, onOpen }: {
+  parent: string | null;
+  disabled: boolean;
+  onOpen: (path: string) => void;
+}) {
+  if (!parent) return null;
+  return <DialogButton disabled={disabled} aria-label="Katalog wyżej"
+    onOKActionDescription="Katalog wyżej"
+    style={{ width: "100%", minWidth: 0, textAlign: "left", padding: "7px 9px" }}
+    onClick={() => onOpen(parent)}>
+    <span style={{ display: "flex", alignItems: "center", gap: 9, minWidth: 0 }}>
+      <span style={{ fontWeight: 700 }}>...</span>
+      <span style={{ fontSize: 12, opacity: 0.75 }}>Katalog wyżej</span>
+    </span>
+  </DialogButton>;
+}
+
 export function FileManagerPage() {
   // Remember the whole browser state across SidebarNavigation tab unmounts.
   // Clipboard and selection are RAM-only, never serialized to disk.
@@ -61,8 +80,28 @@ export function FileManagerPage() {
   const splitTree = options.splitFileTree;
   const [message, setMessage] = useState("");
   const [busy, setBusy] = useState(false);
+  const [savingSplit, setSavingSplit] = useState(false);
   const request = useRef(0);
   const locked = useRef(false);
+  const treeScrollRef = useRef<HTMLDivElement>(null);
+  const fileScrollRef = useRef<HTMLDivElement>(null);
+
+  async function changeSplitTree(enabled: boolean) {
+    if (savingSplit) return;
+    const previous = getHubPreferences();
+    const next = applyHubPreferences({ ...previous, splitFileTree: enabled });
+    setSavingSplit(true);
+    setMessage("");
+    try {
+      const saved = await withTimeout(saveHubOptions(next), 4000);
+      applyHubPreferences(saved);
+    } catch {
+      applyHubPreferences(previous);
+      setMessage("Nie udało się zapisać ustawienia podziału drzewa plików.");
+    } finally {
+      setSavingSplit(false);
+    }
+  }
 
   async function load(path: string | null, showHidden: boolean,
     offset = 0, order: SortBy = sortBy, reverse = descending) {
@@ -78,6 +117,12 @@ export function FileManagerPage() {
       if (!response || !Array.isArray(response.items) || typeof response.path !== "string") {
         throw new Error("Nieprawidłowa odpowiedź systemu plików.");
       }
+      // Directory navigation and sorting begin at the top; switching Hub
+      // tabs instead restores the saved scroll position for each pane.
+      writeHubSession("files.treeScrollTop", 0);
+      writeHubSession("files.listScrollTop", 0);
+      if (treeScrollRef.current) treeScrollRef.current.scrollTop = 0;
+      if (fileScrollRef.current) fileScrollRef.current.scrollTop = 0;
       setPage(response);
       setPathDraft(response.path);
       setSelected(null);
@@ -99,6 +144,16 @@ export function FileManagerPage() {
     if (!page) void load(null, hidden, 0, sortBy, descending);
     return () => { request.current++; };
   }, []);
+
+  useEffect(() => {
+    if (!page) return;
+    if (treeScrollRef.current) {
+      treeScrollRef.current.scrollTop = readHubSession("files.treeScrollTop", 0);
+    }
+    if (fileScrollRef.current) {
+      fileScrollRef.current.scrollTop = readHubSession("files.listScrollTop", 0);
+    }
+  }, [page?.path, page?.offset, splitTree]);
 
   async function operate(operation: "mkdir" | "rename" | "paste") {
     if (!page || locked.current) return;
@@ -149,17 +204,54 @@ export function FileManagerPage() {
     void load(page?.path ?? null, hidden, 0, option.by, option.descending);
   }
 
-  // The same native SteamOS popup is used for sort and file actions.
-  // It overlays the browser rather than adding scrollable rows or a new page.
-  function openSortMenu(parent: EventTarget) {
+  function changeHidden(show: boolean) {
+    if (show === hidden) return;
+    setHidden(show);
+    void load(page?.path ?? null, show);
+  }
+
+  // Native Steam menu, like the existing menu on a folder/file row.
+  // MenuGroup opens its choices in a right-hand submenu, as in Gaming Mode.
+  function openBrowserMenu(parent: EventTarget) {
     if (busy) return;
+    const shortcuts = page?.roots.filter(root => !breadcrumbs(page.path, page.roots)
+      .some(part => part.path === root.path)) ?? [];
     showContextMenu(
-      <Menu label="Sortuj" cancelText="Wstecz">
-        {sortOptions.map(option =>
-          <MenuItem key={option.data} selected={sortMode === option.data}
-            onSelected={() => changeSort(option)}>
-            {option.label}
-          </MenuItem>)}
+      <Menu label="Opcje plików" cancelText="Wstecz">
+        <MenuItem disabled={!page} onSelected={() => {
+          setAction("folder");
+          setName("");
+          setSelected(null);
+          setMessage("");
+        }}>Nowy folder...</MenuItem>
+        <MenuGroup label="Pokaż ukryte">
+          <MenuItem selected={!hidden} onSelected={() => changeHidden(false)}>
+            Wyłączone
+          </MenuItem>
+          <MenuItem selected={hidden} onSelected={() => changeHidden(true)}>
+            Włączone
+          </MenuItem>
+        </MenuGroup>
+        <MenuGroup label="Podziel ekran">
+          <MenuItem selected={!splitTree} disabled={savingSplit}
+            onSelected={() => { void changeSplitTree(false); }}>Wyłączone</MenuItem>
+          <MenuItem selected={splitTree} disabled={savingSplit}
+            onSelected={() => { void changeSplitTree(true); }}>Włączone</MenuItem>
+        </MenuGroup>
+        <MenuGroup label="Sortowanie">
+          {sortOptions.map(option =>
+            <MenuItem key={option.data} selected={sortMode === option.data}
+              onSelected={() => changeSort(option)}>
+              {option.label}
+            </MenuItem>)}
+        </MenuGroup>
+        {shortcuts.length > 0 &&
+          <MenuGroup label="Lokalizacje">
+            {shortcuts.map(root =>
+              <MenuItem key={root.path} onSelected={() => { void load(root.path, hidden); }}>
+                {root.name}
+              </MenuItem>)}
+          </MenuGroup>}
       </Menu>,
       parent,
       { bFitToWindow: true, bShiftToFitWindow: true, bPreferPopTop: true }
@@ -205,16 +297,29 @@ export function FileManagerPage() {
             void load(page?.path ?? null, hidden, page?.offset ?? 0);
           }
         }}>
-        {/* Address is optionally editable by Steam keyboard; folders open with A. */}
-        <TextField value={pathDraft} placeholder="/home/deck/…"
-          aria-label="Ścieżka katalogu"
-          onChange={event => setPathDraft(event.target.value)}
-          onKeyDown={event => {
-            if (event.key === "Enter") {
-              event.preventDefault();
-              void load(pathDraft, hidden);
-            }
-          }} />
+        {/* Focus the address field and press Y for the native file options menu.
+            A/keyboard editing of the path still works as before. */}
+        <Focusable flow-children="column"
+          onOptionsActionDescription="Opcje plików"
+          onOptionsButton={event => {
+            event.preventDefault();
+            event.stopPropagation();
+            openBrowserMenu(event.currentTarget ?? window);
+          }}
+          onContextMenu={event => {
+            event.preventDefault();
+            openBrowserMenu(event.currentTarget);
+          }}>
+          <TextField value={pathDraft} placeholder="/home/deck/…"
+            aria-label="Ścieżka katalogu — Y: opcje plików"
+            onChange={event => setPathDraft(event.target.value)}
+            onKeyDown={event => {
+              if (event.key === "Enter") {
+                event.preventDefault();
+                void load(pathDraft, hidden);
+              }
+            }} />
+        </Focusable>
 
         {/* Each breadcrumb is a focusable controller target, within allowed roots. */}
         {!!page && <div style={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: 4, minWidth: 0 }}>
@@ -230,42 +335,13 @@ export function FileManagerPage() {
             </div>)}
         </div>}
 
-        {/* Same compact toolbar as SteamOS settings. Native controller dropdown. */}
-        <Focusable flow-children="right"
-          navEntryPreferPosition={NavEntryPositionPreferences.MAINTAIN_X}
+        {/* Read-only status; commands live in the Y context menu on the path. */}
+        <div aria-label="Stan przeglądarki plików"
           style={{ display: "flex", flexWrap: "wrap", alignItems: "center",
-            gap: 5, width: "100%", minWidth: 0 }}>
-          {page?.roots.filter(root => !breadcrumbs(page.path, page.roots)
-            .some(part => part.path === root.path)).map(root =>
-            <div key={root.path} style={{ flex: "0 0 auto", width: "auto" }}>
-              <DialogButton disabled={busy}
-                style={{ width: "auto", minWidth: 0, padding: "5px 8px" }}
-                onClick={() => void load(root.path, hidden)}>{root.name}</DialogButton>
-            </div>)}
-          <div style={{ flex: "0 0 auto", width: "auto" }}>
-            <DialogButton disabled={busy || !page}
-              style={{ width: "auto", minWidth: 0, padding: "5px 8px" }}
-              onClick={() => { setAction("folder"); setName(""); setSelected(null); setMessage(""); }}>
-              + Folder
-            </DialogButton>
-          </div>
-          <label style={{ display: "inline-flex", flex: "0 0 auto",
-            gap: 4, alignItems: "center", fontSize: 12 }}>
-            Ukryte
-            <Toggle value={hidden} disabled={busy} onChange={value => {
-              setHidden(value);
-              void load(page?.path ?? null, value);
-            }} />
-          </label>
-          <div style={{ flex: "0 0 auto", width: "auto", maxWidth: 205 }}>
-            <DialogButton disabled={busy}
-              onOKActionDescription="Sortuj"
-              style={{ minWidth: 0, width: "auto", padding: "5px 9px" }}
-              onClick={event => openSortMenu(event.currentTarget ?? window)}>
-              Sortuj: {sortOptions.find(option => option.data === sortMode)?.label ?? "Nazwa A–Z"} ▾
-            </DialogButton>
-          </div>
-        </Focusable>
+            gap: 14, fontSize: 12, opacity: 0.78, minHeight: 23 }}>
+          <span>Sortowanie: {sortOptions.find(option => option.data === sortMode)?.label ?? "Nazwa A–Z"}</span>
+          <span>Ukryte: {hidden ? "widoczne" : "niewidoczne"}</span>
+        </div>
 
         {action === "folder" && <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
           <TextField value={name} placeholder="Nazwa folderu"
@@ -288,25 +364,28 @@ export function FileManagerPage() {
           </DialogButton>
         </div>}
 
-        {/* Only this directory-browser area is split, never the toolbar or Hub. */}
-        {page && <Focusable flow-children={splitTree ? "right" : undefined}
+        {/* The options toolbar stays above this fixed-height browser area.
+            D-pad up/down traverses a pane; left/right changes panes. */}
+        {page && <Focusable flow-children={splitTree ? "row" : "column"}
           navEntryPreferPosition={NavEntryPositionPreferences.MAINTAIN_Y}
           style={{ display: "flex", flexDirection: splitTree ? "row" : "column",
             alignItems: "stretch", gap: splitTree ? 8 : 0,
-            width: "100%", minWidth: 0 }}>
-          {splitTree && <Focusable flow-children="down"
+            width: "100%", minWidth: 0, height: "min(54vh, 540px)",
+            minHeight: 160, overflow: "hidden" }}>
+          {splitTree && <Focusable flow-children="column"
             navEntryPreferPosition={NavEntryPositionPreferences.MAINTAIN_Y}
             style={{ width: "34%", minWidth: 125, flex: "0 0 34%",
-              paddingRight: 7, borderRight: "1px solid #444",
-              maxHeight: "56vh", overflowY: "auto", display: "flex",
-              flexDirection: "column", gap: 3 }}>
-            <DialogButton disabled={busy || !page.parent}
-              onOKActionDescription="W górę"
-              style={{ width: "100%", minWidth: 0, textAlign: "left", padding: "6px 8px" }}
-              onClick={() => { if (page.parent) void load(page.parent, hidden); }}>..</DialogButton>
+              height: "100%", overflow: "hidden",
+              paddingRight: 7, borderRight: "1px solid #444" }}>
+            <div ref={treeScrollRef}
+              onScroll={event => writeHubSession("files.treeScrollTop", event.currentTarget.scrollTop)}
+              style={{ height: "100%", overflowY: "auto", overscrollBehavior: "contain",
+                display: "flex", flexDirection: "column", gap: 3, paddingBottom: 48 }}>
+              <ParentDirectoryRow parent={page.parent} disabled={busy}
+                onOpen={parent => { void load(parent, hidden); }} />
             {page.items.filter(entry => entry.directory).map(entry =>
               selected?.path === entry.path && action === "rename"
-                ? <Focusable key={entry.path} flow-children="right"
+                ? <Focusable key={entry.path} flow-children="row"
                     navEntryPreferPosition={NavEntryPositionPreferences.MAINTAIN_X}
                     style={{ display: "flex", gap: 3, alignItems: "center" }}>
                     <div style={{ flex: "1 1 0", minWidth: 0 }}>
@@ -337,18 +416,23 @@ export function FileManagerPage() {
                         whiteSpace: "nowrap" }}>{entry.name}</span>
                     </span>
                   </DialogButton>)}
+            </div>
           </Focusable>}
-          <Focusable flow-children="down"
+          <Focusable flow-children="column"
             navEntryPreferPosition={NavEntryPositionPreferences.MAINTAIN_Y}
-            style={{ display: "flex", flexDirection: "column", gap: 3,
-              flex: "1 1 0", minWidth: 0,
-              maxHeight: splitTree ? "56vh" : undefined,
-              overflowY: splitTree ? "auto" : undefined }}>
+            style={{ display: "flex", flex: "1 1 0", minWidth: 0,
+              height: "100%", overflow: "hidden" }}>
+            <div ref={fileScrollRef}
+              onScroll={event => writeHubSession("files.listScrollTop", event.currentTarget.scrollTop)}
+              style={{ height: "100%", overflowY: "auto", overscrollBehavior: "contain",
+                display: "flex", flexDirection: "column", gap: 3, paddingBottom: 48 }}>
+              <ParentDirectoryRow parent={page.parent} disabled={busy}
+                onOpen={parent => { void load(parent, hidden); }} />
             {(splitTree ? page.items.filter(entry => !entry.directory) : page.items)
               .map(entry =>
               <div key={entry.path} style={{ width: "100%", minWidth: 0 }}>
                 {selected?.path === entry.path && action === "rename" ? (
-                  <Focusable flow-children="right"
+                  <Focusable flow-children="row"
                     navEntryPreferPosition={NavEntryPositionPreferences.MAINTAIN_X}
                     style={{ display: "flex", alignItems: "center", gap: 5, minWidth: 0 }}>
                     <div style={{ flex: "1 1 0", minWidth: 0 }}>
@@ -405,8 +489,9 @@ export function FileManagerPage() {
                   </DialogButton>
                 )}
               </div>)}
-            {page.items.length === 0 && !busy &&
+            {(splitTree ? page.items.every(entry => entry.directory) : page.items.length === 0) && !busy &&
               <div style={{ opacity: 0.7, padding: 6 }}>Pusty folder</div>}
+            </div>
           </Focusable>
         </Focusable>}
 
