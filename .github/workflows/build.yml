@@ -28,7 +28,9 @@ jobs:
       - name: Build Decky frontend
         run: npm run build
       - name: Check Python syntax
-        run: python3 -m py_compile main.py
+        run: python3 -m py_compile main.py tab_manager.py
+      - name: Test backend
+        run: python3 -m unittest discover -s tests -v
       - name: Create Decky plugin ZIP
         run: python3 scripts/package.py
       - uses: actions/upload-artifact@v4
