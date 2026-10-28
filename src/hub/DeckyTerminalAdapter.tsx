@@ -1,6 +1,7 @@
 import { DialogBody, DialogButton, DialogControlsSection, DialogControlsSectionHeader, Field, SliderField } from "@decky/ui";
 import { useHubSessionState } from "./useHubSessionState";
 import { FocusableInfoField } from "./FocusableInfoField";
+import { GamepadScrollArea } from "./GamepadScrollArea";
 
 /**
  * Emergency safe mode. Do not mount xterm, query Decky RPC or create PTYs.
@@ -12,7 +13,8 @@ import { FocusableInfoField } from "./FocusableInfoField";
 export function DeckyTerminalPage({ fontSize: _fontSize }: { fontSize: number }) {
   const [selected, setSelected] = useHubSessionState("terminal.selected",0);
   return <DialogBody>
-    <DialogControlsSection>
+    <GamepadScrollArea>
+      <DialogControlsSection>
       <DialogControlsSectionHeader>Terminal — tryb bezpieczny</DialogControlsSectionHeader>
       <Field label="Sesja terminala" description="Wybierz sesję 1, 2 lub 3. Uruchamianie powłoki jest tymczasowo wstrzymane.">
         <div style={{ display: "flex", gap: 6 }}>
@@ -28,7 +30,8 @@ export function DeckyTerminalPage({ fontSize: _fontSize }: { fontSize: number })
         description="Na nagraniu z Legion Go S widać przed restartem traceback Pythona ze ścieżkami Unifideck. Nie wiemy jeszcze, czy jest on przyczyną awarii, czy tylko jej objawem." />
       <FocusableInfoField label="Pozostałe funkcje"
         description="Pulpit, Dodatki, Aktualizacje i Podziękowania działają niezależnie od wyłączonego modułu terminala." />
-    </DialogControlsSection>
+      </DialogControlsSection>
+    </GamepadScrollArea>
   </DialogBody>;
 }
 
@@ -37,13 +40,15 @@ export function TerminalOptionsPage({ fontSize, setFontSize }: {
   setFontSize(value: number): void;
 }) {
   return <DialogBody>
-    <DialogControlsSection>
+    <GamepadScrollArea>
+      <DialogControlsSection>
       <DialogControlsSectionHeader>Opcje terminala</DialogControlsSectionHeader>
       <FocusableInfoField label="Tryb bezpieczny" description="Moduł PTY i emulator xterm.js są tymczasowo wyłączone, aby nie narażać interfejsu Steam na kolejne restarty." />
       <Field label="Rozmiar czcionki" description="Ustawienie zostanie wykorzystane po przywróceniu działania terminala.">
         <SliderField min={11} max={22} step={1} value={fontSize}
           showValue onChange={setFontSize} />
       </Field>
-    </DialogControlsSection>
+      </DialogControlsSection>
+    </GamepadScrollArea>
   </DialogBody>;
 }
