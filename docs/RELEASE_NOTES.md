@@ -1,4 +1,11 @@
-# SteamHub 0.4.3
+# SteamHub 0.4.4
+
+- Pliki (Decky Manager) i Terminal (Decky Terminal) mają dedykowane sekcje w menu.
+- Po wybraniu sekcji panel wtyczki wyświetla się bezpośrednio po prawej, jeśli Decky udostępnia jej interfejs.
+- Opcje zaawansowane są rozwijane; niedostępne lub wyłączone wtyczki pokazują zrozumiały komunikat.
+- Nie instalujemy ani nie modyfikujemy obcych wtyczek.
+
+
 
 Hotfix: sprawdzanie aktualizacji przez Steam WebView z zapasową ścieżką przez backend Decky.
 
