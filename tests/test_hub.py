@@ -45,15 +45,28 @@ class HubSelectionTests(unittest.TestCase):
 
     def test_hub_options_defaults_persist_and_validate(self):
         with patch.object(hub_settings, "HUB_PREFERENCES_FILE", Path(self.root.name) / "prefs.json"):
-            self.assertEqual(hub_settings.get_hub_preferences(),
-                             {"saveSession": True, "splitFileTree": False})
-            chosen = {"saveSession": False, "splitFileTree": True}
+            defaults = {"saveSession": True, "splitFileTree": False, "autoKeyboard": True}
+            self.assertEqual(hub_settings.get_hub_preferences(), defaults)
+            chosen = {"saveSession": False, "splitFileTree": True, "autoKeyboard": False}
             self.assertEqual(hub_settings.set_hub_preferences(chosen), chosen)
             self.assertEqual(hub_settings.get_hub_preferences(), chosen)
             for bad in ({}, {"saveSession": "false", "splitFileTree": True},
+                        {"autoKeyboard": "false"},
                         {"saveSession": True, "splitFileTree": False, "extra": 1}):
                 with self.subTest(bad=bad), self.assertRaises(ValueError):
                     hub_settings.set_hub_preferences(bad)
+
+    def test_hub_options_migrate_two_key_prefs_without_resetting_split(self):
+        path = Path(self.root.name) / "prefs.json"
+        with patch.object(hub_settings, "HUB_PREFERENCES_FILE", path):
+            path.write_text(json.dumps({"saveSession": False, "splitFileTree": True}))
+            self.assertEqual(hub_settings.get_hub_preferences(),
+                             {"saveSession": False, "splitFileTree": True, "autoKeyboard": True})
+            saved = hub_settings.set_hub_preferences({
+                "saveSession": False, "splitFileTree": True, "autoKeyboard": False
+            })
+            self.assertFalse(saved["autoKeyboard"])
+            self.assertEqual(hub_settings.get_hub_preferences(), saved)
 
     def test_reject_invalid_input(self):
         for invalid in ("a", {}, [8], [""], ["x" * 101]):
