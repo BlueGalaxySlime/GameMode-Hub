@@ -230,10 +230,6 @@ export function DesktopPage() {
               onOptionsActionDescription="Opcje"
               onOptionsButton={event => openAppMenu(app, event.currentTarget ?? window)}
               onClick={() => { void run(app); }}
-              onContextMenu={event => {
-                event.preventDefault();
-                openAppMenu(app, event.currentTarget);
-              }}
               style={{ width: "100%", minWidth: 0, padding: "7px 9px", textAlign: "left" }}>
               <span style={{ display: "flex", gap: 8, alignItems: "center", minWidth: 0 }}>
                 <span aria-hidden="true">{app.flatpak ? "📦" : "🖥️"}</span>
