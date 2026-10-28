@@ -41,6 +41,19 @@ class TabManagerTests(unittest.TestCase):
         self.assertEqual(tab_manager.save_tabs(tabs), tab_manager.read_tabs())
         self.assertEqual(tab_manager.save_tabs(list(reversed(tabs)))[0]["id"], "b")
 
+    def test_filters_persist(self):
+        tabs = [{"id": "fav", "title": "Ulubione", "filter": "favorites"}]
+        self.assertEqual(tab_manager.save_tabs(tabs)[0]["filter"], "favorites")
+        self.assertEqual(tab_manager.read_tabs()[0]["filter"], "favorites")
+
+    def test_reject_unknown_filter(self):
+        with self.assertRaises(ValueError):
+            tab_manager.save_tabs([{"id": "x", "title": "A", "filter": "unknown"}])
+
+    def test_reject_incomplete_collection_filter(self):
+        with self.assertRaises(ValueError):
+            tab_manager.save_tabs([{"id": "x", "title": "A", "filter": "collection"}])
+
     def test_reject_duplicate_ids(self):
         with self.assertRaises(ValueError):
             tab_manager.save_tabs([{"id": "x", "title": "A"}, {"id": "x", "title": "B"}])
