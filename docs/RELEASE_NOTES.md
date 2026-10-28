@@ -1,3 +1,10 @@
+# SteamHub 0.4.12
+
+- Dopracowano zachowanie sesji podczas szybkiego przełączania terminali oraz powrotu do Huba w trakcie łączenia z backendem.
+- Stan powłoki jest synchronizowany z pamięcią sesji po powrocie do terminala, bez ponownego uruchamiania tej samej sesji.
+- Wysyłanie znaków do terminala korzysta bezpośrednio z identyfikatora zapamiętanej sesji, również po odtworzeniu widoku.
+- Zachowano trzy sesje 1/2/3, czyszczenie ekranu bez zamykania sesji, brak pełnego ekranu oraz blokadę powtarzanych nieodpowiadających wywołań Decky.
+
 # SteamHub 0.4.11
 
 - Usunięto niedziałającą funkcję pełnego ekranu terminala i przycisk „Ponów”, którego użycie mogło zawiesić SteamOS.

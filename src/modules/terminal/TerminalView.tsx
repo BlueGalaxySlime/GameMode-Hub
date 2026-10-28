@@ -53,7 +53,8 @@ export function TerminalView({ bridge, render, fontSize = 15, autoStart = false,
   const [advanced, setAdvanced] = useState(false);
 
   function send(value: string) {
-    const id = session.current;
+    // Slot ownership survives page unmount and remount; a local ref may be stale.
+    const id = slot.id;
     if (!id || !value) return;
     // Preserve order when a terminal sends multiple keystrokes quickly.
     // Individual calls remain below the backend's 4096-byte input limit.
@@ -168,6 +169,21 @@ export function TerminalView({ bridge, render, fontSize = 15, autoStart = false,
     } catch { /* Window may temporarily be hidden by Steam. */ }
   }, [fontSize, visible, bridge]);
 
+  // A start request may finish while the user is viewing another Hub page.
+  // On return, reconcile component state with the persistent slot; never
+  // issue another start request merely because the React page remounted.
+  useEffect(() => {
+    const timer = window.setInterval(() => {
+      if (!mounted.current) return;
+      setActive(slot.phase === "connected");
+      setPending(slot.phase === "starting");
+      if (slot.error) setStatus(slot.error);
+      else if (slot.phase === "connected") setStatus("Sesja aktywna");
+      else if (slot.phase === "ended") setStatus("Powłoka zakończyła działanie");
+    }, 350);
+    return () => window.clearInterval(timer);
+  }, [slotNumber]);
+
   useEffect(() => {
     if (autoStart && visible && slot.phase === "idle" && !getBackendError()) {
       void openSession();
@@ -246,7 +262,7 @@ export function TerminalView({ bridge, render, fontSize = 15, autoStart = false,
   }
 
   async function closeSession() {
-    const id = session.current;
+    const id = slot.id;
     session.current = null;
     slot.id = null;
     slot.phase = "ended";

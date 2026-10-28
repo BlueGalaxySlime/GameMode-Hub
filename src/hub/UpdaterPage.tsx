@@ -6,7 +6,7 @@ import {
 } from "@decky/ui";
 import { RequestTimeoutError, withTimeout } from "../utils/withTimeout";
 
-const VERSION = "0.4.11";
+const VERSION = "0.4.12";
 type UpdateResult = {
   current: string;
   latest: string | null;
