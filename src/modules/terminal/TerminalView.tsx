@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import type { ReactNode } from "react";
 import { Terminal } from "@xterm/xterm";
 import { FitAddon } from "@xterm/addon-fit";
@@ -28,12 +28,13 @@ export interface TerminalLayoutState {
 }
 
 /** A Linux desktop frontend can provide its own presentation renderer. */
-export function TerminalView({ bridge, render, fontSize = 15, autoStart = false, visible = true }: {
+export function TerminalView({ bridge, render, fontSize = 15, autoStart = false, visible = true, fullScreen = false }: {
   bridge: TerminalBridge;
   render?: (state: TerminalLayoutState) => ReactNode;
   fontSize?: number;
   autoStart?: boolean;
   visible?: boolean;
+  fullScreen?: boolean;
 }) {
   const host = useRef<HTMLDivElement>(null);
   const term = useRef<Terminal | null>(null);
@@ -82,8 +83,7 @@ export function TerminalView({ bridge, render, fontSize = 15, autoStart = false,
     term.current = instance;
     fit.current = addon;
     try { addon.fit(); } catch { /* Hidden Steam route may not have dimensions yet. */ }
-    instance.writeln("SteamOS Hub — niezależny terminal Linux");
-    instance.writeln("Sesja uruchomi się tylko po wybraniu przycisku.\r\n");
+    instance.writeln("SteamOS Hub — Linux PTY\r\n");
     const subscription = instance.onData(send);
 
     const refreshSize = () => {
@@ -135,6 +135,26 @@ export function TerminalView({ bridge, render, fontSize = 15, autoStart = false,
     };
     // Only mount/unmount owns session lifetime. Font changes must not restart it.
   }, [bridge]);
+
+  // React may move the terminal viewport into a fullscreen portal.
+  // Keep xterm's existing DOM and backing PTY instead of recreating them.
+  useLayoutEffect(() => {
+    const instance = term.current;
+    const container = host.current;
+    if (!instance || !container) return;
+    if (instance.element && !container.contains(instance.element)) {
+      container.appendChild(instance.element);
+    }
+    if (!visible) return;
+    const frame = window.requestAnimationFrame(() => {
+      try {
+        fit.current?.fit();
+        const id = session.current;
+        if (id) void bridge.resize(id, instance.cols, instance.rows).catch(() => undefined);
+      } catch { /* Route may still be transitioning. */ }
+    });
+    return () => window.cancelAnimationFrame(frame);
+  }, [fullScreen, visible, bridge]);
 
   useEffect(() => {
     if (!visible) return;

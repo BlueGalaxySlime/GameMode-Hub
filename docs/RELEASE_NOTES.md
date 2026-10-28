@@ -1,3 +1,12 @@
+# SteamHub 0.4.10
+
+- Przywrócono widoczne podświetlenie fokusu: usunięto noFocusRing, a pasek terminala jest natywną grupą Focusable z nawigacją poziomą SteamOS.
+- LB/RB mają niewielkie przyciski ze strzałkami, równe przyciskom klawiatury i pełnego ekranu; fizyczne bumpery nadal przełączają sesje.
+- Pełny ekran otwiera terminal w portalu na poziomie dokumentu, poza elementem SidebarNavigation, który ucinał górę interfejsu.
+- Podczas przełączania pełnego ekranu zachowujemy istniejący terminal xterm i sesję PTY, przenosząc jego DOM do nowego kontenera.
+- Usunięto przestarzały komunikat sugerujący ręczne uruchomienie terminala.
+- Wciąż wymagane sprawdzenie zachowania nawigacji kontrolerem i klawiatury na Legion Go S.
+
 # SteamHub 0.4.9
 
 - Usunięto własną klawiaturę ekranową Huba. Ikona klawiatury używa natywnego pola wejściowego SteamOS — technika zaadaptowana z Decky Terminal (BSD-3-Clause).

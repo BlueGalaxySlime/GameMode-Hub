@@ -1,10 +1,11 @@
-import { useEffect, useRef, useState } from "react";
+import { useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { callable } from "@decky/api";
 import {
   DialogBody, DialogButton, DialogControlsSection, Field,
-  Focusable, GamepadButton, SliderField, TextField
+  Focusable, GamepadButton, NavEntryPositionPreferences, SliderField, TextField
 } from "@decky/ui";
-import { FaCompress, FaExpand, FaKeyboard, FaPlus } from "react-icons/fa";
+import { FaChevronLeft, FaChevronRight, FaCompress, FaExpand, FaKeyboard, FaPlus } from "react-icons/fa";
 import { TerminalView } from "../modules/terminal/TerminalView";
 import type { TerminalLayoutState } from "../modules/terminal/TerminalView";
 import type { TerminalBridge, TerminalRead } from "../modules/terminal/bridge";
@@ -78,12 +79,11 @@ function SteamKeyboard({ state, buttonStyle }: {
 }
 
 function SessionPane({
-  state, number, index, count, selected, fullScreen, canAdd,
+  state, number, count, selected, fullScreen, canAdd,
   add, previous, next, toggleFullscreen
 }: {
   state: TerminalLayoutState;
   number: number;
-  index: number;
   count: number;
   selected: boolean;
   fullScreen: boolean;
@@ -93,42 +93,40 @@ function SessionPane({
   next(): void;
   toggleFullscreen(): void;
 }) {
-  const smallButton = { minWidth: "2.5rem", height: "2.2rem", padding: "3px 6px" };
+  const smallButton = { minWidth: "2.15rem", width: "2.15rem", height: "2.05rem", padding: "2px 5px", flexShrink: 0 };
   const failed = !state.active && !state.pending;
-  return <div style={{
-    position: fullScreen ? "fixed" : "sticky",
-    zIndex: fullScreen ? 999999 : 10,
-    inset: fullScreen ? 0 : undefined,
-    top: 0,
+  const toolbar = <div style={{
+    position: fullScreen ? "fixed" : "relative",
+    zIndex: fullScreen ? 999999 : "auto",
+    top: fullScreen ? "42px" : undefined,
+    left: fullScreen ? 0 : undefined,
+    right: fullScreen ? 0 : undefined,
+    bottom: fullScreen ? "36px" : undefined,
     boxSizing: "border-box",
     display: selected ? "flex" : "none",
     flexDirection: "column",
-    width: "100%",
-    height: fullScreen ? "100dvh" : "calc(100dvh - 110px)",
-    maxHeight: fullScreen ? "100dvh" : undefined,
-    minHeight: 0,
-    background: "#111923",
-    overflow: "hidden",
-    padding: fullScreen ? "12px 16px" : "0 8px 6px"
+    width: "100%", height: fullScreen ? "auto" : "calc(100dvh - 145px)",
+    minHeight: 0, maxHeight: "100%",
+    background: "#111923", overflow: "hidden",
+    padding: fullScreen ? "4px 12px 8px" : "0 8px 6px"
   }}>
-    <div style={{
-      display: "flex", gap: 6, alignItems: "center",
-      flexShrink: 0, padding: "5px 0", minHeight: 40
-    }}>
-      <DialogButton style={smallButton} aria-label="Poprzednia sesja, LB"
-        disabled={count < 2} onClick={previous}>LB</DialogButton>
-      <div style={{
-        flex: 1, whiteSpace: "nowrap", overflow: "hidden",
-        textOverflow: "ellipsis", fontSize: "1.05rem", fontWeight: 600
-      }}>Terminal {number}</div>
+    <Focusable flow-children="right" navEntryPreferPosition={NavEntryPositionPreferences.FIRST}
+      style={{ display: "flex", gap: 5, alignItems: "center", flexShrink: 0,
+        padding: "4px 0", minHeight: 40, width: "100%" }}>
+      <DialogButton style={smallButton} aria-label="Poprzednia sesja (LB)"
+        onClick={previous}><FaChevronLeft /></DialogButton>
+      <div style={{ flex: 1, whiteSpace: "nowrap", overflow: "hidden",
+        textOverflow: "ellipsis", fontSize: "1.05rem", fontWeight: 600 }}>
+        Terminal {number}
+      </div>
       <DialogButton style={smallButton} aria-label="Dodaj sesję terminala"
         disabled={!canAdd} onClick={add}><FaPlus /></DialogButton>
-      <DialogButton style={smallButton} aria-label="Następna sesja, RB"
-        disabled={count < 2} onClick={next}>RB</DialogButton>
+      <DialogButton style={smallButton} aria-label="Następna sesja (RB)"
+        onClick={next}><FaChevronRight /></DialogButton>
       <SteamKeyboard state={state} buttonStyle={smallButton} />
-      <DialogButton style={smallButton} aria-label={fullScreen ? "Wyłącz pełny ekran" : "Pełny ekran"}
+      <DialogButton style={smallButton} aria-label={fullScreen ? "Zamknij pełny ekran" : "Pełny ekran"}
         onClick={toggleFullscreen}>{fullScreen ? <FaCompress /> : <FaExpand />}</DialogButton>
-    </div>
+    </Focusable>
     <div role="status" aria-live="polite" style={{
       display: state.active ? "none" : "block", fontSize: "0.77rem",
       flexShrink: 0, padding: "3px 4px", overflowWrap: "anywhere"
@@ -140,6 +138,10 @@ function SessionPane({
       {state.terminalElement}
     </div>
   </div>;
+  // Render the fullscreen pane at the document root, outside the clipped
+  // Steam SidebarNavigation subtree. The existing xterm DOM is reattached
+  // by TerminalView when the host changes; PTY sessions stay alive.
+  return fullScreen && selected ? createPortal(toolbar, document.body) : toolbar;
 }
 
 export function DeckyTerminalPage({ fontSize }: { fontSize: number }) {
@@ -165,14 +167,14 @@ export function DeckyTerminalPage({ fontSize }: { fontSize: number }) {
     }
   };
 
-  return <Focusable noFocusRing onButtonDown={onGamepad}
+  return <Focusable flow-children="right" onButtonDown={onGamepad}
     style={{ width: "100%", height: "100%", overflow: "hidden", position: "relative" }}>
     {sessions.map((number, index) => <div key={number}
       style={{ display: index === selectedIndex ? "block" : "none", width: "100%" }}>
       <TerminalView bridge={bridge} fontSize={fontSize}
-        visible={index === selectedIndex} autoStart
+        visible={index === selectedIndex} fullScreen={fullScreen} autoStart
         render={state => <SessionPane
-          state={state} number={number} index={index} count={sessions.length}
+          state={state} number={number} count={sessions.length}
           selected={index === selectedIndex} fullScreen={fullScreen}
           canAdd={sessions.length < 3} add={add} previous={previous} next={next}
           toggleFullscreen={() => setFullScreen(value => !value)} />} />
