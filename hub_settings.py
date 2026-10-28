@@ -63,15 +63,21 @@ def set_update_channel(channel):
 # Generic settings used by independent frontend modules. Do not persist open
 # file lists or clipboard on disk: only explicit user preferences.
 HUB_PREFERENCES_FILE = SELECTION_FILE.parent / "hub_preferences.json"
-DEFAULT_HUB_PREFERENCES = {"saveSession": True, "splitFileTree": False}
+DEFAULT_HUB_PREFERENCES = {
+    "saveSession": True,
+    "splitFileTree": False,
+    "autoKeyboard": True,
+}
 
 
 def validate_hub_preferences(value):
-    if not isinstance(value, dict) or set(value) != set(DEFAULT_HUB_PREFERENCES):
+    if not isinstance(value, dict) or not set(value).issubset(DEFAULT_HUB_PREFERENCES):
         raise ValueError("Nieprawidlowe opcje Huba.")
-    if any(not isinstance(value[key], bool) for key in DEFAULT_HUB_PREFERENCES):
+    # Merge previous installations' two-key settings with new defaults.
+    options = {**DEFAULT_HUB_PREFERENCES, **value}
+    if any(not isinstance(options[key], bool) for key in DEFAULT_HUB_PREFERENCES):
         raise ValueError("Opcje Huba musza miec wartosc wlacz/wylacz.")
-    return {key: value[key] for key in DEFAULT_HUB_PREFERENCES}
+    return options
 
 
 def get_hub_preferences():
