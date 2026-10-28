@@ -43,6 +43,7 @@ def _tabmaster_installed():
 # Tab definitions are kept separate from module activation and from Steam collections.
 TABS_FILE = SETTINGS_FILE.with_name("tabs.json")
 MAX_TABS = 64
+FILTER_TYPES = frozenset(("all", "installed", "favorites", "non_steam", "collection"))
 
 
 def _validate_tabs(tabs):
@@ -63,7 +64,20 @@ def _validate_tabs(tabs):
         ids.add(tab_id)
         if type(tab.get("hidden", False)) is not bool:
             raise ValueError("Invalid visibility")
-        clean.append({"id": tab_id, "title": title.strip(), "hidden": tab.get("hidden", False)})
+        kind = tab.get("filter", "all")
+        if kind not in FILTER_TYPES:
+            raise ValueError("Invalid tab filter")
+        collection_id = tab.get("collection_id", "")
+        if not isinstance(collection_id, str) or len(collection_id) > 160:
+            raise ValueError("Invalid collection id")
+        if kind == "collection" and not collection_id:
+            raise ValueError("Missing collection id")
+        clean.append({
+            "id": tab_id, "title": title.strip(),
+            "hidden": tab.get("hidden", False),
+            "filter": kind,
+            "collection_id": collection_id if kind == "collection" else "",
+        })
     return clean
 
 
