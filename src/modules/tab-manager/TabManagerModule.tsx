@@ -84,7 +84,8 @@ export function TabManagerModule() {
     } finally { setBusy(false); }
   }
 
-  function openVisibility(parent: EventTarget) {
+  function openVisibility(parent: EventTarget | null) {
+    if (!parent) return;
     const systemTabs = availableSteamLibraryTabs();
     showContextMenu(
       <Menu label="Wyświetlaj karty">
