@@ -139,7 +139,7 @@ test("Konta is fourth tab without mock login buttons", () => {
   const tabs = [...hub.matchAll(/title: "(Pulpit|Pliki|Terminal|Konta|Dodatki)"/g)]
     .map(match => match[1]);
   assert.deepEqual(tabs, ["Pulpit", "Pliki", "Terminal", "Konta", "Dodatki"]);
-  assert.ok(hub.includes('content: <AccountsPage />'));
+  assert.ok(hub.includes('content: <AccountsPage installed={installed} />'));
   const source = fs.readFileSync("src/hub/AccountsPage.tsx", "utf8");
   assert.ok(source.includes("Stan sklepów pobierany bezpośrednio z UniFiDeck"));
   assert.ok(source.includes('readUnifideckStatuses()'));
