@@ -65,7 +65,7 @@ async function launchEpicAuthShortcut(context:AuthContext):Promise<void> {
     steam.SetShortcutLaunchOptions(id,opts);
     // Steam has to register a new shortcut in memory before RunGame.
     // Without this, Gaming Mode can show "Game configuration unavailable".
-    const map=(window as Window & {
+    const map=(window as unknown as Window & {
       appStore?: {m_mapApps?: {get:(n:number)=>{gameid?:unknown}|undefined}}
     }).appStore?.m_mapApps;
     const until=Date.now()+5000;
