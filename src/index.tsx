@@ -3,6 +3,7 @@ import { FaTools } from "react-icons/fa";
 import { ButtonItem, PanelSection, PanelSectionRow, staticClasses } from "@decky/ui";
 import { callable, definePlugin } from "@decky/api";
 import { TabManagerModule } from "./modules/tab-manager/TabManagerModule";
+import { startTabManager, stopTabManager } from "./modules/tab-manager/LibraryIntegration";
 
 type UpdateResult = {
   current: string; latest: string | null; url: string | null; sha256: string | null;
@@ -12,7 +13,7 @@ type DeckyInstaller = {
   callable: (method: string) => (...args: unknown[]) => Promise<unknown>;
 };
 const checkUpdates = callable<[], UpdateResult>("check_updates");
-const VERSION = "0.2.3";
+const VERSION = "0.3.0-preview.1";
 
 function Content() {
   const [message, setMessage] = useState("Nie sprawdzono aktualizacji.");
@@ -67,8 +68,8 @@ function Content() {
   }
 
   return <>
-    <PanelSection title="SteamHub · 0.2.3">
-      <PanelSectionRow><div>Wersja demonstracyjna. Moduły będą dodawane stopniowo.</div></PanelSectionRow>
+    <PanelSection title="SteamHub · 0.3.0-preview.1">
+      <PanelSectionRow><div>Wersja testowa. Tab Manager wymaga weryfikacji na SteamOS.</div></PanelSectionRow>
     </PanelSection>
     <PanelSection title="Moduły (w przygotowaniu)">
       <PanelSectionRow><div>Game Manager · Library Manager · Terminal</div></PanelSectionRow>
@@ -83,9 +84,13 @@ function Content() {
   </>;
 }
 
-export default definePlugin(() => ({
+export default definePlugin(() => {
+  void startTabManager();
+  return {
   name: "SteamHub",
   titleView: <div className={staticClasses.Title}>SteamHub</div>,
   content: <Content />,
   icon: <FaTools />,
-}));
+  onDismount: stopTabManager,
+  };
+});

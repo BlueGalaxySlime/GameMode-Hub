@@ -1,6 +1,6 @@
 """SteamHub release checker. Installation is delegated to Decky Loader."""
 import asyncio
-from tab_manager import _read_tab_manager_enabled, _write_tab_manager_enabled, _tabmaster_installed, read_tabs, save_tabs
+from tab_manager import _read_tab_manager_enabled, _write_tab_manager_enabled, _tabmaster_installed, read_tabs, save_tabs, list_tab_profiles, save_tab_profile, load_tab_profile, delete_tab_profile
 import json
 import re
 import ssl
@@ -8,14 +8,14 @@ from pathlib import Path
 import urllib.error
 import urllib.request
 
-CURRENT_VERSION = "0.2.3"
+CURRENT_VERSION = "0.3.0-preview.1"
 RELEASES_API = "https://api.github.com/repos/BlueGalaxySlime/SteamOS-Hub/releases/latest"
 ASSET_NAME = "SteamHub.zip"
 
 
 def _version(value):
-    match = re.fullmatch(r"v?(\d+)\.(\d+)\.(\d+)", value or "")
-    return tuple(map(int, match.groups())) if match else None
+    match = re.fullmatch(r"v?(\d+)\.(\d+)\.(\d+)(?:-([0-9A-Za-z.-]+))?", value or "")
+    return (*map(int, match.groups()[:3]), 0 if match.group(4) else 1) if match else None
 
 
 def _ssl_context():
@@ -50,7 +50,7 @@ def _fetch_latest_release():
         RELEASES_API,
         headers={
             "Accept": "application/vnd.github+json",
-            "User-Agent": "SteamHub/0.2.3",
+            "User-Agent": "SteamHub/0.3.0-preview.1",
             "X-GitHub-Api-Version": "2022-11-28",
         },
     )
@@ -77,6 +77,18 @@ def _fetch_latest_release():
 
 
 class Plugin:
+    async def list_tab_profiles(self):
+        return await asyncio.to_thread(list_tab_profiles)
+
+    async def save_tab_profile(self, name):
+        return await asyncio.to_thread(save_tab_profile, name)
+
+    async def load_tab_profile(self, name):
+        return await asyncio.to_thread(load_tab_profile, name)
+
+    async def delete_tab_profile(self, name):
+        return await asyncio.to_thread(delete_tab_profile, name)
+
     async def get_tab_definitions(self):
         return await asyncio.to_thread(read_tabs)
 

@@ -1,7 +1,8 @@
 {
   "name": "steamhub",
   "private": true,
-  "version": "0.2.3",
+  "license": "GPL-3.0-only",
+  "version": "0.3.0-preview.1",
   "type": "module",
   "scripts": {
     "build": "rollup -c",

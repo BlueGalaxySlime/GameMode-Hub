@@ -12,6 +12,10 @@ Na stronie wydania rozwiń **Assets** i pobierz **`SteamHub.zip`**.
 >
 > Jeśli link do najnowszego wydania nie działa lub nie ma pliku `SteamHub.zip`, paczka nie została jeszcze opublikowana.
 
+## Wersja testowa Tab Managera
+
+Przedpremierowe wydania z zakładką SteamHub i obsługą biblioteki znajdziesz w [wszystkich wydaniach GitHub](https://github.com/BlueGalaxySlime/SteamOS-Hub/releases). Wersja **preview** nie jest oznaczona jako najnowsze wydanie stabilne. Więcej informacji: [Tab Manager](docs/TAB_MANAGER.md).
+
 ## Instalacja
 
 1. Pobierz `SteamHub.zip` z sekcji **Releases → Assets**.
@@ -28,7 +32,7 @@ Wtyczka ma przyciski **Sprawdź aktualizacje** i **Aktualizuj**. Aktualizacje ni
 
 ## Stan projektu
 
-Wersja testowa. Moduły Game Manager, Library Manager i Terminal są planowane, ale jeszcze niedostępne.
+Tab Manager to moduł testowy: ma własne zakładki w bibliotece, podstawowe filtry i profile. Zaawansowane opcje TabMastera nie są jeszcze kompletne, a kompatybilność wymaga testu na SteamOS. Pozostałe moduły Game Manager, Library Manager i Terminal są planowane, ale jeszcze niedostępne.
 
 - [Wszystkie wydania](https://github.com/BlueGalaxySlime/SteamOS-Hub/releases)
 - [Instrukcje instalacji](docs/INSTALL.md)

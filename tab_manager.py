@@ -43,6 +43,7 @@ def _tabmaster_installed():
 # Tab definitions are kept separate from module activation and from Steam collections.
 TABS_FILE = SETTINGS_FILE.with_name("tabs.json")
 MAX_TABS = 64
+FILTER_TYPES = frozenset(("all", "installed", "favorites", "non_steam", "collection"))
 
 
 def _validate_tabs(tabs):
@@ -63,7 +64,20 @@ def _validate_tabs(tabs):
         ids.add(tab_id)
         if type(tab.get("hidden", False)) is not bool:
             raise ValueError("Invalid visibility")
-        clean.append({"id": tab_id, "title": title.strip(), "hidden": tab.get("hidden", False)})
+        kind = tab.get("filter", "all")
+        if not isinstance(kind, str) or kind not in FILTER_TYPES:
+            raise ValueError("Invalid tab filter")
+        collection_id = tab.get("collection_id", "")
+        if not isinstance(collection_id, str) or len(collection_id) > 160:
+            raise ValueError("Invalid collection id")
+        if kind == "collection" and not collection_id:
+            raise ValueError("Missing collection id")
+        clean.append({
+            "id": tab_id, "title": title.strip(),
+            "hidden": tab.get("hidden", False),
+            "filter": kind,
+            "collection_id": collection_id if kind == "collection" else "",
+        })
     return clean
 
 
@@ -82,3 +96,65 @@ def save_tabs(tabs):
     temporary.write_text(json.dumps(clean, ensure_ascii=False), encoding="utf-8")
     temporary.replace(TABS_FILE)
     return clean
+
+
+# Profiles are user-controlled snapshots of complete tab configurations.
+PROFILES_FILE = SETTINGS_FILE.with_name("tab_profiles.json")
+MAX_PROFILES = 24
+
+
+def _profile_name(name):
+    if not isinstance(name, str) or not (1 <= len(name.strip()) <= 80):
+        raise ValueError("Invalid profile name")
+    return name.strip()
+
+
+def _read_profiles():
+    try:
+        raw = json.loads(PROFILES_FILE.read_text(encoding="utf-8"))
+    except FileNotFoundError:
+        return {}
+    if not isinstance(raw, dict):
+        raise ValueError("Invalid profile database")
+    if len(raw) > MAX_PROFILES:
+        raise ValueError("Too many profiles")
+    return {_profile_name(name): _validate_tabs(tabs) for name, tabs in raw.items()}
+
+
+def _write_profiles(profiles):
+    PROFILES_FILE.parent.mkdir(parents=True, exist_ok=True)
+    temporary = PROFILES_FILE.with_suffix(".tmp")
+    temporary.write_text(json.dumps(profiles, ensure_ascii=False), encoding="utf-8")
+    temporary.replace(PROFILES_FILE)
+
+
+def list_tab_profiles():
+    return sorted(_read_profiles())
+
+
+def save_tab_profile(name):
+    name = _profile_name(name)
+    profiles = _read_profiles()
+    if name not in profiles and len(profiles) >= MAX_PROFILES:
+        raise ValueError("Too many profiles")
+    profiles[name] = read_tabs()
+    _write_profiles(profiles)
+    return sorted(profiles)
+
+
+def load_tab_profile(name):
+    profiles = _read_profiles()
+    name = _profile_name(name)
+    if name not in profiles:
+        raise ValueError("Profile not found")
+    return save_tabs(profiles[name])
+
+
+def delete_tab_profile(name):
+    profiles = _read_profiles()
+    name = _profile_name(name)
+    if name not in profiles:
+        raise ValueError("Profile not found")
+    del profiles[name]
+    _write_profiles(profiles)
+    return sorted(profiles)
