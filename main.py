@@ -42,7 +42,7 @@ from runtime_state import set_hub_ui_open, get_runtime_state, diagnostics as run
 import tab_manager
 import collection_manager
 
-CURRENT_VERSION = "0.5.46"
+CURRENT_VERSION = "0.5.47"
 RELEASES_API = "https://api.github.com/repos/BlueGalaxySlime/GameMode-Hub/releases/latest"
 ASSET_NAME = "GameMode-Hub.zip"
 
