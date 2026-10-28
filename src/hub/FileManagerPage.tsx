@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { callable } from "@decky/api";
-import { DialogBody, DialogButton, DialogControlsSection, TextField, Toggle } from "@decky/ui";
+import { DialogBody, DialogButton, DialogControlsSection, Focusable, TextField, Toggle } from "@decky/ui";
 import { withTimeout } from "../utils/withTimeout";
 import { breadcrumbs } from "../core/filePath";
 
@@ -132,9 +132,26 @@ export function FileManagerPage() {
     void load(page?.path ?? null, hidden, 0, next, reverse);
   }
 
+  // SteamOS owns the black footer. Expose controller hints through the
+  // focus/navigation API, not duplicate text buttons or a custom footer.
   return <DialogBody>
     <DialogControlsSection>
-      <div style={{ display: "flex", flexDirection: "column", gap: 8, width: "100%", minWidth: 0 }}>
+      <Focusable
+        style={{ display: "flex", flexDirection: "column", gap: 8, width: "100%", minWidth: 0 }}
+        onOptionsActionDescription="Odśwież"
+        onOptionsButton={() => { void load(page?.path ?? null, hidden, page?.offset ?? 0); }}
+        onCancelActionDescription={page?.parent ? "W górę" : "Wstecz"}
+        onCancelButton={page?.parent ? event => {
+          event.preventDefault();
+          event.stopPropagation();
+          void load(page.parent, hidden);
+        } : undefined}
+        onKeyDown={event => {
+          if (event.key === "F5") {
+            event.preventDefault();
+            void load(page?.path ?? null, hidden, page?.offset ?? 0);
+          }
+        }}>
         {/* Single editable address bar: keyboard Enter and controller button. */}
         <div style={{ display: "flex", alignItems: "stretch", gap: 6, minWidth: 0 }}>
           <div style={{ flex: 1, minWidth: 0 }}>
@@ -149,8 +166,10 @@ export function FileManagerPage() {
               }} />
           </div>
           <DialogButton disabled={busy || !pathDraft.trim()}
+            aria-label="Otwórz wpisaną ścieżkę"
+            onOKActionDescription="Otwórz"
             style={{ minWidth: 0, padding: "6px 10px" }}
-            onClick={() => void load(pathDraft, hidden)}>Przejdź</DialogButton>
+            onClick={() => void load(pathDraft, hidden)}>↵</DialogButton>
         </div>
 
         {/* Each breadcrumb is a focusable controller target, within allowed roots. */}
@@ -174,15 +193,6 @@ export function FileManagerPage() {
             <DialogButton key={root.path} disabled={busy}
               style={{ minWidth: 0, padding: "6px 9px" }}
               onClick={() => void load(root.path, hidden)}>{root.name}</DialogButton>)}
-          <DialogButton disabled={busy || !page?.parent}
-            style={{ minWidth: 0, padding: "6px 9px" }}
-            onClick={() => { if (page?.parent) void load(page.parent, hidden); }}>
-            ↑
-          </DialogButton>
-          <DialogButton disabled={busy} style={{ minWidth: 0, padding: "6px 9px" }}
-            onClick={() => void load(page?.path ?? null, hidden, page?.offset ?? 0)}>
-            Odśwież
-          </DialogButton>
           <DialogButton disabled={busy || !page} style={{ minWidth: 0, padding: "6px 9px" }}
             onClick={() => { setAction("folder"); setName(""); setSelected(null); setMessage(""); }}>
             + Folder
@@ -233,6 +243,18 @@ export function FileManagerPage() {
           {page.items.map(entry => <div key={entry.path} style={{ width: "100%", minWidth: 0 }}>
             <div style={{ display: "flex", alignItems: "stretch", gap: 5, width: "100%", minWidth: 0 }}>
               <DialogButton disabled={busy || entry.symlink}
+                onOKActionDescription={entry.directory ? "Otwórz" : "Opcje"}
+                onSecondaryActionDescription="Opcje"
+                onSecondaryButton={() => {
+                  setSelected(entry);
+                  setAction(null);
+                  setName(entry.name);
+                  setMessage("");
+                }}
+                onOptionsActionDescription="Odśwież"
+                onOptionsButton={() => {
+                  void load(page.path, hidden, page.offset);
+                }}
                 style={{ textAlign: "left", flex: 1, minWidth: 0, padding: "8px 11px",
                   background: selected?.path === entry.path ? "#426b99" : undefined }}
                 onClick={() => {
@@ -255,14 +277,6 @@ export function FileManagerPage() {
                     </span>}
                 </span>
               </DialogButton>
-              {entry.directory && <DialogButton disabled={busy} aria-label={"Opcje: " + entry.name}
-                style={{ minWidth: 40, width: 40, padding: "5px 0" }}
-                onClick={() => {
-                  setSelected(entry);
-                  setAction(null);
-                  setName(entry.name);
-                  setMessage("");
-                }}>⋯</DialogButton>}
             </div>
             {selected?.path === entry.path && !entry.symlink &&
               <div style={{ display: "flex", flexDirection: "column", gap: 6, padding: "6px 3px 8px 12px" }}>
@@ -311,7 +325,7 @@ export function FileManagerPage() {
         {!!message && <div role="status" style={{ fontSize: 12, opacity: 0.8, padding: "2px 3px" }}>
           {message}
         </div>}
-      </div>
+      </Focusable>
     </DialogControlsSection>
   </DialogBody>;
 }

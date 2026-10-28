@@ -1,3 +1,12 @@
+# GameMode Hub 0.5.8
+
+- Systemowy czarny pasek SteamOS pozostaje własnością Steam. Podpowiedzi A (Otwórz/Opcje), X (Opcje), B (W górę/Wstecz) i Y (Odśwież) są deklarowane poprzez natywne właściwości fokusu Decky UI, a nie przez własny pasek.
+- A na folderze otwiera go; X pokazuje działania na wybranym folderze/pliku. Nie ma już obok każdego folderu dodatkowego przycisku „⋯”.
+- B wraca do nadrzędnego katalogu, dopóki użytkownik pozostaje wewnątrz katalogów. Z katalogu głównego działanie B pozostaje systemowe.
+- Usunięto tekstowe „Przejdź”, „Odśwież” i powielony przycisk ↑. Do wpisanego adresu służy Enter lub kompaktowy przycisk ↵. Klawisz F5 i przycisk Y odświeżają listę.
+- Zostają edytowalny pasek ścieżki, klikalne segmenty, Ukryte oraz Sortuj. Terminal i aktualizator bez zmian poza numerem wersji.
+- Zachowanie systemowego paska wymaga weryfikacji na urządzeniu; API fokusu zależy od wersji SteamOS.
+
 # GameMode Hub 0.5.7
 
 - Minimalistyczny menedżer plików: bez podwójnego tytułu i pól „Bieżący katalog”, „Lokalizacje”, „Nawigacja”, „Stan” oraz „Bezpieczeństwo”.

@@ -37,5 +37,19 @@ test("compact full width list and sorting/hidden options stay accessible",()=>{
   assert.ok(ui.includes('Sortuj: {sortLabels[sortBy]}'));
   assert.ok(ui.includes("changeSort(sortBy, !descending)"));
   assert.ok(ui.includes("setHidden(value)"));
-  assert.ok(ui.includes('aria-label={"Opcje: " + entry.name}'));
+  assert.ok(ui.includes('onSecondaryActionDescription="Opcje"'));
+  assert.ok(ui.includes('onSecondaryButton={() => {'));
+  assert.ok(ui.includes('onOKActionDescription={entry.directory ? "Otwórz" : "Opcje"}'));
+});
+
+test("SteamOS-native footer actions replace redundant navigation buttons",()=>{
+  assert.ok(ui.includes("<Focusable"));
+  assert.ok(ui.includes('onOptionsActionDescription="Odśwież"'));
+  assert.ok(ui.includes("onOptionsButton={() =>"));
+  assert.ok(ui.includes('onCancelActionDescription={page?.parent ? "W górę" : "Wstecz"}'));
+  assert.ok(ui.includes("onCancelButton={page?.parent ? event =>"));
+  assert.ok(ui.includes('event.key === "F5"'));
+  assert.ok(!ui.includes(">Przejdź</DialogButton>"));
+  assert.ok(!ui.includes(">Odśwież</DialogButton>"));
+  assert.ok(!ui.includes(">⋯</DialogButton>"));
 });
