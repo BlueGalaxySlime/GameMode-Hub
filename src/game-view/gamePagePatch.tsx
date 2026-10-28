@@ -1,12 +1,12 @@
 import { routerHook } from "@decky/api";
 import type { RoutePatch } from "@decky/api";
-import { afterPatch, appDetailsClasses, createReactTreePatcher, findInReactTree } from "@decky/ui";
+import { afterPatch, appDetailsClasses, appDetailsHeaderClasses, playSectionClasses, createReactTreePatcher, findInReactTree } from "@decky/ui";
 import type { ReactElement } from "react";
 import { UnifiedGameStrip } from "./UnifiedGameStrip";
 import { gameUiOptions, subscribeGameUi } from "./gameViewStore";
 
 const ROUTE = "/library/app/:appid";
-const KEY = "gamemodehub-unified-game-strip";
+const KEY = "gamemodehub-unified-game-tabs";
 let installed: RoutePatch | null = null;
 
 /** Additive and fail-closed SteamOS route patch.
@@ -32,18 +32,33 @@ function install(): RoutePatch {
         (_: Record<string,unknown>[], rendered: ReactElement) => {
           try {
             if (!gameUiOptions().enabled || !appDetailsClasses?.InnerContainer) return rendered;
+            const appId = Number((overview as {appid?:number}|undefined)?.appid);
+            if (!Number.isInteger(appId) || appId < 0x80000000) return rendered;
             const children = findInReactTree(rendered, (item:any)=>
               Array.isArray(item?.props?.children) &&
               typeof item?.props?.className === "string" &&
               item.props.className.includes(appDetailsClasses.InnerContainer)
             )?.props?.children as any[] | undefined;
             if (!children || children.some(item=>item?.key===KEY)) return rendered;
-            const anchor = children.findIndex(child =>
-              child?.props?.childFocusDisabled !== undefined &&
-              child?.props?.navRef !== undefined &&
-              child?.props?.children?.props?.overview !== undefined &&
-              child?.props?.children?.props?.details !== undefined
-            );
+            // Coexist with Unifideck: keep its install/achievements/cloud
+            // controls and insert behind its info panel if already present.
+            const unifideckInfo = children.findIndex(child =>
+              typeof child?.key === "string" &&
+              child.key.startsWith("unifideck-game-info-"));
+            const unifideckPlay = children.findIndex(child =>
+              typeof child?.key === "string" &&
+              child.key.startsWith("unifideck-play-wrapper-"));
+            const header = children.findIndex(child => {
+              const cls = String(child?.props?.className ?? "");
+              return Boolean(
+                (playSectionClasses?.Container && cls.includes(playSectionClasses.Container)) ||
+                (appDetailsHeaderClasses?.TopCapsule && cls.includes(appDetailsHeaderClasses.TopCapsule)) ||
+                (appDetailsClasses?.Header && cls.includes(appDetailsClasses.Header))
+              );
+            });
+            const anchor = unifideckInfo >= 0 ? unifideckInfo + 1 :
+              unifideckPlay >= 0 ? unifideckPlay + 1 :
+              header >= 0 ? header + 1 : -1;
             if (anchor<0) return rendered;
             children.splice(anchor,0,
               <UnifiedGameStrip key={KEY} overview={overview} details={details}/>);

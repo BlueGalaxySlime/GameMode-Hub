@@ -34,8 +34,8 @@ export function UiPage() {
         onClick={()=>setCategory("console")}>Konsola</DialogButton>
     </Focusable>
     {category==="gaming" ? <>
-      <Field label="Wspólne informacje o grze"
-        description="Spójny pasek źródła, czasu gry i zgodności na ekranach Steam i skrótów GOG, Epic itd. Nie zastępuje natywnego przycisku Graj ani elementów launchera. Domyślnie wyłączony do testów na urządzeniu.">
+      <Field label="Wspólne zakładki gry"
+        description="Wzór nawigacji jak w SteamOS. Steam zachowuje własne działające zakładki, a skróty GOG, Epic i innych launcherów otrzymują zakładki z ich nazwami i obsługiwanymi funkcjami. Nie zastępuje Unifideck ani przycisku Graj.">
         <Toggle value={settings.enabled} disabled={saving}
           onChange={value=>{void update("enabled",value);}} />
       </Field>
@@ -45,7 +45,7 @@ export function UiPage() {
           onChange={value=>{void update("show_protondb",value);}} />
       </Field>
       <Field label="Źródła gier"
-        description="Automatycznie: Steam i rozpoznane skróty. GOG/Epic/Heroic/Lutris/Bottles mogą wymagać ręcznego wyboru źródła. Nie zmieniamy poleceń uruchamiania. Ponownie otwórz kartę gry po zmianie ustawień." />
+        description="Jeden układ: aktywność, biblioteka, społeczność, informacje. Nazwy i działania zależą od sklepu. Źródło Unifideck (np. gog:ID) jest rozpoznawane z opcji uruchamiania; nieznane skróty można przypisać ręcznie." />
       <DialogButton onClick={()=>setShowLookup(value=>!value)}>
         {showLookup ? "Ukryj ręczne sprawdzanie ProtonDB" : "Sprawdź grę ręcznie w ProtonDB"}
       </DialogButton>
