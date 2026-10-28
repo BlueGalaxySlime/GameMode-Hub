@@ -7,6 +7,7 @@ import { gameUiOptions, saveGameUi, subscribeGameUi } from "../game-view/gameVie
 import { ProtonDBPage } from "./ProtonDBPage";
 import { TabManagerModule } from "../modules/tab-manager/TabManagerModule";
 import { CollectionsModule } from "../modules/collection-manager/CollectionsModule";
+import { LibraryBackupSection } from "./LibraryBackupSection";
 
 /**
  * Like Opcje Huba: one scrollable page with ordinary sections.
@@ -54,5 +55,6 @@ export function UiPage() {
     </DialogControlsSection>
     <TabManagerModule />
     <CollectionsModule />
+    <LibraryBackupSection />
   </DialogBody>;
 }
