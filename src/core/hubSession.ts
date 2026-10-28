@@ -2,8 +2,8 @@
  * Platform neutral: the Decky adapter only supplies the UI and persistence.
  * Sessions are held in RAM, not written to disk. No PTYs or processes are kept.
  */
-export type HubPreferences = { saveSession: boolean; splitFileTree: boolean };
-const defaults: HubPreferences = { saveSession: true, splitFileTree: false };
+export type HubPreferences = { saveSession: boolean; splitFileTree: boolean; autoKeyboard: boolean };
+const defaults: HubPreferences = { saveSession: true, splitFileTree: false, autoKeyboard: true };
 let preferences = { ...defaults };
 const listeners = new Set<() => void>();
 const sessions = new Map<string, unknown>();
@@ -18,7 +18,8 @@ export function applyHubPreferences(value: unknown) {
   const raw = value as Partial<HubPreferences>;
   preferences = {
     saveSession: typeof raw.saveSession === "boolean" ? raw.saveSession : preferences.saveSession,
-    splitFileTree: typeof raw.splitFileTree === "boolean" ? raw.splitFileTree : preferences.splitFileTree
+    splitFileTree: typeof raw.splitFileTree === "boolean" ? raw.splitFileTree : preferences.splitFileTree,
+    autoKeyboard: typeof raw.autoKeyboard === "boolean" ? raw.autoKeyboard : preferences.autoKeyboard
   };
   if (!preferences.saveSession) sessions.clear();
   listeners.forEach(listener => listener());
