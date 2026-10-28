@@ -1,3 +1,10 @@
+# GameMode Hub 0.5.48 (testowy)
+
+- **Optymalizacja bez pasków podzakładek.** Jeden widok jak w Opcjach Huba: Gaming Mode, Karty, Kolekcje i Kopia zapasowa jako zwykłe sekcje. Usunięto puste zakładki Obraz/Konsola i zbędne opisy.
+- **Edycja kart przeniesiona do biblioteki Steam.** Po włączeniu własnych kart w Optymalizacji, w natywnym pasku kart biblioteki pojawia się **+**, który otwiera edytor bez drugiego launchera i bez dodawania formularzy do ustawień. W ustawieniach pozostaje tylko przełącznik i diagnostyka konfliktów.
+- **Kopia zapasowa** obejmuje definicje kart, kolekcje Huba i profile kart; kopie przechowywane są poza instalacją Decky, w `~/.config/gamemodehub/backups/library/`. Przywrócenie wymaga potwierdzenia, a przed nadpisaniem ustawień powstaje dodatkowy automatyczny snapshot. Maksymalnie 20 kopii, bez plików gier i danych logowania.
+- **Integracja biblioteki nadal eksperymentalna i domyślnie wyłączona.** Przed użyciem wymaga sprawdzenia przycisku + i nawigacji padem na Lenovo. Nie zastępuje oryginalnych kart Steam.
+
 # GameMode Hub 0.5.47 (testowy)
 
 - **UI → Optymalizacja**. Dotychczasowa trasa strony i ustawienia pozostają zachowane.

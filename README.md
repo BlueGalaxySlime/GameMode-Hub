@@ -19,7 +19,7 @@
 
 ## Optymalizacja
 
-W sekcji **Optymalizacja → Gaming Mode** znajdują się oddzielne moduły **Karty** i **Kolekcje**. Karty służą do konfiguracji dodatkowych kart biblioteki, kolekcje do przechowywania zestawów i reguł gier. Działa to bez instalowania TabMastera; natywna integracja kart z paskiem biblioteki pozostaje opcjonalna i eksperymentalna. Szczegóły w [dokumentacji](docs/TAB_MANAGER.md).
+**Optymalizacja** jest prostą stroną ustawień: Gaming Mode, Karty, Kolekcje i Kopia zapasowa bez dodatkowych przełączanych ekranów. Dodawanie i edycja kart odbywają się **z poziomu biblioteki Gaming Mode** poprzez przycisk **+** (po włączeniu własnych kart), a Optymalizacja zawiera tylko ich opcje. Kolekcje Huba i karty są niezależne. Kopie zapasowe kart, kolekcji i profili można zapisać i przywrócić, bez plików gier i haseł. Nie trzeba instalować TabMastera; integracja z biblioteką pozostaje opcjonalna i eksperymentalna. Szczegóły w [dokumentacji](docs/TAB_MANAGER.md).
 
 ## Pliki
 

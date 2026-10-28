@@ -17,6 +17,7 @@ import type { Patch } from "@decky/ui";
 import { createElement, useEffect, useState } from "react";
 import type { ReactElement } from "react";
 import { getTabMasterActivity } from "./TabMasterDetection";
+import { LibraryCardsEditor } from "./LibraryCardsEditor";
 import type { TabMasterActivity, DeckyLoaderRegistry } from "./TabMasterDetection";
 
 declare const collectionStore: {
@@ -216,13 +217,23 @@ function mergeLibraryTabs(tabs: SteamTab[], deps: any[]): SteamTab[] {
   const result = [...tabs];
 
   const configured = definitions.filter(tab => !tab.hidden);
-  if (!configured.length) return result;
+  // Minimal native "+" control on the library tab strip: editing stays in Steam,
+  // while Optimization only stores the feature switch.
+  const editor: SteamTab = {
+    id: "GameModeHub:editor",
+    title: "+",
+    content: createElement("div", {
+      style: { margin: "0 auto", maxWidth: 900, padding: "12px 18px 50px" },
+      role: "region", "aria-label": "Edycja kart biblioteki"
+    }, createElement(LibraryCardsEditor))
+  };
+  if (!configured.length) return [...result, editor];
 
   const tabGrid = findInReactTree(
     template.content,
     (node: any) => node?.type && node.type.toString?.().includes("Library_FilteredByHeader")
   )?.type;
-  if (!tabGrid) return result;
+  if (!tabGrid) return [...result, editor];
   const tabContext = (template.content.type as any)?._context;
 
   const [sortBy, setSortBy, openSortingMenu] = deps;
@@ -246,6 +257,7 @@ function mergeLibraryTabs(tabs: SteamTab[], deps: any[]): SteamTab[] {
       )
     });
   }
+  result.push(editor);
   return result;
 }
 
