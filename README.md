@@ -17,6 +17,10 @@
 
 „Opcje Huba” zawierają dwa przełączniki: **Zachowuj stan kart** (domyślnie włączony) oraz **Podział drzewa plików** (domyślnie wyłączony). Stan kart jest przechowywany w pamięci wtyczki, więc można przełączać zakładki bez utraty ścieżki i bieżących ustawień. Same opcje są zapisywane na dysku. Podział w Plikach ogranicza się do przeglądarki katalogów: foldery po lewej, pliki po prawej, natomiast pasek adresu i cały Hub nie są dzielone.
 
+## Optymalizacja
+
+W sekcji **Optymalizacja → Gaming Mode** znajdują się oddzielne moduły **Karty** i **Kolekcje**. Karty służą do konfiguracji dodatkowych kart biblioteki, kolekcje do przechowywania zestawów i reguł gier. Działa to bez instalowania TabMastera; natywna integracja kart z paskiem biblioteki pozostaje opcjonalna i eksperymentalna. Szczegóły w [dokumentacji](docs/TAB_MANAGER.md).
+
 ## Pliki
 
 W Quick Access → GameMode Hub → **Pliki** lista zajmuje całą szerokość panelu. Na górze jest edytowalny adres folderu (Enter lub Przejdź), niżej klikalne segmenty ścieżki oraz zwarty pasek z ukrytymi plikami i sortowaniem według nazwy, rozmiaru lub daty. Możesz tworzyć foldery, zmieniać nazwy i kopiować/przenosić pliki; usuwanie pozostaje wyłączone, dopóki nie dodamy bezpiecznego kosza. Systemowe katalogi są niedostępne.
