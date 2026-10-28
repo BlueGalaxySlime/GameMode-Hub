@@ -1,5 +1,6 @@
 import { DialogBody, DialogButton, DialogControlsSection, DialogControlsSectionHeader, Field, SliderField } from "@decky/ui";
 import { useHubSessionState } from "./useHubSessionState";
+import { FocusableInfoField } from "./FocusableInfoField";
 
 /**
  * Emergency safe mode. Do not mount xterm, query Decky RPC or create PTYs.
@@ -21,11 +22,11 @@ export function DeckyTerminalPage({ fontSize: _fontSize }: { fontSize: number })
             onClick={() => setSelected(index)}>{index + 1}</DialogButton>)}
         </div>
       </Field>
-      <Field label={"Sesja " + (selected + 1) + " — niedostępna"}
+      <FocusableInfoField label={"Sesja " + (selected + 1) + " — niedostępna"}
         description="Nie uruchamiamy terminala, ponieważ poprzednia wersja powodowała restart interfejsu Steam. Nie zostaną wysłane żadne polecenia do systemu." />
-      <Field label="Diagnostyka"
+      <FocusableInfoField label="Diagnostyka"
         description="Na nagraniu z Legion Go S widać przed restartem traceback Pythona ze ścieżkami Unifideck. Nie wiemy jeszcze, czy jest on przyczyną awarii, czy tylko jej objawem." />
-      <Field label="Pozostałe funkcje"
+      <FocusableInfoField label="Pozostałe funkcje"
         description="Pulpit, Dodatki, Aktualizacje i Podziękowania działają niezależnie od wyłączonego modułu terminala." />
     </DialogControlsSection>
   </DialogBody>;
@@ -38,7 +39,7 @@ export function TerminalOptionsPage({ fontSize, setFontSize }: {
   return <DialogBody>
     <DialogControlsSection>
       <DialogControlsSectionHeader>Opcje terminala</DialogControlsSectionHeader>
-      <Field label="Tryb bezpieczny" description="Moduł PTY i emulator xterm.js są tymczasowo wyłączone, aby nie narażać interfejsu Steam na kolejne restarty." />
+      <FocusableInfoField label="Tryb bezpieczny" description="Moduł PTY i emulator xterm.js są tymczasowo wyłączone, aby nie narażać interfejsu Steam na kolejne restarty." />
       <Field label="Rozmiar czcionki" description="Ustawienie zostanie wykorzystane po przywróceniu działania terminala.">
         <SliderField min={11} max={22} step={1} value={fontSize}
           showValue onChange={setFontSize} />
