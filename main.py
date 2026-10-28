@@ -8,14 +8,14 @@ from pathlib import Path
 import urllib.error
 import urllib.request
 
-CURRENT_VERSION = "0.2.3"
+CURRENT_VERSION = "0.3.0-preview.1"
 RELEASES_API = "https://api.github.com/repos/BlueGalaxySlime/SteamOS-Hub/releases/latest"
 ASSET_NAME = "SteamHub.zip"
 
 
 def _version(value):
     match = re.fullmatch(r"v?(\d+)\.(\d+)\.(\d+)", value or "")
-    return tuple(map(int, match.groups())) if match else None
+    return (*map(int, match.groups()[:3]), 0 if match.group(4) else 1) if match else None
 
 
 def _ssl_context():
@@ -50,7 +50,7 @@ def _fetch_latest_release():
         RELEASES_API,
         headers={
             "Accept": "application/vnd.github+json",
-            "User-Agent": "SteamHub/0.2.3",
+            "User-Agent": "SteamHub/0.3.0-preview.1",
             "X-GitHub-Api-Version": "2022-11-28",
         },
     )
