@@ -1,34 +1,26 @@
-# SteamHub — niezależna aplikacja Linux
+# GameMode Hub
 
-**SteamHub** działa bez Decky Loader i bez uruchomionego Steam. Starsza wtyczka Decky pozostaje opcjonalna.
+**GameMode Hub** to lekki panel rozszerzeń do **SteamOS Gaming Mode**, otwierany z menu **Quick Access (⋯)**. Nie jest osobnym launcherem ani zamiennikiem Steam w domyślnym trybie.
 
-## Instalacja na SteamOS
+## Instalacja na SteamOS — GameMode Hub 0.5.2
 
-1. W trybie pulpitu pobierz `SteamHub-0.5.0-x86_64.flatpak` z [GitHub Releases](https://github.com/BlueGalaxySlime/SteamOS-Hub/releases/latest).
-2. Otwórz pobrany plik w **KDE Discover** i potwierdź instalację.
-3. Uruchom SteamHub z menu aplikacji KDE.
+1. Jeśli masz starą wtyczkę **SteamHub**, usuń ją w Decky. Nazwa identyfikatora wtyczki uległa zmianie.
+2. Pobierz **[GameMode-Hub.zip](https://github.com/BlueGalaxySlime/GameMode-Hub/releases/latest)** z *Releases → Assets*. Nie rozpakowuj archiwum.
+3. W Gaming Mode otwórz Decky Loader → ustawienia deweloperskie i zainstaluj wtyczkę z ZIP. Szczegóły: [instrukcja](docs/INSTALL.md).
+4. Naciśnij przycisk **⋯**, otwórz **GameMode Hub**, wybierz **Otwórz GameMode Hub**. Zostaniesz w interfejsie SteamOS.
 
-**Nie trzeba instalować Decky, rozpakowywać plików, używać terminala ani `sudo`.** Nie omijamy systemowego potwierdzenia instalacji.
+**Wymagany jest Decky Loader tylko jako adapter do Quick Access.** Valve nie udostępnia stabilnego publicznego interfejsu wtyczek do Quick Access. Nie modyfikujemy plików Steam ani nie wstrzykujemy własnych procesów do klienta Steam poza adapterem Decky.
 
-Aby uruchamiać Hub z **Gaming Mode**, na razie dodaj aplikację do Steam jako program spoza Steam. Automatyczne tworzenie skrótu w bibliotece Steam nie jest jeszcze dostępne.
+## Architektura
 
-## AppImage — dla innych dystrybucji
+- `src/core/` — nazwa, manifest funkcji i podstawowe reguły **bez** importów ze Steam/Decky.
+- `src/hub/` i `src/index.tsx` — obecny adapter SteamOS/Decky (nawigacja i obsługa kontrolera).
+- `main.py` i `hub_settings.py` — proste usługi ustawień/aktualizacji; brak wymaganego uprawnienia root.
+- `terminal_core/` — zachowany do dalszych badań niezależny silnik PTY, **nie jest dołączany do instalatora**.
+- `desktop/` — wcześniejszy eksperyment z Electronem, **nie jest już budowany ani publikowany**. Opcjonalny niezależny launcher pozostaje osobnym przyszłym etapem.
 
-Pobierz `SteamHub-0.5.0-x86_64.AppImage`. Jeżeli to konieczne, w Dolphin ustaw prawo do uruchamiania pliku i otwórz go. W aplikacji wybierz **Ustawienia → Zainstaluj SteamHub**. Program kopiuje się do katalogu użytkownika i tworzy skrót w menu, bez uprawnień administratora.
+**Terminal jest tymczasowo wyłączony** ze względu na wcześniejsze restarty interfejsu Steam na Legion Go S. Nie uruchamia procesów po otwarciu panelu. Nie ma jeszcze niezależnego zamiennika Quick Access bez Decky — to cel długoterminowy.
 
-## Aktualny stan
+## Pobieranie
 
-- Samodzielny interfejs w stylu ustawień SteamOS, z obsługą kontrolera.
-- Rozpoznawanie dystrybucji Linux i sposobu uruchomienia.
-- Menedżer plików ograniczony do katalogu domowego — obecnie **tylko odczyt**.
-- Sekcje konfiguracji, aktualizacji i podziękowań.
-- Streaming, Biblioteki i Aplikacje są miejscami na przyszłe integracje.
-- **Terminal pozostaje wyłączony**, ponieważ przyczyna wcześniejszych restartów Gaming Mode nie została jeszcze ustalona.
-
-Nie deklarujemy jeszcze automatycznego aktualizowania Flatpaka ani automatycznej integracji z biblioteką Steam. Instalacja i obsługa na Legion Go S wymagają potwierdzenia na urządzeniu.
-
-## Wtyczka Decky (opcjonalna)
-
-Plik `SteamHub.zip` w tym samym wydaniu to **starsza wtyczka Decky**, a nie instalator samodzielnego Huba. Jej terminal pozostaje w trybie bezpiecznym.
-
-[Instrukcje](docs/INSTALL.md) · [Architektura](docs/ARCHITECTURE.md) · [Podziękowania i licencje](THIRD_PARTY_NOTICES.md)
+[Wydania GameMode Hub](https://github.com/BlueGalaxySlime/GameMode-Hub/releases) · [Plan rozwoju](docs/ROADMAP.md) · [Licencje i podziękowania](THIRD_PARTY_NOTICES.md)

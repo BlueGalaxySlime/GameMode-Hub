@@ -18,9 +18,9 @@ if _PLUGIN_ROOT not in sys.path:
 
 from hub_settings import get_selected_addons, set_selected_addons
 
-CURRENT_VERSION = "0.5.1"
+CURRENT_VERSION = "0.5.2"
 RELEASES_API = "https://api.github.com/repos/BlueGalaxySlime/GameMode-Hub/releases/latest"
-ASSET_NAME = "SteamHub.zip"
+ASSET_NAME = "GameMode-Hub.zip"
 
 
 def _version(value):
@@ -60,7 +60,7 @@ def _fetch_latest_release():
         RELEASES_API,
         headers={
             "Accept": "application/vnd.github+json",
-            "User-Agent": "GameModeHub/0.5.1",
+            "User-Agent": "GameModeHub/0.5.2",
             "X-GitHub-Api-Version": "2022-11-28",
         },
     )

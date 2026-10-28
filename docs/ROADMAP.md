@@ -1,20 +1,19 @@
-# SteamHub Roadmap
+# GameMode Hub — plan rozwoju
 
-## 0.5.0 — niezależny fundament Linux
-- [x] Samodzielna aplikacja niepotrzebująca Decky ani Steam do uruchomienia
-- [x] Interfejs nawiązujący do ustawień SteamOS i podstawowe sterowanie kontrolerem
-- [x] Wykrywanie dystrybucji i pakietu uruchomieniowego
-- [x] Czytnik plików w katalogu domowym, bez zapisu
-- [x] Instalacja AppImage do katalogu użytkownika i skrót KDE
-- [x] Kompilacja Flatpak i AppImage w GitHub Actions
-- [ ] Testy instalacji i pada na Legion Go S
-- [ ] Opcjonalny skrót do biblioteki Steam, za zgodą użytkownika
+## Kierunek główny: SteamOS Gaming Mode / Quick Access
+- [x] Główny interfejs uruchamiany przez adapter Decky w menu Quick Access.
+- [x] Oddzielny manifest modułów bez zależności od Steam/Decky.
+- [x] Nowa nazwa / nowa tożsamość pakietu GameMode Hub.
+- [x] Mały ZIP wtyczki bez Electron/Flatpak/AppImage i bez uruchamiania terminala.
+- [ ] Sprawdzenie na Legion Go S: otwieranie z Quick Access, pad, focus i współpraca z dodatkami.
+- [ ] Stabilne adaptery dla menedżera plików, ustawień, dodatków i bibliotek.
+- [ ] Przywrócenie niezależnego terminala dopiero po ustaleniu przyczyn restartów.
+- [ ] Ciągła zgodność adaptera z aktualizacjami Decky Loader.
 
-## Kolejne etapy
-- [ ] Niezależny, sprawdzony na urządzeniu silnik terminala
-- [ ] Integracje Decky Manager, Sunshine, Unifideck i Desktop App przez adaptery
-- [ ] Instalator wykrywający platformę i wybierający format
-- [ ] Automatyczne aktualizacje przez repozytorium Flatpak / inne źródła
-- [ ] Rozbudowana obsługa pada i dostępność
+## Opcjonalny etap późniejszy
+- [ ] Własny launcher/powłoka gamingowa na Linux/SteamOS, **dobrowolnie wybierana** przez użytkownika.
+- [ ] Integracja z Quick Access bez Decky, tylko jeśli możliwa w bezpieczny i stabilny sposób.
+- [ ] Instalator wykrywający system operacyjny i oferujący właściwy tryb.
+- [ ] Nie zastępuj domyślnego SteamOS bez świadomej zgody użytkownika.
 
-Starsza wtyczka Decky pozostaje dostępna, z wyłączonym terminalem.
+Kod dawnej wersji desktop/Electron w katalogu `desktop/` to archiwalny prototyp; nie jest częścią obecnego wydania.

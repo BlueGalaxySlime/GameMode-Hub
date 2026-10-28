@@ -1,3 +1,14 @@
+# GameMode Hub 0.5.2 — Gaming Mode Quick Access
+
+- **Nowa tożsamość wtyczki: GameMode Hub.** Wcześniejsza SteamHub powinna zostać usunięta przed instalacją; to świadoma migracja z zerwaniem zgodności tożsamości.
+- Instalator wtyczki to `GameMode-Hub.zip`, a folder w nim ma nazwę `GameMode Hub`.
+- Ekran otwierany bezpośrednio z Quick Access SteamOS przez minimalny adapter Decky; nie uruchamia osobnego launchera.
+- Kod głównego manifestu funkcji i identyfikatorów jest wydzielony do `src/core`, bez importów Steam ani Decky. W przyszłości będzie można go wykorzystać we własnym launcherze.
+- Instalator nie zawiera ciężkiej aplikacji Electron, Flatpak ani AppImage. Wyłączono ich budowanie w GitHub Actions.
+- Terminal pozostaje w bezpiecznym trybie nieaktywnym; jego pliki silnika PTY nie są już pakowane do ZIP.
+- Aktualizator wskazuje na nowe repozytorium `BlueGalaxySlime/GameMode-Hub` i nowy plik ZIP.
+- Nadal wymagane testy na Legion Go S: nawigacja kontrolerem, Quick Access i wtyczki zewnętrzne.
+
 # SteamHub 0.5.0 — samodzielna aplikacja Linux
 
 - Nowa aplikacja Linux uruchamiana bez Steam i Decky.

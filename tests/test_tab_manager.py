@@ -34,9 +34,9 @@ class TabManagerTests(unittest.TestCase):
         response = {
             "tag_name": "v0.3.0",
             "assets": [{
-                "name": "SteamHub.zip",
+                "name": "GameMode-Hub.zip",
                 "digest": "sha256:" + "a" * 64,
-                "browser_download_url": "https://github.com/BlueGalaxySlime/GameMode-Hub/releases/download/v0.3.0/SteamHub.zip",
+                "browser_download_url": "https://github.com/BlueGalaxySlime/GameMode-Hub/releases/download/v0.3.0/GameMode-Hub.zip",
             }],
         }
         with (patch.object(main, "CURRENT_VERSION", "0.2.3"),

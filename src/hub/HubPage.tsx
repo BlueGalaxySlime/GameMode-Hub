@@ -10,6 +10,8 @@ import { withTimeout } from "../utils/withTimeout";
 import { UpdaterPage } from "./UpdaterPage";
 import { DeckyTerminalPage, TerminalOptionsPage } from "./DeckyTerminalAdapter";
 import { CreditsPage } from "./CreditsPage";
+import { APP_NAME, DECKY_PLUGIN_NAME, HUB_ROUTE } from "../core/identity";
+import { CORE_MODULES } from "../core/modules";
 
 type InstalledAddon = {
   name: string;
@@ -34,7 +36,7 @@ async function listInstalledAddons(): Promise<InstalledAddon[]> {
   return response.filter((plugin: unknown): plugin is InstalledAddon => {
     return typeof plugin === "object" && plugin !== null &&
       typeof (plugin as InstalledAddon).name === "string" &&
-      !["GameMode Hub", "GameModeHub", "GameMode Hub"].includes((plugin as InstalledAddon).name);
+      ![DECKY_PLUGIN_NAME, "SteamHub", "GameModeHub"].includes((plugin as InstalledAddon).name);
   }).map(plugin => ({
     name: plugin.name,
     disabled: plugin.disabled === true,
@@ -48,7 +50,7 @@ function Overview({ selected, installed }: {
 }) {
   return <DialogBody>
     <DialogControlsSection>
-      <DialogControlsSectionHeader>GameMode Hub</DialogControlsSectionHeader>
+      <DialogControlsSectionHeader>{APP_NAME}</DialogControlsSectionHeader>
       <Field label="Moje dodatki" description="Wybrane dodatki pojawiają się w menu po lewej stronie.">
         <div>{selected.length}</div>
       </Field>
@@ -56,11 +58,12 @@ function Overview({ selected, installed }: {
         const addon = installed.find(plugin => plugin.name === name);
         return <Field key={name} label={name}
           description={addon ? (addon.disabled ? "Wyłączony w Decky" : "Zainstalowany i aktywny") : "Niedostępny"}>
-          <DialogButton onClick={() => Navigation.Navigate("/steamhub/addon/" + encodeURIComponent(name))}>
+          <DialogButton onClick={() => Navigation.Navigate(HUB_ROUTE + "/addon/" + encodeURIComponent(name))}>
             Opcje
           </DialogButton>
         </Field>;
       })}
+      <Field label="Tryb" description="SteamOS Gaming Mode — otwierany z Quick Access. Integrację zapewnia niewielki adapter Decky." />
       {!selected.length && <Field label="Brak wybranych dodatków"
         description="Otwórz Dodatki, aby wybrać te, które mają być widoczne w GameMode Hub." />}
     </DialogControlsSection>
@@ -232,30 +235,34 @@ export function HubPage() {
     }
   }
 
+  // Navigation is SteamOS-specific; module metadata is not. Keep the core
+  // independent so a future alternate gaming shell can reuse it.
+  const registered = CORE_MODULES.map(module => module.id);
   const pages = [
-    { title: "Pulpit", route: "/steamhub/home", icon: <FaHome />,
+    { title: "Pulpit", route: HUB_ROUTE + "/home", icon: <FaHome />,
       content: <Overview selected={selected} installed={installed} /> },
-    { title: "Dodatki", route: "/steamhub/addons", icon: <FaPuzzlePiece />,
+    { title: "Dodatki", route: HUB_ROUTE + "/addons", icon: <FaPuzzlePiece />,
       content: <AddonSelector installed={installed} selected={selected} pending={busy}
         error={error} toggle={toggle} reload={() => { void refresh(); }} /> },
-    { title: "Terminal", route: "/steamhub/terminal", icon: <FaTerminal />,
+    { title: "Terminal", route: HUB_ROUTE + "/terminal", icon: <FaTerminal />,
       hideTitle: true, padding: "none" as const,
       content: <DeckyTerminalPage fontSize={terminalFontSize} /> },
     "separator" as const,
-    { title: "Opcje terminala", route: "/steamhub/terminal/options", icon: <FaCog />,
+    { title: "Opcje terminala", route: HUB_ROUTE + "/terminal/options", icon: <FaCog />,
       content: <TerminalOptionsPage fontSize={terminalFontSize} setFontSize={setTerminalFontSize} /> },
     "separator" as const,
-    { title: "Aktualizacje", route: "/steamhub/updates", icon: <FaSyncAlt />,
+    { title: "Aktualizacje", route: HUB_ROUTE + "/updates", icon: <FaSyncAlt />,
       content: <UpdaterPage /> },
-    { title: "Podziękowania", route: "/steamhub/credits", icon: <FaHeart />,
+    { title: "Podziękowania", route: HUB_ROUTE + "/credits", icon: <FaHeart />,
       content: <CreditsPage /> },
     ...selected.map(name => ({
       title: featureName(name),
-      route: "/steamhub/addon/" + encodeURIComponent(name),
+      route: HUB_ROUTE + "/addon/" + encodeURIComponent(name),
       icon: name === "Decky Manager" ? <FaFolderOpen /> : name === "Decky Terminal" ? <FaTerminal /> : <FaPlug />,
       content: <AddonOptions name={name} addon={installed.find(x => x.name === name)}
         selected={selected.includes(name)} remove={() => { void toggle(name, false); }} />
     }))
   ];
+  if (!registered.includes("home")) return null;
   return <SidebarNavigation pages={pages} />;
 }

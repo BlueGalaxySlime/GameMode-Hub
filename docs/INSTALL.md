@@ -1,28 +1,15 @@
-# Instalacja SteamHub
+# Instalacja GameMode Hub na SteamOS
 
-## SteamOS — jeden pakiet, graficzna instalacja
+GameMode Hub **0.5.2** to wtyczka **Quick Access** w Gaming Mode, a nie osobny program z menu Steam. Do otwarcia Quick Access korzysta obecnie z Decky Loader.
 
-1. Wejdź do **trybu pulpitu** SteamOS.
-2. Pobierz `SteamHub-0.5.0-x86_64.flatpak` z [GitHub Releases](https://github.com/BlueGalaxySlime/SteamOS-Hub/releases/latest), z sekcji **Assets**.
-3. Otwórz pobrany plik w **KDE Discover** i zatwierdź instalację. System może pobrać wymagane środowisko Flatpak.
-4. Uruchom SteamHub z menu aplikacji KDE.
+1. W Decky usuń wcześniejszą wtyczkę **SteamHub**, jeśli jest zainstalowana. Zmieniamy identyfikator wtyczki — to nowa instalacja.
+2. Pobierz `GameMode-Hub.zip` z [GameMode Hub Releases](https://github.com/BlueGalaxySlime/GameMode-Hub/releases/latest) w części **Assets**. Plik `Source code (zip)` nie jest instalatorem.
+3. W Gaming Mode otwórz **Decky Loader** i aktywuj **Developer Mode** (jeśli potrzeba).
+4. Użyj opcji instalacji wtyczki z ZIP i wybierz `GameMode-Hub.zip`.
+5. Naciśnij **⋯** i otwórz **GameMode Hub → Otwórz GameMode Hub**.
 
-Instalacja nie wymaga Decky Loader, `sudo`, terminala ani rozpakowywania archiwów. Ze względów bezpieczeństwa system może wymagać zatwierdzenia pakietu.
+Pozostajesz w SteamOS Gaming Mode. Wtyczka nie uruchamia osobnego okna Electron, AppImage ani Flatpak. Nie wymaga przechodzenia do trybu pulpitu, jeśli masz już Decky i możesz wskazać ZIP.
 
-**Gaming Mode:** na tym etapie SteamHub nie dodaje się sam do biblioteki Steam. W trybie pulpitu można dodać go do Steam jako grę spoza Steam, aby potem uruchamiać z Gaming Mode.
+**Ważne:** nie modyfikujemy bezpośrednio interfejsu Steam z pominięciem Decky. Jeśli Decky zmieni API, adapter może wymagać aktualizacji — bez zmian w podstawowych modułach.
 
-**Aktualizacje:** lokalny pakiet Flatpak nie jest jeszcze podłączony do Flathub ani do repozytorium Flatpak. Nowsze instalatory będą dostępne w GitHub Releases.
-
-## AppImage
-
-Pobierz `SteamHub-0.5.0-x86_64.AppImage`. Zaznacz wykonywanie pliku we właściwościach Dolphin, jeśli system tego wymaga, i uruchom. W SteamHub otwórz **Ustawienia → Zainstaluj SteamHub**. Aplikacja skopiuje plik do `~/.local/share/SteamHub/SteamHub.AppImage` i doda wpis w `~/.local/share/applications/` bez uprawnień administratora.
-
-AppImage może wymagać FUSE, dlatego **na SteamOS polecamy Flatpak**.
-
-## Opcjonalna wtyczka Decky
-
-`SteamHub.zip` jest odrębną wtyczką i wymaga Decky Loader. Nie jest potrzebna do korzystania z samodzielnej aplikacji Linux.
-
-## Stan funkcji
-
-Menedżer plików jest tylko do odczytu; terminal jest celowo nieaktywny ze względu na wcześniej zaobserwowane restarty Gaming Mode. Samodzielny Hub nie zarządza jeszcze instalacją zewnętrznych dodatków.
+Terminal jest wyłączony z powodów bezpieczeństwa. Usunięcie poprzedniej wtyczki nie usuwa danych innych dodatków.

@@ -1,5 +1,5 @@
 {
-  "name": "SteamHub",
+  "name": "GameMode Hub",
   "author": "BlueGalaxySlime",
   "api_version": 1,
   "flags": [],
@@ -8,7 +8,7 @@
       "utility",
       "launcher"
     ],
-    "description": "GameMode Hub — Quick Access panel for SteamOS Gaming Mode. Legacy Decky identity retained for upgrades.",
+    "description": "Lekki panel Quick Access w SteamOS Gaming Mode. Funkcje Huba są niezależne od Decky; Decky zapewnia opcjonalny adapter integracyjny.",
     "image": "https://opengraph.githubassets.com/1/BlueGalaxySlime/GameMode-Hub"
   }
 }

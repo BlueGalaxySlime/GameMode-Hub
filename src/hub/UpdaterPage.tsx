@@ -5,8 +5,9 @@ import {
   DialogControlsSectionHeader, Field
 } from "@decky/ui";
 import { RequestTimeoutError, withTimeout } from "../utils/withTimeout";
+import { APP_NAME, DECKY_PLUGIN_NAME, RELEASE_ASSET } from "../core/identity";
 
-const VERSION = "0.5.1";
+const VERSION = "0.5.2";
 type UpdateResult = {
   current: string;
   latest: string | null;
@@ -31,7 +32,7 @@ async function checkBrowser(): Promise<UpdateResult> {
     const data = await response.json();
     const latest = String(data.tag_name ?? "").replace(/^v/, "");
     const asset = Array.isArray(data.assets)
-      ? data.assets.find((a: { name?: string }) => a.name === "SteamHub.zip") : undefined;
+      ? data.assets.find((a: { name?: string }) => a.name === RELEASE_ASSET) : undefined;
     const url = typeof asset?.browser_download_url === "string" &&
       asset.browser_download_url.startsWith("https://github.com/BlueGalaxySlime/GameMode-Hub/releases/download/")
       ? asset.browser_download_url : null;
@@ -79,7 +80,7 @@ export function UpdaterPage() {
       } else {
         setMessage(result.latest && result.latest !== VERSION
           ? "Wydanie " + result.latest + " nie jest nowsze lub nie ma poprawnej sumy SHA-256."
-          : "GameMode Hub " + VERSION + " jest aktualny.");
+          : APP_NAME + " " + VERSION + " jest aktualny.");
       }
     } catch (error) {
       setMessage(error instanceof RequestTimeoutError
@@ -104,7 +105,7 @@ export function UpdaterPage() {
     setMessage("Przekazywanie aktualizacji do Decky Loader…");
     try {
       await withTimeout(
-        decky.callable("utilities/install_plugin")(candidate.url, "SteamHub", candidate.latest, candidate.sha256, 2),
+        decky.callable("utilities/install_plugin")(candidate.url, DECKY_PLUGIN_NAME, candidate.latest, candidate.sha256, 2),
         30000
       );
       setCandidate(null);
@@ -121,8 +122,8 @@ export function UpdaterPage() {
 
   return <DialogBody>
     <DialogControlsSection>
-      <DialogControlsSectionHeader>Aktualizacje GameMode Hub</DialogControlsSectionHeader>
-      <Field label="Zainstalowana wersja" description={"GameMode Hub " + VERSION} />
+      <DialogControlsSectionHeader>Aktualizacje {APP_NAME}</DialogControlsSectionHeader>
+      <Field label="Zainstalowana wersja" description={APP_NAME + " " + VERSION} />
       <Field label="Sprawdź aktualizacje" description="Sprawdzanie odbywa się ręcznie w GitHub Releases.">
         <DialogButton disabled={checking} onClick={() => { void check(); }}>
           {checking ? "Czekaj…" : "Sprawdź"}

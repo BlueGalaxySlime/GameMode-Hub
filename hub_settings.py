@@ -5,7 +5,7 @@ Do not modify, enable, disable, or otherwise manage the selected plugins.
 import json
 from pathlib import Path
 
-SELECTION_FILE = Path.home() / ".config" / "steamhub" / "selected_addons.json"
+SELECTION_FILE = Path.home() / ".config" / "gamemodehub" / "selected_addons.json"
 MAX_SELECTED = 64
 
 
