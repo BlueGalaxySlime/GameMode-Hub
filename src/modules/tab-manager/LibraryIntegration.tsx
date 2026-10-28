@@ -16,7 +16,7 @@ import {
 import type { Patch } from "@decky/ui";
 import { createElement, useEffect, useState } from "react";
 import type { ReactElement } from "react";
-import { getTabMasterActivity } from "./TabMasterDetection";
+import { getTabMasterActivity, readDeckyTabMasterActivity } from "./TabMasterDetection";
 import { LibraryCardsContextMenu } from "./LibraryCardsContextMenu";
 import type { TabMasterActivity, DeckyLoaderRegistry } from "./TabMasterDetection";
 
@@ -33,7 +33,6 @@ export type TabDefinition = {
   collection_id: string;
 };
 
-const readEnabled = callable<[], boolean>("get_tab_manager_enabled");
 const readTabs = callable<[], TabDefinition[]>("get_tab_definitions");
 const readHiddenSteamTabs = callable<[], string[]>("get_hidden_steam_tabs");
 const saveHiddenSteamTabs = callable<[string[]], string[]>("save_hidden_steam_tabs");
@@ -56,6 +55,7 @@ export function detectTabMasterActivity(): TabMasterActivity {
 
 
 let active = false;
+let statusDetail: string = "Inicjalizacja";
 let conflict = true; // Fail closed until backend checks the other plugin.
 let definitions: TabDefinition[] = [];
 let hubCollections: HubCollection[] = [];
@@ -67,25 +67,46 @@ let revision = 0;
 let generation = 0;
 
 export function tabManagerStatus() {
-  return { active, conflict, definitions };
+  return { active, conflict, definitions, statusDetail, patched: !!currentPatch };
+}
+
+export async function refreshTabManagerConflict(): Promise<TabMasterActivity> {
+  const current = (window as Window & {
+    DeckyPluginLoader?: DeckyLoaderRegistry;
+    DeckyBackend?: { callable?: (method: string) => (...args: unknown[]) => Promise<unknown> };
+  });
+  const result = await readDeckyTabMasterActivity(
+    current.DeckyPluginLoader, current.DeckyBackend
+  );
+  conflict = result !== "inactive";
+  statusDetail = result === "inactive" ? "Moduł aktywny w bibliotece Steam"
+    : result === "active" ? "Aktywny TabMaster blokuje menu Huba"
+    : "Decky nie udostępnia stanu innych wtyczek";
+  syncPatch();
+  return result;
 }
 
 export async function startTabManager() {
   const request = ++generation;
   try {
-    const [savedEnabled, savedTabs, savedCollections, savedHidden] = await Promise.all([
-      readEnabled(), readTabs(), readHubCollections(), readHiddenSteamTabs()
+    const [savedTabs, savedCollections, savedHidden] = await Promise.all([
+      readTabs(), readHubCollections(), readHiddenSteamTabs()
     ]);
     if (request !== generation) return;
-    active = savedEnabled;
-    // Fail closed only when Decky's active-plugin state is unknown or active.
-    conflict = detectTabMasterActivity() !== "inactive";
     definitions = savedTabs;
     hubCollections = savedCollections;
     hiddenSteamTabs = savedHidden;
-    syncPatch();
+    // The library module is part of Hub, not an opt-in option. Start
+    // without opening Optimization or clicking Manage.
+    active = true;
+    await refreshTabManagerConflict();
+    if (request !== generation) {
+      active = false;
+      syncPatch();
+    }
   } catch (error) {
-    console.warn("[SteamHub] Tab Manager initialization failed", error);
+    statusDetail = "Błąd odczytu konfiguracji kart";
+    console.warn("[GameMode Hub] Tab Manager initialization failed", error);
   }
 }
 
@@ -149,7 +170,10 @@ export function tabManagerTabsChanged(value: TabDefinition[]) {
 }
 
 function syncPatch() {
-  const shouldRun = active && !conflict && detectTabMasterActivity() === "inactive";
+  // A positively detected conflict always wins, even if the previous
+  // async check said inactive. An unknown sync result does not erase
+  // an earlier confirmed backend check.
+  const shouldRun = active && !conflict && detectTabMasterActivity() !== "active";
   if (shouldRun && !currentPatch) {
     try {
       currentPatch = installLibraryPatch();
@@ -255,7 +279,7 @@ function menuFooter(tab: SteamTab): SteamTab {
 /** Uses Steam's original grid and its built-in Menu button for the focused tab. */
 function mergeLibraryTabs(tabs: SteamTab[], deps: any[]): SteamTab[] {
   // Recheck at render time in case TabMaster was enabled after this patch.
-  if (!active || conflict || detectTabMasterActivity() !== "inactive") return tabs;
+  if (!active || conflict || detectTabMasterActivity() === "active") return tabs;
   const template = tabs.find(tab => tab?.id === "AllGames");
   if (!template) return tabs;
   // Snapshot before filtering, so hidden system cards can always be restored.
