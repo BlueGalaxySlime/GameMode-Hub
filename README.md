@@ -2,7 +2,7 @@
 
 **GameMode Hub** to lekki panel rozszerzeń do **SteamOS Gaming Mode**, otwierany z menu **Quick Access (⋯)**. Nie jest osobnym launcherem ani zamiennikiem Steam w domyślnym trybie.
 
-## Instalacja na SteamOS — GameMode Hub 0.5.5
+## Instalacja na SteamOS — GameMode Hub 0.5.6
 
 1. Jeśli masz starą wtyczkę **SteamHub**, usuń ją w Decky. Nazwa identyfikatora wtyczki uległa zmianie.
 2. Pobierz **[GameMode-Hub.zip](https://github.com/BlueGalaxySlime/GameMode-Hub/releases/latest)** z *Releases → Assets*. Nie rozpakowuj archiwum.
@@ -12,6 +12,10 @@
 **Kanały aktualizacji:** Testowy (bieżące wydania i możliwość downgrade’u) oraz Stabilny (pusty, dopóki nie zweryfikujemy wydania na urządzeniu). Numery wydań nie mają dopisków o kanale — oznaczenie kanału jest metadanymi wydania GitHub. Wersję wybierzesz w zakładce Aktualizacje.
 
 **Wymagany jest Decky Loader tylko jako adapter do Quick Access.** Valve nie udostępnia stabilnego publicznego interfejsu wtyczek do Quick Access. Nie modyfikujemy plików Steam ani nie wstrzykujemy własnych procesów do klienta Steam poza adapterem Decky.
+
+## Pliki
+
+W Quick Access → GameMode Hub → **Pliki** dostępne jest przeglądanie katalogu domowego i podłączonych nośników użytkownika. Możesz tworzyć foldery, zmieniać nazwy i kopiować/przenosić pliki; usuwanie pozostaje wyłączone, dopóki nie dodamy bezpiecznego kosza. Systemowe katalogi są niedostępne.
 
 ## Architektura
 

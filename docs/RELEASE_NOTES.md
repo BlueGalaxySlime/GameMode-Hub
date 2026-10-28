@@ -1,3 +1,13 @@
+# GameMode Hub 0.5.6 — Pliki w Quick Access
+
+- Dodano własną sekcję **Pliki** w bocznym menu GameMode Hub, bez zależności od zewnętrznej wtyczki Decky Manager.
+- Przeglądanie katalogu domowego i nośników dostępnych dla użytkownika SteamOS, nawigacja między folderami, strony po 40 pozycji i pokazywanie ukrytych plików.
+- Podstawowe operacje: tworzenie folderu, zmiana nazwy pliku, kopiowanie lub przenoszenie pojedynczych plików między folderami. Przenoszenie folderu w obrębie tego samego systemu plików.
+- Operacje zapisu blokowane przy uruchomieniu backendu jako root oraz poza zdefiniowanymi obszarami użytkownika. Brak nadpisywania istniejących plików, uruchamiania plików, kasowania, terminala i wykonywania poleceń.
+- Wbudowano testy izolacji ścieżek, walidacji nazw, kopiowania i nawigacji.
+- Zachowano numery wersji bez dopisków oraz aktualizator w kanałach Stabilny/Testowy. Terminal bez zmian, nadal wyłączony.
+- Testy CI nie zastępują sprawdzenia działania kontrolerem na Legion Go S.
+
 # GameMode Hub 0.5.5 — hotfix aktualizatora
 
 - Poprawiono obsługę pustej lub nieaktualnej odpowiedzi GitHub w przeglądarce Steam: kanał Testowy próbuje wtedy ponownie przez backend Decky.

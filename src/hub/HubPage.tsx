@@ -8,6 +8,7 @@ import { callable } from "@decky/api";
 import { FaCog, FaFolderOpen, FaHeart, FaHome, FaPlug, FaPuzzlePiece, FaSyncAlt, FaTerminal } from "react-icons/fa";
 import { withTimeout } from "../utils/withTimeout";
 import { UpdaterPage } from "./UpdaterPage";
+import { FileManagerPage } from "./FileManagerPage";
 import { DeckyTerminalPage, TerminalOptionsPage } from "./DeckyTerminalAdapter";
 import { CreditsPage } from "./CreditsPage";
 import { APP_NAME, DECKY_PLUGIN_NAME, HUB_ROUTE } from "../core/identity";
@@ -244,6 +245,8 @@ export function HubPage() {
     { title: "Dodatki", route: HUB_ROUTE + "/addons", icon: <FaPuzzlePiece />,
       content: <AddonSelector installed={installed} selected={selected} pending={busy}
         error={error} toggle={toggle} reload={() => { void refresh(); }} /> },
+    { title: "Pliki", route: HUB_ROUTE + "/files", icon: <FaFolderOpen />,
+      content: <FileManagerPage /> },
     { title: "Terminal", route: HUB_ROUTE + "/terminal", icon: <FaTerminal />,
       hideTitle: true, padding: "none" as const,
       content: <DeckyTerminalPage fontSize={terminalFontSize} /> },

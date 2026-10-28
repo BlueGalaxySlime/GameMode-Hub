@@ -1,6 +1,6 @@
 # Instalacja GameMode Hub na SteamOS
 
-GameMode Hub **0.5.5** to wtyczka **Quick Access** w Gaming Mode, a nie osobny program z menu Steam. Do otwarcia Quick Access korzysta obecnie z Decky Loader.
+GameMode Hub **0.5.6** to wtyczka **Quick Access** w Gaming Mode, a nie osobny program z menu Steam. Do otwarcia Quick Access korzysta obecnie z Decky Loader.
 
 1. W Decky usuń wcześniejszą wtyczkę **SteamHub**, jeśli jest zainstalowana. Zmieniamy identyfikator wtyczki — to nowa instalacja.
 2. Pobierz `GameMode-Hub.zip` z [GameMode Hub Releases](https://github.com/BlueGalaxySlime/GameMode-Hub/releases/latest) w części **Assets**. Plik `Source code (zip)` nie jest instalatorem.
