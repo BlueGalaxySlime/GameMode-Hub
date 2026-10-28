@@ -1,6 +1,5 @@
 /**
- * Deliberately independent of Decky. A future desktop Linux frontend can
- * provide the same transport contract without changing TerminalView.
+ * PTY transport independent of Decky and Steam. RPC adapter may vary by host.
  */
 export type TerminalRead = { data: string; running: boolean; truncated: boolean };
 export type TerminalBridge = {
@@ -9,4 +8,5 @@ export type TerminalBridge = {
   write(id: string, base64: string): Promise<{ ok: boolean }>;
   resize(id: string, cols: number, rows: number): Promise<{ ok: boolean }>;
   close(id: string): Promise<{ ok: boolean }>;
+  ping?(): Promise<{ ok: boolean }>;
 };

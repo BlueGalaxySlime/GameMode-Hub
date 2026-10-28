@@ -192,7 +192,6 @@ export function HubPage() {
   const [busy, setBusy] = useState(true);
   const [error, setError] = useState("");
   const [terminalFontSize, setTerminalFontSize] = useState(15);
-  const [showTerminalExtraKeys, setShowTerminalExtraKeys] = useState(true);
 
   async function refresh() {
     setBusy(true);
@@ -241,11 +240,10 @@ export function HubPage() {
         error={error} toggle={toggle} reload={() => { void refresh(); }} /> },
     { title: "Terminal", route: "/steamhub/terminal", icon: <FaTerminal />,
       hideTitle: true, padding: "none" as const,
-      content: <DeckyTerminalPage fontSize={terminalFontSize} showExtraKeys={showTerminalExtraKeys} /> },
+      content: <DeckyTerminalPage fontSize={terminalFontSize} /> },
     "separator" as const,
     { title: "Opcje terminala", route: "/steamhub/terminal/options", icon: <FaCog />,
-      content: <TerminalOptionsPage fontSize={terminalFontSize} showExtraKeys={showTerminalExtraKeys}
-        setFontSize={setTerminalFontSize} setShowExtraKeys={setShowTerminalExtraKeys} /> },
+      content: <TerminalOptionsPage fontSize={terminalFontSize} setFontSize={setTerminalFontSize} /> },
     "separator" as const,
     { title: "Aktualizacje", route: "/steamhub/updates", icon: <FaSyncAlt />,
       content: <UpdaterPage /> },

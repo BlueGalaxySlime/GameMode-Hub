@@ -6,6 +6,7 @@ type Credit = { project: string; authors: string; reason: string; license: strin
 
 /** Extend this list as code from more modules is used. */
 const reusedCode: Credit[] = [
+  { project: "Decky Terminal", authors: "Alex4386 i współtwórcy", reason: "Technika otwierania natywnej klawiatury SteamOS przez ukryte pole wejściowe.", license: "BSD-3-Clause", source: "github.com/Alex4386/decky-terminal" },
   {
     project: "TabMaster",
     authors: "Travis Lane (Tormak) i współtwórcy",

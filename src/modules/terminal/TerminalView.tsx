@@ -28,10 +28,12 @@ export interface TerminalLayoutState {
 }
 
 /** A Linux desktop frontend can provide its own presentation renderer. */
-export function TerminalView({ bridge, render, fontSize = 15 }: {
+export function TerminalView({ bridge, render, fontSize = 15, autoStart = false, visible = true }: {
   bridge: TerminalBridge;
   render?: (state: TerminalLayoutState) => ReactNode;
   fontSize?: number;
+  autoStart?: boolean;
+  visible?: boolean;
 }) {
   const host = useRef<HTMLDivElement>(null);
   const term = useRef<Terminal | null>(null);
@@ -135,6 +137,7 @@ export function TerminalView({ bridge, render, fontSize = 15 }: {
   }, [bridge]);
 
   useEffect(() => {
+    if (!visible) return;
     const instance = term.current;
     if (!instance) return;
     instance.options.fontSize = fontSize;
@@ -143,10 +146,15 @@ export function TerminalView({ bridge, render, fontSize = 15 }: {
       const id = session.current;
       if (id) void bridge.resize(id, instance.cols, instance.rows).catch(() => undefined);
     } catch { /* Window may temporarily be hidden by Steam. */ }
-  }, [fontSize, bridge]);
+  }, [fontSize, visible, bridge]);
+
+  useEffect(() => {
+    if (autoStart) void openSession();
+    // Auto-start once for each newly created terminal session.
+  }, []);
 
   async function openSession() {
-    if (pending) return;
+    if (pending || session.current) return;
     setPending(true);
     try {
       const old = session.current;
@@ -155,7 +163,7 @@ export function TerminalView({ bridge, render, fontSize = 15 }: {
       const instance = term.current;
       if (!instance) throw new Error("Terminal nie jest gotowy");
       fit.current?.fit();
-      setStatus("Uruchamianie sesji Linuksa…");
+      setStatus("Łączenie z terminalem…");
       let expired = false;
       let timeout: ReturnType<typeof setTimeout> | undefined;
       const request = bridge.start(
@@ -191,7 +199,22 @@ export function TerminalView({ bridge, render, fontSize = 15 }: {
       // pane can still focus it when a physical keyboard is available.
     } catch (error) {
       setActive(false);
-      setStatus("Nie udało się uruchomić: " + (error instanceof Error ? error.message : String(error)));
+      let detail = error instanceof Error ? error.message : String(error);
+      if (detail.includes("Przekroczono 12 sekund") && bridge.ping) {
+        try {
+          // Readiness probe distinguishes a stalled PTY from a disconnected Decky API.
+          const diagnosis = await Promise.race([
+            bridge.ping(),
+            new Promise<never>((_, reject) => setTimeout(() => reject(new Error("brak odpowiedzi")), 2000))
+          ]);
+          detail = diagnosis.ok
+            ? "Silnik PTY nie odpowiedział. " + detail
+            : "Backend SteamHub jest niedostępny. " + detail;
+        } catch {
+          detail = "Decky nie odpowiada na wywołania terminala. Otwórz Hub ponownie lub przeładuj Decky.";
+        }
+      }
+      if (mounted.current) setStatus(detail);
     } finally {
       if (mounted.current) setPending(false);
     }

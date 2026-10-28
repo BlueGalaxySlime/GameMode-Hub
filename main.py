@@ -9,7 +9,7 @@ from pathlib import Path
 import urllib.error
 import urllib.request
 
-CURRENT_VERSION = "0.4.8"
+CURRENT_VERSION = "0.4.9"
 RELEASES_API = "https://api.github.com/repos/BlueGalaxySlime/SteamOS-Hub/releases/latest"
 ASSET_NAME = "SteamHub.zip"
 
@@ -51,7 +51,7 @@ def _fetch_latest_release():
         RELEASES_API,
         headers={
             "Accept": "application/vnd.github+json",
-            "User-Agent": "SteamHub/0.4.8",
+            "User-Agent": "SteamHub/0.4.9",
             "X-GitHub-Api-Version": "2022-11-28",
         },
     )
@@ -78,6 +78,9 @@ def _fetch_latest_release():
 class Plugin:
     def __init__(self):
         self._terminal = TerminalService()
+
+    async def terminal_ping(self):
+        return {"ok": True}
 
     async def terminal_start(self, cols=80, rows=24):
         return await asyncio.to_thread(self._terminal.start, cols, rows)

@@ -1,3 +1,14 @@
+# SteamHub 0.4.9
+
+- Usunięto własną klawiaturę ekranową Huba. Ikona klawiatury używa natywnego pola wejściowego SteamOS — technika zaadaptowana z Decky Terminal (BSD-3-Clause).
+- Kompaktowy pasek: LB, Terminal 1/2/3, +, RB, klawiatura SteamOS, pełny ekran.
+- LB/RB przełączają niezależne sesje (również przyciski kontrolera), + uruchamia nową sesję, maksymalnie trzy.
+- Terminal bez dodatkowych nagłówków i przycisków Uruchom / Zamknij. Sesja uruchamia się przy otwarciu.
+- Pełny ekran zasłania lewy panel, a w zwykłym widoku terminal zajmuje cały dostępny obszar po prawej; scrollback jest wewnętrzny.
+- Diagnostyka połączenia z Decky rozróżnia problem silnika PTY od niedostępności backendu.
+- Opcje terminala pozostają po lewej, oddzielone separatorami, zgodnie z SteamOS.
+- Kompilacja nie zastępuje testu na Legion Go S; działanie systemowej klawiatury i backendu należy zweryfikować.
+
 # SteamHub 0.4.8
 
 - Naprawiono dostępność klawiatury ekranowej: przycisk „Pokaż klawiaturę” działa również bez uruchomionej sesji i podczas oczekiwania na backend.
