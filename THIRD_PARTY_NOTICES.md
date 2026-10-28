@@ -1,13 +1,25 @@
 # Third-party notices
 
-## TabMaster
+## TabMaster — GPL-3.0
 
-Project: TabMaster, by Travis Lane (Tormak) and contributors.
-Source: https://github.com/Tormak9970/TabMaster
-License: GNU General Public License version 3 (GPL-3.0), as declared in TabMaster's LICENSE file.
+Original project: **TabMaster**, Travis Lane (Tormak) and contributors.
+Upstream code: https://github.com/Tormak9970/TabMaster
+Original file: `src/patches/LibraryPatch.tsx`.
+License: **GNU General Public License, version 3** (see `LICENSE`).
 
-TabMaster is an independent upstream project. SteamHub's Tab Manager is intended to integrate comparable functionality with a different SteamOS UI; this notice is **not** a claim that upstream TabMaster code has already been incorporated.
+SteamHub's `src/modules/tab-manager/LibraryIntegration.tsx` **adapts TabMaster's
+SteamOS library interception technique**. Changes include SteamHub-specific
+tab models, an independent enable/disable lifecycle, conservative TabMaster
+conflict handling, a SteamHub native library tab, and basic collection filters.
+SteamHub is not an official TabMaster release and is not endorsed by its authors.
 
-**Before copying or adapting upstream GPL-3.0 code:** preserve copyright notices, identify changes, include the complete GPL-3.0 license text, provide corresponding source, and ensure the distributed combined work complies with GPL-3.0. Review any files carrying separate license notices individually. Do not ship an integration until these obligations are met.
+The adapted work is distributed under GPL-3.0. The complete, modifiable source
+is provided in the SteamHub repository:
+https://github.com/BlueGalaxySlime/SteamOS-Hub
 
-Upstream credit must remain visible in shipped project documentation and module information once source is incorporated.
+Preserve this attribution and the copyright notices when redistributing
+or adapting the integration. Consult the upstream repository for any
+individual files carrying additional or different copyright/license notices.
+
+The library integration has not yet been validated on real SteamOS hardware;
+this development branch must not be presented as a stable TabMaster replacement.
