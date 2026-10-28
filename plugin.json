@@ -8,7 +8,7 @@
       "utility",
       "launcher"
     ],
-    "description": "Modular gaming-mode utilities for SteamOS (early preview).",
+    "description": "SteamOS-style full-screen addon dashboard and update manager.",
     "image": "https://opengraph.githubassets.com/1/BlueGalaxySlime/SteamOS-Hub"
   }
 }

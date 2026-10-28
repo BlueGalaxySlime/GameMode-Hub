@@ -1,13 +1,13 @@
-# SteamHub 0.3.3
+# SteamHub 0.4.0
 
-**Hotfix: przywrócenie niezależnego aktualizatora.**
+Nowy układ w stylu ustawień SteamOS:
 
-- Usunięto z instalowanej paczki eksperymentalne modyfikacje biblioteki SteamOS.
-- SteamHub w Quick Access udostępnia tymczasowo tylko sprawdzanie i instalowanie aktualizacji.
-- Zachowano ograniczenie czasu oczekiwania, komunikaty o błędach oraz ponawianie sprawdzania.
-- Hotfix może pobrać nowszą wersję SteamHub, gdy zostanie ona opublikowana w GitHub Releases jako standardowe wydanie.
-- Nie usuwa lokalnie zapisanych ustawień i profili poprzednich modułów. Moduły wrócą w oddzielnym, pełnoekranowym panelu.
-- Aktualizacja SteamOS ani Decky Loader nie jest wprowadzana przez tę wtyczkę.
+- **Quick Access** zawiera jeden przycisk: **Otwórz SteamHub**.
+- Przycisk otwiera **pełnoekranowe okno SteamHub** z natywnym bocznym menu.
+- **Pulpit:** lista wybranych dodatków Decky i ich stan.
+- **Dodatki:** wybieranie dodatków z listy zainstalowanych w Decky; zapis wyboru jest niezależny od ich stanu i aktualizacji.
+- **Aktualizacje:** sprawdzanie GitHub Releases oraz instalowanie aktualizacji w oddzielnej zakładce, z limitem czasu i możliwością ponowienia.
+- Każdy wybrany dodatek ma osobną pozycję w panelu. Opcje wybranych dodatków: stan, widoczność, odnośnik do Decky oraz możliwość otwarcia oryginalnego panelu zainstalowanej wtyczki (na żądanie). Nowe, natywne opcje mogą być dodawane przez adaptery SteamHub. SteamHub nie zmienia kodu ani konfiguracji obcych wtyczek bez działania użytkownika.
+- Usunięto modyfikowanie zakładek biblioteki SteamOS; nie kolidujemy z TabMaster.
 
-To wydanie nie zawiera Tab Managera ani ingerencji w bibliotekę. Kolejne wydania
-przywrócą moduły w nowym układzie pełnoekranowym, otwieranym z Quick Access.
+Wersja jest wydaniem standardowym. Nie wymaga żadnego trybu preview.
