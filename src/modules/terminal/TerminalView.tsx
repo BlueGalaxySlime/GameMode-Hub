@@ -1,4 +1,5 @@
-import { useEffect, useLayoutEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import { appendOutput, clearOutput, getBackendError, getSlot, markBackendUnavailable } from "./sessionStore";
 import type { ReactNode } from "react";
 import { Terminal } from "@xterm/xterm";
 import { FitAddon } from "@xterm/addon-fit";
@@ -25,27 +26,29 @@ export interface TerminalLayoutState {
   submit(): void;
   send(value: string): void;
   toggleAdvanced(): void;
+  clear(): void;
 }
 
 /** A Linux desktop frontend can provide its own presentation renderer. */
-export function TerminalView({ bridge, render, fontSize = 15, autoStart = false, visible = true, fullScreen = false }: {
+export function TerminalView({ bridge, render, fontSize = 15, autoStart = false, visible = true, slotNumber = 0 }: {
   bridge: TerminalBridge;
   render?: (state: TerminalLayoutState) => ReactNode;
   fontSize?: number;
   autoStart?: boolean;
   visible?: boolean;
-  fullScreen?: boolean;
+  slotNumber?: number;
 }) {
+  const slot = getSlot(slotNumber);
   const host = useRef<HTMLDivElement>(null);
   const term = useRef<Terminal | null>(null);
   const fit = useRef<FitAddon | null>(null);
-  const session = useRef<string | null>(null);
+  const session = useRef<string | null>(slot.id);
   const mounted = useRef(true);
   const polling = useRef(false);
   const writeQueue = useRef<Promise<void>>(Promise.resolve());
-  const [active, setActive] = useState(false);
-  const [pending, setPending] = useState(false);
-  const [status, setStatus] = useState("Uruchom sesję, aby otworzyć powłokę Linuksa.");
+  const [active, setActive] = useState(slot.phase === "connected");
+  const [pending, setPending] = useState(slot.phase === "starting");
+  const [status, setStatus] = useState(slot.error || (slot.phase === "connected" ? "Sesja aktywna" : "Przygotowywanie terminala…"));
   const [command, setCommand] = useState("");
   const [advanced, setAdvanced] = useState(false);
 
@@ -62,7 +65,7 @@ export function TerminalView({ bridge, render, fontSize = 15, autoStart = false,
       const payload = btoa(binary);
       writeQueue.current = writeQueue.current
         .catch(() => undefined)
-        .then(async () => { await bridge.write(id, payload); })
+        .then(async () => { await Promise.race([bridge.write(id, payload), new Promise<never>((_, reject) => setTimeout(() => reject(new Error("Timeout zapisu")), 3000))]); })
         .catch(() => { if (mounted.current) setStatus("Nie udało się wysłać danych do terminala."); });
     }
   }
@@ -83,7 +86,7 @@ export function TerminalView({ bridge, render, fontSize = 15, autoStart = false,
     term.current = instance;
     fit.current = addon;
     try { addon.fit(); } catch { /* Hidden Steam route may not have dimensions yet. */ }
-    instance.writeln("SteamOS Hub — Linux PTY\r\n");
+    if (slot.output) instance.write(slot.output);
     const subscription = instance.onData(send);
 
     const refreshSize = () => {
@@ -107,11 +110,20 @@ export function TerminalView({ bridge, render, fontSize = 15, autoStart = false,
       try {
         const result = await bridge.read(id);
         if (!mounted.current || id !== session.current) return;
-        if (result.data) instance.write(decodeBytes(result.data));
+        if (result.data) {
+          const bytes = decodeBytes(result.data);
+          appendOutput(slot, new TextDecoder().decode(bytes));
+          if (mounted.current) instance.write(bytes);
+        }
         if (result.truncated) instance.writeln("\r\n[Ostrzeżenie: część wyjścia pominięta]");
         if (!result.running) {
-          setActive(false);
-          setStatus("Sesja zakończona. Możesz uruchomić kolejną.");
+          slot.phase = "ended";
+          slot.error = "Powłoka zakończyła działanie.";
+          const finishedId = slot.id;
+          slot.id = null;
+          session.current = null;
+          if (finishedId) void bridge.close(finishedId).catch(() => undefined);
+          if (mounted.current) { setActive(false); setStatus(slot.error); }
         }
       } catch {
         if (mounted.current && id === session.current) setStatus("Błąd odczytu terminala. Zamknij i uruchom sesję ponownie.");
@@ -128,33 +140,13 @@ export function TerminalView({ bridge, render, fontSize = 15, autoStart = false,
       subscription.dispose();
       const id = session.current;
       session.current = null;
-      if (id) void bridge.close(id).catch(() => undefined);
+      // Do not close the Linux PTY here: route transitions are not a logout.
       instance.dispose();
       term.current = null;
       fit.current = null;
     };
     // Only mount/unmount owns session lifetime. Font changes must not restart it.
   }, [bridge]);
-
-  // React may move the terminal viewport into a fullscreen portal.
-  // Keep xterm's existing DOM and backing PTY instead of recreating them.
-  useLayoutEffect(() => {
-    const instance = term.current;
-    const container = host.current;
-    if (!instance || !container) return;
-    if (instance.element && !container.contains(instance.element)) {
-      container.appendChild(instance.element);
-    }
-    if (!visible) return;
-    const frame = window.requestAnimationFrame(() => {
-      try {
-        fit.current?.fit();
-        const id = session.current;
-        if (id) void bridge.resize(id, instance.cols, instance.rows).catch(() => undefined);
-      } catch { /* Route may still be transitioning. */ }
-    });
-    return () => window.cancelAnimationFrame(frame);
-  }, [fullScreen, visible, bridge]);
 
   useEffect(() => {
     if (!visible) return;
@@ -169,73 +161,75 @@ export function TerminalView({ bridge, render, fontSize = 15, autoStart = false,
   }, [fontSize, visible, bridge]);
 
   useEffect(() => {
-    if (autoStart) void openSession();
-    // Auto-start once for each newly created terminal session.
-  }, []);
+    if (autoStart && visible && slot.phase === "idle" && !getBackendError()) {
+      void openSession();
+    }
+    // Start once when a slot is selected, never on every visit to this page.
+  }, [slotNumber, visible, autoStart]);
 
   async function openSession() {
-    if (pending || session.current) return;
+    if (slot.starting || slot.phase !== "idle" || getBackendError()) return;
+    const instance = term.current;
+    if (!instance) return;
+    slot.starting = true;
+    slot.phase = "starting";
     setPending(true);
+    setStatus("Sprawdzanie połączenia z backendem…");
+    let timedOut = false;
+
+    function bounded<T>(promise: Promise<T>, delay: number): Promise<T> {
+      return new Promise((resolve, reject) => {
+        const timer = window.setTimeout(() => {
+          timedOut = true;
+          reject(new Error("Brak odpowiedzi backendu w czasie " + delay + " ms"));
+        }, delay);
+        promise.then(value => { window.clearTimeout(timer); resolve(value); },
+          error => { window.clearTimeout(timer); reject(error); });
+      });
+    }
+
     try {
-      const old = session.current;
-      session.current = null;
-      if (old) await bridge.close(old);
-      const instance = term.current;
-      if (!instance) throw new Error("Terminal nie jest gotowy");
-      fit.current?.fit();
-      setStatus("Łączenie z terminalem…");
-      let expired = false;
-      let timeout: ReturnType<typeof setTimeout> | undefined;
+      // The first probe does not create any process. If it fails, do not call
+      // terminal_start and do not expose a retry button that can hang Steam.
+      if (bridge.ping) {
+        const response = await bounded(bridge.ping(), 2500);
+        if (!response.ok) throw new Error("Backend terminala nie jest gotowy");
+      }
+      if (timedOut) throw new Error("Backend nie odpowiedział");
+      setStatus("Uruchamianie sesji…");
+      try { fit.current?.fit(); } catch { /* hidden dimensions */ }
       const request = bridge.start(
         Math.max(20, Math.min(500, instance.cols || 80)),
         Math.max(5, Math.min(200, instance.rows || 24))
       );
-      // If Decky's backend does not answer, release UI focus and allow retry.
-      // Late responses must close their PTY to avoid orphaned shells.
+      // A late reply must not leave an orphaned PTY after a timeout.
       void request.then(result => {
-        if (expired || !mounted.current) void bridge.close(result.id).catch(() => undefined);
+        if (timedOut) void bridge.close(result.id).catch(() => undefined);
       }).catch(() => undefined);
-      const timeoutPromise = new Promise<never>((_, reject) => {
-        timeout = setTimeout(() => {
-          expired = true;
-          reject(new Error("Przekroczono 12 sekund oczekiwania na Decky. Sprawdź backend i spróbuj ponownie."));
-        }, 12000);
-      });
-      let result: { id: string };
-      try {
-        result = await Promise.race([request, timeoutPromise]);
-      } finally {
-        if (timeout) clearTimeout(timeout);
-      }
-      if (!mounted.current) {
-        await bridge.close(result.id);
-        return;
-      }
-      instance.clear();
+      const result = await bounded(request, 4500);
+      if (timedOut) return;
+      slot.id = result.id;
+      slot.phase = "connected";
+      slot.error = "";
       session.current = result.id;
-      setActive(true);
-      setStatus("Aktywna sesja użytkownika Linuksa (bez uprawnień root).");
-      // Keep controller focus on SteamOS input controls; clicking the xterm
-      // pane can still focus it when a physical keyboard is available.
-    } catch (error) {
-      setActive(false);
-      let detail = error instanceof Error ? error.message : String(error);
-      if (detail.includes("Przekroczono 12 sekund") && bridge.ping) {
-        try {
-          // Readiness probe distinguishes a stalled PTY from a disconnected Decky API.
-          const diagnosis = await Promise.race([
-            bridge.ping(),
-            new Promise<never>((_, reject) => setTimeout(() => reject(new Error("brak odpowiedzi")), 2000))
-          ]);
-          detail = diagnosis.ok
-            ? "Silnik PTY nie odpowiedział. " + detail
-            : "Backend SteamHub jest niedostępny. " + detail;
-        } catch {
-          detail = "Decky nie odpowiada na wywołania terminala. Otwórz Hub ponownie lub przeładuj Decky.";
-        }
+      if (mounted.current) {
+        setActive(true);
+        setStatus("Sesja aktywna");
       }
-      if (mounted.current) setStatus(detail);
+    } catch (error) {
+      const detail = error instanceof Error ? error.message : String(error);
+      const message = "Terminal nie połączył się z Decky (" + detail +
+        "). Wyłączono dalsze próby, aby nie zawieszać SteamOS. " +
+        "Po przywróceniu backendu przeładuj SteamHub.";
+      markBackendUnavailable(message);
+      slot.error = message;
+      slot.phase = "unavailable";
+      if (mounted.current) {
+        setActive(false);
+        setStatus(message);
+      }
     } finally {
+      slot.starting = false;
       if (mounted.current) setPending(false);
     }
   }
@@ -243,6 +237,8 @@ export function TerminalView({ bridge, render, fontSize = 15, autoStart = false,
   async function closeSession() {
     const id = session.current;
     session.current = null;
+    slot.id = null;
+    slot.phase = "ended";
     if (!id) return;
     setActive(false);
     setStatus("Zamykanie sesji…");
@@ -262,16 +258,17 @@ export function TerminalView({ bridge, render, fontSize = 15, autoStart = false,
 
   // Native SteamOS controls are provided by the Decky adapter, not hardcoded here.
   const state: TerminalLayoutState = {
-    status, active, pending, hasSession: session.current !== null,
+    status, active, pending, hasSession: slot.id !== null,
     command, advanced,
     terminalElement: <div className="steamhub-terminal"
-      style={{ width: "100%", height: "100%", minHeight: 0, overflow: "hidden", padding: 8 }}>
+      style={{ width: "100%", height: "100%", minHeight: 0, overflow: "hidden", padding: 0 }}>
       <div ref={host} style={{ width: "100%", height: "100%" }} />
     </div>,
     start: () => { void openSession(); },
     close: () => { void closeSession(); },
     setCommand, submit: submitCommand, send,
-    toggleAdvanced: () => setAdvanced(value => !value)
+    toggleAdvanced: () => setAdvanced(value => !value),
+    clear: () => { term.current?.clear(); clearOutput(slot); }
   };
   if (render) return <>{render(state)}</>;
   // Browser fallback for a future standalone Linux UI.
