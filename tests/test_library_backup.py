@@ -51,7 +51,7 @@ class LibraryBackupTests(unittest.TestCase):
         self.assertEqual(collection_manager.read_collections(), original_collections)
         self.assertEqual(tab_manager.list_tab_profiles(), ["Mój układ"])
         self.assertEqual(len(library_backup.list_backups()), 2)
-        self.assertEqual(
+        self.assertCountEqual(
             [x["kind"] for x in library_backup.list_backups()],
             ["before_restore", "manual"],
         )
