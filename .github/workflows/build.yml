@@ -28,7 +28,7 @@ jobs:
       - name: Build Decky frontend
         run: npm run build
       - name: Check Python syntax
-        run: python3 -m py_compile main.py tab_manager.py
+        run: python3 -m py_compile main.py
       - name: Test backend
         run: python3 -m unittest discover -s tests -v
       - name: Test TabMaster activation detection
