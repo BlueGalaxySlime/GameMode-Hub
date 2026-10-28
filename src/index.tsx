@@ -13,7 +13,7 @@ type DeckyInstaller = {
   callable: (method: string) => (...args: unknown[]) => Promise<unknown>;
 };
 const checkUpdates = callable<[], UpdateResult>("check_updates");
-const VERSION = "0.3.0-preview.1";
+const VERSION = "0.3.0";
 
 function Content() {
   const [message, setMessage] = useState("Nie sprawdzono aktualizacji.");
@@ -68,8 +68,8 @@ function Content() {
   }
 
   return <>
-    <PanelSection title="SteamHub · 0.3.0-preview.1">
-      <PanelSectionRow><div>Wersja testowa. Tab Manager wymaga weryfikacji na SteamOS.</div></PanelSectionRow>
+    <PanelSection title="SteamHub · 0.3.0">
+      <PanelSectionRow><div>Tab Manager jest eksperymentalny i wymaga weryfikacji na SteamOS.</div></PanelSectionRow>
     </PanelSection>
     <PanelSection title="Moduły (w przygotowaniu)">
       <PanelSectionRow><div>Game Manager · Library Manager · Terminal</div></PanelSectionRow>
