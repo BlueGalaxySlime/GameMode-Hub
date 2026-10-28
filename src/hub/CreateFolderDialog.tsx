@@ -37,6 +37,7 @@ export function CreateFolderDialog({ folder, onCreated, closeModal }: {
       <strong>Nowy folder</strong>
       <HubTextInput value={name} focusOnMount aria-label="Nazwa nowego folderu"
         placeholder="Wpisz nazwę folderu" disabled={busy}
+        onEditValue={setName} onExitEdit={() => closeModal?.()}
         onChange={event => setName(event.target.value)}
         onKeyDown={event => {
           if (event.key === "Enter") { event.preventDefault(); void create(); }
