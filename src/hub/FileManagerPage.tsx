@@ -232,11 +232,13 @@ export function FileManagerPage() {
     const pane = pendingDirectoryFocus.current;
     const container = (pane === "left" ? treeScrollRef : fileScrollRef).current;
     // Prefer a directory entry, then ".." for an empty directory.
-    const target = container?.querySelector<HTMLElement>(
+    const candidates = container?.querySelectorAll<HTMLElement>(
       '[data-file-entry] [role="button"], [data-file-entry] button, ' +
       '[data-file-entry] [tabindex], [data-parent-row] [role="button"], ' +
       '[data-parent-row] button, [data-parent-row] [tabindex]'
     );
+    const target = Array.from(candidates ?? []).find(element =>
+      !element.hasAttribute("disabled") && element.getAttribute("aria-disabled") !== "true");
     if (target) {
       pendingDirectoryFocus.current = null;
       target.focus({ preventScroll: true });
@@ -506,11 +508,15 @@ export function FileManagerPage() {
             <div key={part.path} style={{ display: "flex", flex: "0 0 auto",
               gap: 4, alignItems: "center", minWidth: 0 }}>
               {i > 0 && <span style={{ opacity: 0.55 }}>›</span>}
-              <DialogButton disabled={busy || currentPage.path === part.path}
+              <DialogButton disabled={busy}
                 style={{ minWidth: 0, padding: "3px 9px", fontSize: 12, maxWidth: 190,
                   overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}
-                onClick={() => navigateDirectory(part.path, currentPane)}>
-                {part.name}
+                onClick={() => {
+                  if (part.path !== currentPage.path) navigateDirectory(part.path, currentPane);
+                }}>
+                <span style={{ fontWeight: part.path === currentPage.path ? 700 : 400 }}>
+                  {part.name}
+                </span>
               </DialogButton>
             </div>)}
         </Focusable>}
