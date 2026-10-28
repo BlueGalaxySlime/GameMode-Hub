@@ -1,5 +1,5 @@
 /*
- * SteamHub Library Integration (GPL-3.0-or-later).
+ * SteamHub Library Integration (GPL-3.0-only).
  * Library interception technique adapted from TabMaster's LibraryPatch.tsx
  * by Travis Lane (Tormak) and contributors:
  * https://github.com/Tormak9970/TabMaster
