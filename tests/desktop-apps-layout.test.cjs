@@ -11,7 +11,7 @@ const bundle = fs.readFileSync("scripts/package.py", "utf8");
 test("Pulpit uses the Files layout with a search bar and category breadcrumb", () => {
   assert.ok(hub.includes("content: <DesktopPage />"));
   assert.ok(page.includes('aria-label="Ścieżka pulpitu"'));
-  assert.ok(page.includes('flow-children="row"'));
+  assert.ok(!page.includes('flow-children="row"')); // No redundant focusable category row.
   assert.ok(page.includes('flow-children="column"'));
   assert.ok(page.includes('height: "min(54vh, 540px)"'));
   assert.ok(page.includes('Widok: lista'));
