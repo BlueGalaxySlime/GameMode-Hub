@@ -14,7 +14,7 @@ Na stronie wydania rozwiń **Assets** i pobierz **`SteamHub.zip`**.
 
 ## Aktualny stan
 
-SteamHub otwiera **pełnoekranowy panel** w stylu Ustawień SteamOS. W Quick Access jest tylko przycisk **Otwórz SteamHub**. W pełnym oknie możesz wybrać zainstalowane dodatki Decky, zobaczyć ich stan i zarządzać wyborem. Aktualizacje znajdują się w osobnej zakładce panelu. Opcje innych wtyczek wymagają odrębnych adapterów — ich własny interfejs nie jest kopiowany.
+SteamHub otwiera **pełnoekranowy panel** w stylu Ustawień SteamOS. W Quick Access jest tylko przycisk **Otwórz SteamHub**. W pełnym oknie możesz wybrać zainstalowane dodatki Decky, zobaczyć ich stan i zarządzać wyborem. Aktualizacje znajdują się w osobnej zakładce panelu. Oryginalny panel wybranego dodatku można wyświetlić na żądanie wewnątrz SteamHub, jeśli wtyczka udostępnia go w Decky. Docelowy wygląd opcji poszczególnych dodatków będzie dopracowywany przez niezależne adaptery — bez kopiowania ich kodu.
 
 ## Instalacja
 
