@@ -1,6 +1,7 @@
 """SteamHub release checker. Installation is delegated to Decky Loader."""
 import asyncio
 from hub_settings import get_selected_addons, set_selected_addons
+from terminal_core import TerminalService
 import json
 import re
 import ssl
@@ -75,6 +76,27 @@ def _fetch_latest_release():
 
 
 class Plugin:
+    def __init__(self):
+        self._terminal = TerminalService()
+
+    async def terminal_start(self, cols=80, rows=24):
+        return await asyncio.to_thread(self._terminal.start, cols, rows)
+
+    async def terminal_read(self, session_id):
+        return await asyncio.to_thread(self._terminal.read, session_id)
+
+    async def terminal_write(self, session_id, data):
+        return await asyncio.to_thread(self._terminal.write, session_id, data)
+
+    async def terminal_resize(self, session_id, cols, rows):
+        return await asyncio.to_thread(self._terminal.resize, session_id, cols, rows)
+
+    async def terminal_close(self, session_id):
+        return await asyncio.to_thread(self._terminal.close, session_id)
+
+    async def _unload(self):
+        await asyncio.to_thread(self._terminal.close_all)
+
     async def get_selected_addons(self):
         return await asyncio.to_thread(get_selected_addons)
 
