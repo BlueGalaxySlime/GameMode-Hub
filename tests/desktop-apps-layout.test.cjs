@@ -267,3 +267,19 @@ test("Flatpak checks display an accurate nonzero status and Y can update all use
   assert.ok(py.includes('def flatpak_update_all_user():'));
   assert.ok(py.includes('["--user", "update", "--app"'));
 });
+
+
+test("Flatpak task does not lock modal and all user updates run in one process", () => {
+  const dialog = fs.readFileSync("src/hub/FlatpakManagerDialog.tsx", "utf8");
+  const svc = fs.readFileSync("flatpak_manager.py", "utf8");
+  assert.ok(dialog.includes('onCancel={() => closeModal?.()}'));
+  assert.ok(dialog.includes('<DialogButton onClick={() => closeModal?.()}>Zamknij</DialogButton>'));
+  assert.ok(dialog.includes('"flatpak_task_start"'));
+  assert.ok(dialog.includes('"flatpak_task_status"'));
+  assert.ok(dialog.includes('"flatpak_task_cancel"'));
+  assert.ok(dialog.includes('Anuluj aktualizację'));
+  assert.ok(dialog.includes('task?.elapsed'));
+  assert.ok(svc.includes('start_new_session=True'));
+  assert.ok(svc.includes('os.killpg('));
+  assert.ok(svc.includes('class FlatpakUpdateTask:'));
+});

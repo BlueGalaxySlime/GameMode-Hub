@@ -28,9 +28,9 @@ from desktop_apps import (list_desktop_apps, get_desktop_state, set_desktop_sett
                           forget_temporary_shortcut)
 from trash_manager import trash_entry, list_trash, restore_entry
 from lan_transfer import TransferManager
-from flatpak_manager import flatpak_overview, flatpak_update_user, flatpak_update_all_user
+from flatpak_manager import flatpak_overview, flatpak_update_user, flatpak_update_all_user, UPDATE_TASK
 
-CURRENT_VERSION = "0.5.32"
+CURRENT_VERSION = "0.5.33"
 RELEASES_API = "https://api.github.com/repos/BlueGalaxySlime/GameMode-Hub/releases/latest"
 ASSET_NAME = "GameMode-Hub.zip"
 
@@ -132,6 +132,7 @@ class Plugin:
 
     async def _unload(self):
         await asyncio.to_thread(self._transfer.stop)
+        UPDATE_TASK.cancel()
 
     async def get_selected_addons(self):
         return await asyncio.to_thread(get_selected_addons)
@@ -196,6 +197,15 @@ class Plugin:
 
     async def flatpak_overview(self):
         return await asyncio.to_thread(flatpak_overview)
+
+    async def flatpak_task_start(self, app_id=None):
+        return UPDATE_TASK.start(app_id)
+
+    async def flatpak_task_status(self):
+        return UPDATE_TASK.status()
+
+    async def flatpak_task_cancel(self):
+        return UPDATE_TASK.cancel()
 
     async def flatpak_update_user(self, app_id):
         return await asyncio.to_thread(flatpak_update_user, app_id)

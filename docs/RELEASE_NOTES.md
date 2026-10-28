@@ -1,3 +1,11 @@
+# GameMode Hub 0.5.33 (testowy)
+
+- **Flatpak — brak blokady Huba:** polecenie aktualizacji uruchamia się w osobnym, nadzorowanym zadaniu. Kliknięcie Aktualizuj nie czeka kilku minut na odpowiedź i nie blokuje kontrolera.
+- **B oraz Zamknij działają podczas pracy:** okno można zamknąć, a po ponownym otwarciu zobaczyć stan nadal działającego zadania. Osobna opcja „Anuluj aktualizację” wysyła sygnał zatrzymania procesu, bez wymuszania wyjścia przez Steam.
+- **Aktualizacja wszystkich w jednej operacji:** zamiast aktualizować aplikacje pojedynczo, przycisk „Aktualizuj wszystkie Flatpaki użytkownika” wykonuje jedno polecenie `flatpak --user update --noninteractive --assumeyes`, obejmujące także środowiska uruchomieniowe (runtime). Instalacje systemowe pozostają tylko do odczytu; bez roota.
+- **Weryfikacja na bazie AutoFlatpaks:** AutoFlatpaks używa kolejki poleceń `flatpak install --noninteractive --no-auto-pin --or-update`, przede wszystkim dla systemowych pakietów. Hub nie kopiuje mechanizmu roota ani całego interfejsu. Szybkość aktualizacji nadal zależy od pobierania i wielkości paczek; pokazywany jest czas działania, nie fikcyjny procent.
+- **Testy:** blokada duplikatów, bezpieczne anulowanie, brak roota i pojedyncze polecenie zbiorcze. Fizyczny pad Lenovo wymaga potwierdzenia.
+
 # GameMode Hub 0.5.32 (testowy)
 
 - **Zgłoszenia — naprawa nawigacji padem:** Tytuł i Opis są wybieralnymi natywnymi wierszami SteamOS. A otwiera edycję, B ją kończy, a góra/dół porusza się między polami jak w Szukaj i Pliki. Tytuł akceptuje strzałkę w dół do opisu.
