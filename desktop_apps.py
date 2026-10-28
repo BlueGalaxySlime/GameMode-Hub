@@ -176,6 +176,19 @@ def set_desktop_setting(app_id, key, value):
     return state["apps"][app_id]
 
 
+def reset_desktop_categories():
+    """Reset manual grouping in one write without touching other app state."""
+    state = get_desktop_state()
+    count = 0
+    for prefs in state["apps"].values():
+        if prefs.get("category") in ("flatpak", "system"):
+            prefs["category"] = "auto"
+            count += 1
+    if count:
+        _save(state)
+    return {"reset": count, "state": state}
+
+
 def remember_temporary_shortcut(shortcut):
     shortcut = _shortcut_id(shortcut)
     state = get_desktop_state()

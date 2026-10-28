@@ -29,10 +29,16 @@ const { breadcrumbs } = context.exports;
 
 test("Y on the focused file or address opens native SteamOS context menu", () => {
   assert.ok(ui.includes("showContextMenu("));
+  assert.ok(ui.includes("ref={filesFocusRef}"));
+  assert.ok(ui.includes("openFocusedFilesMenu(event.target ?? window)"));
+  assert.ok(ui.includes("data-file-pane={pane}"));
+  assert.ok(ui.includes("data-file-path={entry.path}"));
   assert.ok(ui.includes('onOptionsActionDescription="Opcje plików"'));
   assert.ok(ui.includes("openBrowserMenu(event.currentTarget ?? window)"));
   assert.ok(ui.includes('onOptionsActionDescription="Opcje"'));
-  assert.ok(ui.includes("onOptionsButton={event => openFileMenu(entry, event.currentTarget ?? window, pane)}"));
+  assert.ok(ui.includes("openFileMenu(entry, event.currentTarget ?? window, pane);"));
+  assert.ok(ui.includes("function openFocusedFilesMenu(parent: EventTarget)"));
+  assert.ok(ui.includes("event.stopPropagation();"));
   assert.ok(ui.includes("<Menu label={entry.name}"));
   assert.ok(ui.includes('clipboardAction(entry, "copy")'));
   assert.ok(ui.includes('clipboardAction(entry, "move")'));

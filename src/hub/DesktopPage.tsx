@@ -8,7 +8,7 @@ import { withTimeout } from "../utils/withTimeout";
 import { useHubSessionState } from "./useHubSessionState";
 import { HubTextInput } from "./HubTextInput";
 import { effectiveDesktopCategory, filterDesktopApps } from "../core/desktopCatalog";
-import { DesktopRulesDialog } from "./DesktopRulesDialog";
+import { DesktopRulesDialog, ResetDesktopRulesDialog } from "./DesktopRulesDialog";
 import type { DesktopCategory, DesktopSort } from "../core/desktopCatalog";
 import {
   createSteamDesktopShortcut, openSteamDesktopShortcut, removeSteamDesktopShortcut
@@ -27,6 +27,7 @@ type Category = DesktopCategory;
 const listDesktopApps = callable<[], DesktopApp[]>("desktop_list_apps");
 const readState = callable<[], DesktopState>("desktop_get_state");
 const updateSetting = callable<[string, string, boolean | number | string | null], SavedApp>("desktop_set_setting");
+const resetDesktopCategories = callable<[], { reset: number; state: DesktopState }>("desktop_reset_categories");
 const rememberTemporary = callable<[number], number[]>("desktop_remember_temporary");
 const forgetTemporary = callable<[number], number[]>("desktop_forget_temporary");
 
@@ -189,6 +190,30 @@ export function DesktopPage() {
     }
   }
 
+  async function resetCategoryOverrides() {
+    if (busy || working || categorySavingRef.current) return;
+    categorySavingRef.current = true;
+    setBusy(true);
+    try {
+      const result = await withTimeout(resetDesktopCategories(), 8000);
+      setStored(result.state);
+      setMessage(result.reset
+        ? "Przywrócono automatyczne przypisanie dla " + result.reset + " aplikacji."
+        : "Wszystkie przypisania są już automatyczne.");
+    } catch (reason) {
+      setMessage("Nie udało się zresetować przypisań: " + String(reason));
+    } finally {
+      categorySavingRef.current = false;
+      setBusy(false);
+    }
+  }
+
+  function openResetRules() {
+    window.setTimeout(() => showModal(
+      <ResetDesktopRulesDialog onConfirm={() => { void resetCategoryOverrides(); }} />
+    ), 0);
+  }
+
   function openRules() {
     const countFlatpak = apps.filter(app => app.flatpak).length;
     const countOverrides = apps.filter(app =>
@@ -267,6 +292,9 @@ export function DesktopPage() {
     if (scrollRef.current) scrollRef.current.scrollTop = 0;
   }
 
+  const hasManualOverrides = Object.values(stored.apps).some(app =>
+    app.category === "flatpak" || app.category === "system");
+
   function openDesktopMenu(parent: EventTarget) {
     showContextMenu(
       <Menu label="Opcje pulpitu">
@@ -284,6 +312,10 @@ export function DesktopPage() {
         </MenuGroup>
         <MenuGroup label="Reguły widoku">
           <MenuItem onSelected={openRules} onClick={openRules}>Pokaż reguły</MenuItem>
+          <MenuItem disabled={busy || !!working || !hasManualOverrides}
+            onSelected={openResetRules} onClick={openResetRules}>
+            Resetuj do automatycznych
+          </MenuItem>
         </MenuGroup>
       </Menu>,
       parent,

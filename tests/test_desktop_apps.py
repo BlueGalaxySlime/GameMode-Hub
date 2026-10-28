@@ -75,6 +75,25 @@ class DesktopAppsTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             desktop_apps.set_desktop_setting("org.example.Test", "category", "hidden")
 
+    def test_reset_categories_preserves_favorites_hidden_shortcuts(self):
+        desktop_apps.set_desktop_setting("first", "favorite", True)
+        desktop_apps.set_desktop_setting("first", "shortcut", 123)
+        desktop_apps.set_desktop_setting("first", "category", "flatpak")
+        desktop_apps.set_desktop_setting("second", "hidden", True)
+        desktop_apps.set_desktop_setting("second", "category", "system")
+        desktop_apps.set_desktop_setting("third", "category", "auto")
+        desktop_apps.remember_temporary_shortcut(456)
+        result = desktop_apps.reset_desktop_categories()
+        self.assertEqual(result["reset"], 2)
+        self.assertEqual(result["state"], desktop_apps.get_desktop_state())
+        self.assertEqual(result["state"]["apps"]["first"]["category"], "auto")
+        self.assertTrue(result["state"]["apps"]["first"]["favorite"])
+        self.assertEqual(result["state"]["apps"]["first"]["shortcut"], 123)
+        self.assertTrue(result["state"]["apps"]["second"]["hidden"])
+        self.assertEqual(result["state"]["apps"]["third"]["category"], "auto")
+        self.assertEqual(result["state"]["temporary"], [456])
+        self.assertEqual(desktop_apps.reset_desktop_categories()["reset"], 0)
+
     def test_invalid_preferences_rejected(self):
         for value in ("not bool", None, 1):
             with self.subTest(value=value), self.assertRaises(ValueError):

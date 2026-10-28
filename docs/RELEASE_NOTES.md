@@ -1,3 +1,9 @@
+# GameMode Hub 0.5.28 (testowy)
+
+- **Pliki — obsługa Y:** awaryjne przechwytywanie Y wewnątrz zakładki Pliki, gdy zaznaczony wiersz nie obsługuje zdarzenia. Pozostawiono natywne menu kontekstowe ze wszystkimi akcjami, w tym Transfer Wi-Fi, Kosz, Ulubione, sortowanie, zaznaczanie, kopiowanie i przenoszenie.
+- **Pulpit — Reguły widoku:** nowa opcja „Resetuj do automatycznych” w menu Y → Reguły widoku. Po potwierdzeniu przywraca automatyczną klasyfikację wszystkich ręcznie przypisanych aplikacji, nie zmienia Ulubionych, ukrytych aplikacji, skrótów ani sortowania.
+- **Testy:** dodano regresje dla obsługi Y i resetu zachowującego pozostałe ustawienia. Sprawdzenie fizycznego Y na Lenovo nadal potrzebne.
+
 # GameMode Hub 0.5.27 (testowy)
 
 - **Transfer Mac → Lenovo — poprawka ORIGIN:** zmieniono politykę Referer z `no-referrer` na `same-origin`. Formularz parowania może teraz przekazać Referer w obrębie tej samej lokalnej strony, bez wysyłania go do obcych witryn.

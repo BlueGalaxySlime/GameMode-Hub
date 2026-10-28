@@ -24,11 +24,12 @@ from hub_settings import (
 from release_catalog import RELEASES_API as RELEASE_CATALOG_API, catalog, validate_channel
 from file_manager import listing as list_files, create_folder, rename_entry, paste_entry, paste_entries
 from desktop_apps import (list_desktop_apps, get_desktop_state, set_desktop_setting,
-                          remember_temporary_shortcut, forget_temporary_shortcut)
+                          reset_desktop_categories, remember_temporary_shortcut,
+                          forget_temporary_shortcut)
 from trash_manager import trash_entry, list_trash, restore_entry
 from lan_transfer import TransferManager
 
-CURRENT_VERSION = "0.5.27"
+CURRENT_VERSION = "0.5.28"
 RELEASES_API = "https://api.github.com/repos/BlueGalaxySlime/GameMode-Hub/releases/latest"
 ASSET_NAME = "GameMode-Hub.zip"
 
@@ -200,6 +201,9 @@ class Plugin:
 
     async def desktop_set_setting(self, app_id, key, value):
         return await asyncio.to_thread(set_desktop_setting, app_id, key, value)
+
+    async def desktop_reset_categories(self):
+        return await asyncio.to_thread(reset_desktop_categories)
 
     async def desktop_remember_temporary(self, shortcut_id):
         return await asyncio.to_thread(remember_temporary_shortcut, shortcut_id)

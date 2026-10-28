@@ -152,6 +152,7 @@ export function FileManagerPage() {
   const treeScrollRef = useRef<HTMLDivElement>(null);
   const fileScrollRef = useRef<HTMLDivElement>(null);
   const addressControlRef = useRef<HTMLDivElement>(null);
+  const filesFocusRef = useRef<HTMLDivElement>(null);
   // A clicked directory is removed from the DOM after navigation. Restore
   // focus inside that SAME pane, otherwise Steam selects the sidebar tab.
   const pendingDirectoryFocus = useRef<"left" | "right" | null>(null);
@@ -517,6 +518,29 @@ export function FileManagerPage() {
     );
   }
 
+  // Files-only fallback if a focused control misses the Y gamepad event.
+  // Reuses the existing Steam context menus with all their original actions.
+  function openFocusedFilesMenu(parent: EventTarget) {
+    if (busy || editingPath) return;
+    const focused = document.activeElement;
+    if (focused instanceof HTMLElement && filesFocusRef.current?.contains(focused)) {
+      const row = focused.closest<HTMLElement>("[data-file-entry]");
+      if (row) {
+        const pane: "left" | "right" = row.closest<HTMLElement>("[data-file-pane]")
+          ?.dataset.filePane === "right" ? "right" : "left";
+        const folder = pane === "right" ? (rightPage ?? page) : page;
+        const entry = folder?.items.find(item => item.path === row.dataset.filePath);
+        if (entry) {
+          openFileMenu(entry, focused, pane);
+          return;
+        }
+      }
+      openBrowserMenu(focused);
+      return;
+    }
+    openBrowserMenu(parent);
+  }
+
   async function pasteTo(path: string) {
     if (!clipboard || locked.current) return;
     locked.current = true;
@@ -557,7 +581,14 @@ export function FileManagerPage() {
   return <DialogBody>
     <DialogControlsSection>
       <Focusable
+        ref={filesFocusRef}
         style={{ display: "flex", flexDirection: "column", gap: 8, width: "100%", minWidth: 0 }}
+        onOptionsButton={event => {
+          if (event.defaultPrevented) return;
+          event.preventDefault();
+          event.stopPropagation();
+          openFocusedFilesMenu(event.target ?? window);
+        }}
         onCancelActionDescription={multiSelect ? "Zakończ zaznaczanie" : editingPath ? "Zamknij edycję" : currentPage?.parent ? "Katalog wyżej" : "Pasek adresu"}
         onCancelButton={event => {
           event.preventDefault();
@@ -661,7 +692,7 @@ export function FileManagerPage() {
             minHeight: 160, overflow: "hidden" }}>
           {(["left", "right"] as const).filter(pane => splitTree || pane === "left").map(pane => {
             const folder = pane === "right" ? (rightPage ?? page) : page;
-            return <Focusable key={pane} flow-children="column"
+            return <Focusable key={pane} data-file-pane={pane} flow-children="column"
               navEntryPreferPosition={NavEntryPositionPreferences.MAINTAIN_Y}
               onGamepadFocus={() => activatePane(pane)}
               onMouseEnter={() => activatePane(pane)}
@@ -683,7 +714,8 @@ export function FileManagerPage() {
                     navigateDirectory(parent, pane);
                   }} /></div>
                 {folder.items.map(entry =>
-                  <div key={entry.path} data-file-entry style={{ width: "100%", minWidth: 0 }}>
+                  <div key={entry.path} data-file-entry data-file-path={entry.path}
+                    style={{ width: "100%", minWidth: 0 }}>
                     {activePane === pane && selected?.path === entry.path && action === "rename" ? (
                       <Focusable flow-children="row"
                         navEntryPreferPosition={NavEntryPositionPreferences.MAINTAIN_X}
@@ -710,7 +742,11 @@ export function FileManagerPage() {
                       <DialogButton disabled={entry.symlink || locked.current}
                         onOKActionDescription={multiSelect ? "Zaznacz / odznacz" : entry.directory ? "Otwórz" : "Zaznacz"}
                         onOptionsActionDescription="Opcje"
-                        onOptionsButton={event => openFileMenu(entry, event.currentTarget ?? window, pane)}
+                        onOptionsButton={event => {
+                           event.preventDefault();
+                           event.stopPropagation();
+                           openFileMenu(entry, event.currentTarget ?? window, pane);
+                         }}
                         onGamepadFocus={() => activatePane(pane)}
                         style={{ width: "100%", minWidth: 0, textAlign: "left",
                           padding: "7px 9px",

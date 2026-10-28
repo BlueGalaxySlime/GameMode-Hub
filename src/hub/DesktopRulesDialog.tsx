@@ -25,3 +25,24 @@ export function DesktopRulesDialog({ automaticFlatpak, overridden, closeModal }:
     </div>
   </ModalRoot>;
 }
+
+export function ResetDesktopRulesDialog({ onConfirm, closeModal }: {
+  onConfirm: () => void; closeModal?: () => void;
+}) {
+  return <ModalRoot onCancel={() => closeModal?.()}>
+    <div style={{ display: "flex", flexDirection: "column", gap: 10, padding: 12,
+      width: "min(86vw, 520px)", maxWidth: "100%", boxSizing: "border-box" }}>
+      <strong>Resetować reguły widoku?</strong>
+      <div style={{ fontSize: 13 }}>
+        Ręczne przypisania Flatpak/Systemowe zostaną zastąpione automatycznym
+        wykrywaniem. Ulubione, ukryte aplikacje, skróty i sortowanie pozostaną bez zmian.
+      </div>
+      <div style={{ display: "flex", gap: 8 }}>
+        <DialogButton onClick={() => closeModal?.()}>Anuluj</DialogButton>
+        <DialogButton onClick={() => { closeModal?.(); onConfirm(); }}>
+          Resetuj do automatycznych
+        </DialogButton>
+      </div>
+    </div>
+  </ModalRoot>;
+}

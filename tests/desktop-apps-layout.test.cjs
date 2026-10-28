@@ -171,3 +171,18 @@ test("Desktop View exposes readable auto rules and per-app category overrides", 
   assert.ok(rules.includes('wpisem X-Flatpak'));
   assert.ok(rules.includes('Ręcznie przypisane: {overridden}'));
 });
+
+test("Desktop Rules View offers confirmation before reset to auto", () => {
+  const rules = fs.readFileSync("src/hub/DesktopRulesDialog.tsx", "utf8");
+  const data = fs.readFileSync("desktop_apps.py", "utf8");
+  assert.ok(page.includes('Resetuj do automatycznych'));
+  assert.ok(page.includes('onSelected={openResetRules}'));
+  assert.ok(page.includes('disabled={busy || !!working || !hasManualOverrides}'));
+  assert.ok(page.includes('desktop_reset_categories'));
+  assert.ok(page.includes('setStored(result.state)'));
+  assert.ok(rules.includes('Resetować reguły widoku?'));
+  assert.ok(rules.includes('onConfirm()'));
+  assert.ok(rules.includes('Anuluj'));
+  assert.ok(backend.includes('async def desktop_reset_categories('));
+  assert.ok(data.includes('def reset_desktop_categories():'));
+});
