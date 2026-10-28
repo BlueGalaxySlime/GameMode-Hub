@@ -14,6 +14,7 @@ import { useHubSessionState } from "./useHubSessionState";
 import { DeckyTerminalPage, TerminalOptionsPage } from "./DeckyTerminalAdapter";
 import { CreditsPage } from "./CreditsPage";
 import { FocusableInfoField } from "./FocusableInfoField";
+import { GamepadScrollArea } from "./GamepadScrollArea";
 import { APP_NAME, DECKY_PLUGIN_NAME, HUB_ROUTE } from "../core/identity";
 import { CORE_MODULES } from "../core/modules";
 
@@ -53,7 +54,8 @@ function Overview({ selected, installed }: {
   installed: InstalledAddon[];
 }) {
   return <DialogBody>
-    <DialogControlsSection>
+    <GamepadScrollArea>
+      <DialogControlsSection>
       <DialogControlsSectionHeader>{APP_NAME}</DialogControlsSectionHeader>
       <Field label="Moje dodatki" description="Wybrane dodatki pojawiają się w menu po lewej stronie.">
         <div>{selected.length}</div>
@@ -74,7 +76,8 @@ function Overview({ selected, installed }: {
       <DialogButton onClick={() => Navigation.Navigate(HUB_ROUTE + "/addons")}>
         Przejdź do dodatków
       </DialogButton>
-    </DialogControlsSection>
+      </DialogControlsSection>
+    </GamepadScrollArea>
   </DialogBody>;
 }
 
