@@ -65,7 +65,7 @@ test("file options are in native right-hand submenus, not inline controls", () =
 
 test("path can be edited with A, while status strip is read only", () => {
   assert.ok(ui.includes('onOKActionDescription="Edytuj ścieżkę"'));
-  assert.ok(ui.includes("onClick={() => setEditingPath(true)}"));
+  assert.ok(ui.includes("setSelectingPath(false); setEditingPath(true);"));
   assert.ok(ui.includes('aria-label="Edytuj ścieżkę katalogu"'));
   assert.ok(ui.includes('event.key === "Enter"'));
   assert.ok(ui.includes('event.key === "Escape"'));
@@ -141,10 +141,10 @@ test("one Hub keyboard preference switches between Steam and physical input", ()
   assert.ok(hubTextInput.includes('getHubPreferences, subscribeHubPreferences'));
   assert.ok(hubTextInput.includes('options.autoKeyboard'));
   assert.ok(hubTextInput.includes('TextEditControls'));
-  assert.ok(hubTextInput.includes('onOptionsActionDescription="Wytnij / Kopiuj / Wklej"'));
+  assert.ok(hubTextInput.includes('onMenuActionDescription="Edycja tekstu"'));
   assert.ok(hubTextInput.includes('<TextField {...fieldProps}'));
   assert.ok(hubTextInput.includes('inputMode="none"'));
-  assert.ok(ui.includes('import { HubTextInput } from "./HubTextInput"'));
+  assert.ok(ui.includes('import { HubTextInput, openHubTextMenu } from "./HubTextInput"'));
   assert.ok(terminalInput.includes('keyboardOptions.autoKeyboard ? "text" : "none"'));
 });
 

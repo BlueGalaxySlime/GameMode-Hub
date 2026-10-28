@@ -1,3 +1,12 @@
+# GameMode Hub 0.5.46 (testowy)
+
+- **☰ (trzy kreski / Menu) na podświetlonym polu tekstowym** otwiera natywne menu edycji tekstu **bez aktywowania klawiatury ekranowej SteamOS**. Dotyczy Szukaj w Pulpicie, paska adresu w Plikach oraz Tytułu i Opisu w Zgłoszeniach.
+- **Pierwsza opcja: „Tryb zaznaczania tekstu”** — wyświetla oddzielną, fokusowalną wersję pola. Krzyżak przesuwa granicę zaznaczenia, widać wyróżniony fragment. Klawiatura SteamOS nie jest wywoływana.
+- **Menu ☰ w trybie zaznaczania:** Kopiuj, Wytnij, Wklej, Zaznacz wszystko i Wyczyść wszystko. Wyczyść wszystko usuwa zawartość pola; dostępne jest też „Cofnij wyczyszczenie” w tym samym trybie. **B wychodzi z zaznaczania**.
+- **Y pozostaje do standardowych funkcji ekranu.** Przy otwartej klawiaturze SteamOS fizyczne Y może być przejęte jako spacja, dlatego funkcji tekstowych nie uzależnia się od Y w nakładce klawiatury.
+- **Bezpieczne operacje:** wycinanie modyfikuje tekst wyłącznie po pomyślnym zapisaniu do schowka. Niedostępność schowka nie niszczy tekstu. Nie modyfikujemy globalnych skrótów pada ani ustawień systemu.
+- **Test Lenovo wymagany:** szczególnie obsługa przycisku ☰ w aktualnej wersji SteamOS, prawidłowe przechwycenie krzyżaka w trybie zaznaczania i przywrócenie fokusu po B.
+
 # GameMode Hub 0.5.45 (testowy)
 
 - **Aktywna edycja pól:** po naciśnięciu A i wejściu w pole tekstowe, pierwsze B uruchamia zaznaczanie od aktualnej pozycji kursora. Pojawia się krótka wskazówka. Kierunki na padzie przesuwają koniec zaznaczenia, bez zmiany wpisanego tekstu.

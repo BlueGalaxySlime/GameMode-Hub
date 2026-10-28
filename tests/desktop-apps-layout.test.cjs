@@ -39,12 +39,12 @@ test("Pulpit has favorite, Steam library and hide actions; no Open duplicate", (
 });
 
 test("A on the search bar edits text through the shared SteamOS keyboard input", () => {
-  assert.ok(page.includes('import { HubTextInput } from "./HubTextInput"'));
+  assert.ok(page.includes('import { HubTextInput, openHubTextMenu } from "./HubTextInput"'));
   assert.ok(page.includes('const [search, setSearch] = useHubSessionState("desktop.search", "")'));
   assert.ok(page.includes('const [editingSearch, setEditingSearch] = useState(false)'));
-  assert.ok(page.includes('<HubTextInput value={search} focusOnMount'));
+  assert.ok(page.includes('<HubTextInput value={search} focusOnMount={!selectingSearch}'));
   assert.ok(page.includes('aria-label="Szukaj aplikacji"'));
-  assert.ok(page.includes('onClick={() => setEditingSearch(true)}'));
+  assert.ok(page.includes('onClick={() => { setSelectingSearch(false); setEditingSearch(true); }}'));
   assert.ok(page.includes('onOKActionDescription="Szukaj"'));
   assert.ok(page.includes('onChange={event => {'));
   assert.ok(page.includes('setSearch(event.target.value)'));
@@ -250,7 +250,7 @@ test("Report fields are native focusable Steam rows with A editing, B exiting", 
   const inputs = fs.readFileSync("src/hub/HubTextInput.tsx", "utf8");
   assert.ok(reports.includes('onOKActionDescription="Edytuj tytuł"'));
   assert.ok(reports.includes('onOKActionDescription="Edytuj opis"'));
-  assert.ok(reports.includes('onClick={() => setEditingDetail(true)}'));
+  assert.ok(reports.includes('setSelectionDetail(false); setEditingDetail(true);'));
   assert.ok(reports.includes('finishTitle(event.key === "ArrowDown")'));
   assert.ok(reports.includes('onCancelButton={event => {'));
   assert.ok(reports.includes('onSecondaryActionDescription="Tytuł zgłoszenia"'));

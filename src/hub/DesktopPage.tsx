@@ -7,7 +7,7 @@ import {
 } from "@decky/ui";
 import { withTimeout } from "../utils/withTimeout";
 import { useHubSessionState } from "./useHubSessionState";
-import { HubTextInput } from "./HubTextInput";
+import { HubTextInput, openHubTextMenu } from "./HubTextInput";
 import { effectiveDesktopCategory, filterDesktopApps } from "../core/desktopCatalog";
 import { DesktopRulesDialog, ResetDesktopRulesDialog } from "./DesktopRulesDialog";
 import { FlatpakManagerDialog } from "./FlatpakManagerDialog";
@@ -58,6 +58,8 @@ export function DesktopPage() {
   const [sortMode, setSortMode] = useHubSessionState<DesktopSort>("desktop.sortMode", "recommended");
   const [search, setSearch] = useHubSessionState("desktop.search", "");
   const [editingSearch, setEditingSearch] = useState(false);
+  const [selectingSearch, setSelectingSearch] = useState(false);
+  const [selectAllSearch, setSelectAllSearch] = useState(false);
   const [message, setMessage] = useState("");
   const [busy, setBusy] = useState(false);
   const [working, setWorking] = useState<string | null>(null);
@@ -309,6 +311,8 @@ export function DesktopPage() {
     // after React mounts the replacement DialogButton.
     restoreSearchFocusRef.current = true;
     setEditingSearch(false);
+    setSelectingSearch(false);
+    setSelectAllSearch(false);
   }
 
   useEffect(() => {
@@ -477,7 +481,8 @@ export function DesktopPage() {
             }}
             style={{ width: "100%", minWidth: 0 }}>
           {editingSearch ? (
-            <HubTextInput value={search} focusOnMount
+            <HubTextInput value={search} focusOnMount={!selectingSearch}
+              startInSelectionMode={selectingSearch} selectAllOnMount={selectAllSearch}
               aria-label="Szukaj aplikacji" placeholder="Szukaj aplikacji…"
               onEditValue={next => { setSearch(next); if (scrollRef.current) scrollRef.current.scrollTop = 0; }}
               onExitEdit={finishSearch}
@@ -513,7 +518,22 @@ export function DesktopPage() {
                 event.stopPropagation();
                 openDesktopMenu(event.currentTarget ?? window);
               }}
-              onClick={() => setEditingSearch(true)}
+              onMenuActionDescription="Edycja tekstu"
+              onMenuButton={event => {
+                event.preventDefault();
+                event.stopPropagation();
+                openHubTextMenu({
+                  parent: event.currentTarget ?? window,
+                  value: search,
+                  onEditValue: setSearch,
+                  onStartSelection: (all = false) => {
+                    setSelectAllSearch(all);
+                    setSelectingSearch(true);
+                    setEditingSearch(true);
+                  }
+                });
+              }}
+              onClick={() => { setSelectingSearch(false); setEditingSearch(true); }}
               style={{ width: "100%", minWidth: 0, textAlign: "left",
                 padding: "8px 12px", overflow: "hidden",
                 textOverflow: "ellipsis", whiteSpace: "nowrap" }}>

@@ -1,7 +1,7 @@
 import { useRef, useState } from "react";
 import { DialogBody, DialogButton, DialogControlsSection, Focusable,
   NavEntryPositionPreferences, Navigation } from "@decky/ui";
-import { HubTextInput, HubTextArea } from "./HubTextInput";
+import { HubTextInput, HubTextArea, openHubTextMenu } from "./HubTextInput";
 import { useHubSessionState } from "./useHubSessionState";
 
 const ISSUE_URL = "https://github.com/BlueGalaxySlime/GameMode-Hub/issues";
@@ -14,6 +14,10 @@ export function ReportsPage() {
   const [detail, setDetail] = useHubSessionState("reports.detail", "");
   const [editingTitle, setEditingTitle] = useState(false);
   const [editingDetail, setEditingDetail] = useState(false);
+  const [selectionTitle, setSelectionTitle] = useState(false);
+  const [selectionDetail, setSelectionDetail] = useState(false);
+  const [selectAllTitle, setSelectAllTitle] = useState(false);
+  const [selectAllDetail, setSelectAllDetail] = useState(false);
   const titleRowRef = useRef<HTMLDivElement>(null);
   const detailRowRef = useRef<HTMLDivElement>(null);
   const [message, setMessage] = useState("");
@@ -33,11 +37,13 @@ export function ReportsPage() {
 
   function finishTitle(moveToDescription = false) {
     setEditingTitle(false);
+    setSelectionTitle(false);
     restoreButtonFocus(moveToDescription ? detailRowRef.current : titleRowRef.current);
   }
 
   function finishDetail() {
     setEditingDetail(false);
+    setSelectionDetail(false);
     restoreButtonFocus(detailRowRef.current);
   }
 
@@ -83,7 +89,9 @@ export function ReportsPage() {
         {/* Like Files/Search: Steam-native focusable row, A enters text editing. */}
         <div ref={titleRowRef} style={{ width: "100%", minWidth: 0 }}>
           {editingTitle ? (
-            <HubTextInput value={title} focusOnMount aria-label="Tytuł zgłoszenia"
+            <HubTextInput value={title} focusOnMount={!selectionTitle}
+              startInSelectionMode={selectionTitle} selectAllOnMount={selectAllTitle}
+              aria-label="Tytuł zgłoszenia"
               placeholder="Tytuł błędu (np. Y nie otwiera menu)…"
               onEditValue={next => setTitle(next.slice(0, MAX_TITLE))} onExitEdit={() => finishTitle()}
               onChange={event => setTitle(event.target.value.slice(0, MAX_TITLE))}
@@ -104,7 +112,19 @@ export function ReportsPage() {
                 event.stopPropagation();
                 returnToReportTitle();
               }}
-              onClick={() => setEditingTitle(true)}
+              onMenuActionDescription="Edycja tekstu"
+              onMenuButton={event => {
+                event.preventDefault();
+                event.stopPropagation();
+                openHubTextMenu({
+                  parent: event.currentTarget ?? window, value: title,
+                  onEditValue: next => setTitle(next.slice(0, MAX_TITLE)),
+                  onStartSelection: (all = false) => {
+                    setSelectAllTitle(all); setSelectionTitle(true); setEditingTitle(true);
+                  }
+                });
+              }}
+              onClick={() => { setSelectionTitle(false); setEditingTitle(true); }}
               style={{ width: "100%", minWidth: 0, textAlign: "left" }}>
               {title || "Tytuł błędu (np. Y nie otwiera menu)…"}
             </DialogButton>
@@ -116,7 +136,9 @@ export function ReportsPage() {
         <div ref={detailRowRef} style={{ width: "100%", minWidth: 0 }}>
           {editingDetail ? (
             <HubTextArea value={detail} rows={5} maxLength={MAX_TEXT}
-              focusOnMount aria-label="Opis błędu i sposób odtworzenia"
+              focusOnMount={!selectionDetail}
+              startInSelectionMode={selectionDetail} selectAllOnMount={selectAllDetail}
+              aria-label="Opis błędu i sposób odtworzenia"
               onEditValue={next => setDetail(next.slice(0, MAX_TEXT))} onExitEdit={finishDetail}
               placeholder="Opis błędu: co się stało i jak odtworzyć problem…"
               onKeyDown={event => {
@@ -136,7 +158,19 @@ export function ReportsPage() {
                 event.stopPropagation();
                 returnToReportTitle();
               }}
-              onClick={() => setEditingDetail(true)}
+              onMenuActionDescription="Edycja tekstu"
+              onMenuButton={event => {
+                event.preventDefault();
+                event.stopPropagation();
+                openHubTextMenu({
+                  parent: event.currentTarget ?? window, value: detail,
+                  onEditValue: next => setDetail(next.slice(0, MAX_TEXT)),
+                  onStartSelection: (all = false) => {
+                    setSelectAllDetail(all); setSelectionDetail(true); setEditingDetail(true);
+                  }
+                });
+              }}
+              onClick={() => { setSelectionDetail(false); setEditingDetail(true); }}
               style={{ width: "100%", minWidth: 0, textAlign: "left",
                 minHeight: 104, whiteSpace: "pre-wrap", overflowWrap: "anywhere" }}>
               {detail || "Opis błędu: co się stało i jak odtworzyć problem…"}
