@@ -18,14 +18,16 @@ type DirectoryPage = {
   roots: { name: string; path: string }[];
   items: Entry[]; total: number; offset: number; limit: number; truncated: boolean;
 };
-type Clipboard = { path: string; name: string; mode: "copy" | "move" };
+type Clipboard = { paths: string[]; name: string; mode: "copy" | "move" };
 
 const fileList = callable<
   [string | null, boolean, number, SortBy, boolean], DirectoryPage
 >("files_list");
 const makeFolder = callable<[string, string], { path: string }>("files_mkdir");
 const renameFile = callable<[string, string], { path: string }>("files_rename");
-const pasteFile = callable<[string, string, "copy" | "move"], { path: string }>("files_paste");
+const pasteMany = callable<[string[], string, "copy" | "move"], { items: { path: string }[]; count: number }>("files_paste_many");
+const readFavorites = callable<[], string[]>("get_favorite_folders");
+const saveFavorites = callable<[string[]], string[]>("set_favorite_folders");
 const saveHubOptions = callable<[HubPreferences], HubPreferences>("set_hub_preferences");
 
 const sortOptions = [
@@ -78,6 +80,10 @@ export function FileManagerPage() {
   const [sortMode, setSortMode] = useHubSessionState("files.sortMode", "name-asc");
   const [selected, setSelected] = useHubSessionState<Entry | null>("files.selected", null);
   const [clipboard, setClipboard] = useHubSessionState<Clipboard | null>("files.clipboard", null);
+  const [multiSelect, setMultiSelect] = useHubSessionState("files.multiSelect", false);
+  const [markedPaths, setMarkedPaths] = useHubSessionState<string[]>("files.markedPaths", []);
+  const [favorites, setFavorites] = useHubSessionState<string[]>("files.favorites", []);
+  const [savingFavorites, setSavingFavorites] = useState(false);
   const [name, setName] = useHubSessionState("files.name", "");
   const [action, setAction] = useHubSessionState<"folder" | "rename" | null>("files.action", null);
   const options = useSyncExternalStore(subscribeHubPreferences, getHubPreferences);
@@ -100,6 +106,40 @@ export function FileManagerPage() {
     setSelected(null);
     setAction(null);
   }
+  async function changeFavorites(next: string[]) {
+    if (savingFavorites) return;
+    const previous = favorites;
+    setFavorites(next);
+    setSavingFavorites(true);
+    try {
+      setFavorites(await withTimeout(saveFavorites(next), 4000));
+      setMessage("");
+    } catch (error) {
+      setFavorites(previous);
+      setMessage("Nie zapisano ulubionych: " + String(error));
+    } finally {
+      setSavingFavorites(false);
+    }
+  }
+
+  function toggleMarked(path: string) {
+    setMarkedPaths(paths => paths.includes(path)
+      ? paths.filter(item => item !== path) : [...paths, path]);
+  }
+
+  function startMultiSelect(entry: Entry) {
+    setMultiSelect(true);
+    setMarkedPaths([entry.path]);
+    setAction(null);
+    setMessage("Zaznaczaj elementy przyciskiem A. B kończy tryb.");
+  }
+
+  function exitMultiSelect() {
+    setMultiSelect(false);
+    setMarkedPaths([]);
+    setMessage("");
+  }
+
   const locked = useRef(false);
   const treeScrollRef = useRef<HTMLDivElement>(null);
   const fileScrollRef = useRef<HTMLDivElement>(null);
@@ -166,6 +206,7 @@ export function FileManagerPage() {
 
   useEffect(() => {
     if (!page) void load(null, hidden, 0, sortBy, descending, "left");
+    void withTimeout(readFavorites(), 4000).then(setFavorites).catch(() => {});
     return () => { request.current++; };
   }, []);
 
@@ -196,7 +237,8 @@ export function FileManagerPage() {
       } else if (operation === "rename" && selected) {
         await withTimeout(renameFile(selected.path, name), 30000);
       } else if (operation === "paste" && clipboard) {
-        await withTimeout(pasteFile(clipboard.path, directory.path, clipboard.mode), 30000);
+        const pasted = await withTimeout(pasteMany(clipboard.paths, directory.path, clipboard.mode), 120000);
+        setMessage("Wklejono " + pasted.count + " elementów.");
         setClipboard(null);
       } else {
         return;
@@ -214,7 +256,7 @@ export function FileManagerPage() {
         if (pane === "right") setPage(next);
         else setRightPage(next);
       }
-      setMessage("Gotowe.");
+      if (operation !== "paste") setMessage("Gotowe.");
     } catch (error) {
       setMessage("Operacja nie powiodła się: " + String(error));
     } finally {
@@ -225,11 +267,18 @@ export function FileManagerPage() {
 
   function clipboardAction(entry: Entry, mode: "copy" | "move") {
     if (entry.symlink) return;
-    if (entry.directory && mode === "copy") return;
-    setClipboard({ path: entry.path, name: entry.name, mode });
+    setClipboard({ paths: [entry.path], name: entry.name, mode });
     setSelected(null);
     setAction(null);
-    setMessage("");
+    setMessage("Schowek: " + entry.name);
+  }
+
+  function clipboardMarked(mode: "copy" | "move") {
+    if (!markedPaths.length) return;
+    const count = markedPaths.length;
+    setClipboard({ paths: [...markedPaths], name: count + " elementów", mode });
+    exitMultiSelect();
+    setMessage("Schowek: " + count + " elementów. Wybierz folder docelowy i Wklej.");
   }
 
   function changeSort(option: typeof sortOptions[number]) {
@@ -259,6 +308,33 @@ export function FileManagerPage() {
           setSelected(null);
           setMessage("");
         }}>Nowy folder...</MenuItem>
+        <MenuGroup label="Ulubione">
+          <MenuItem disabled={!currentPage || savingFavorites ||
+            (favorites.length >= 32 && !favorites.includes(currentPage.path))}
+            onSelected={() => {
+              if (currentPage && !favorites.includes(currentPage.path))
+                void changeFavorites([...favorites, currentPage.path]);
+            }}>Dodaj bieżący folder</MenuItem>
+          {currentPage && favorites.includes(currentPage.path) &&
+            <MenuItem disabled={savingFavorites}
+              onSelected={() => { void changeFavorites(favorites.filter(p => p !== currentPage.path)); }}>
+              Usuń bieżący z ulubionych
+            </MenuItem>}
+          {favorites.map(path =>
+            <MenuItem key={path} onSelected={() => { void load(path, hidden); }}>
+              {"★ " + path}
+            </MenuItem>)}
+          {favorites.length > 0 && <MenuGroup label="Usuń zapisany folder">
+            {favorites.map(path =>
+              <MenuItem key={path} disabled={savingFavorites}
+                onSelected={() => { void changeFavorites(favorites.filter(p => p !== path)); }}>
+                {path}
+              </MenuItem>)}
+          </MenuGroup>}
+        </MenuGroup>
+        {clipboard && <MenuItem onSelected={() => { void operate("paste"); }}>
+          {"Wklej tutaj (" + clipboard.paths.length + ")"}
+        </MenuItem>}
         <MenuGroup label="Pokaż ukryte">
           <MenuItem selected={!hidden} onSelected={() => changeHidden(false)}>
             Wyłączone
@@ -306,13 +382,45 @@ export function FileManagerPage() {
           setName(entry.name);
           setAction("rename");
         }}>Zmień nazwę</MenuItem>
-        {!entry.directory &&
-          <MenuItem onSelected={() => clipboardAction(entry, "copy")}>Kopiuj</MenuItem>}
+        <MenuItem onSelected={() => startMultiSelect(entry)}>Zaznacz kilka (B kończy)</MenuItem>
+        {multiSelect && markedPaths.length > 0 && <>
+          <MenuItem onSelected={() => clipboardMarked("copy")}>
+            {"Kopiuj zaznaczone (" + markedPaths.length + ")"}
+          </MenuItem>
+          <MenuItem onSelected={() => clipboardMarked("move")}>
+            {"Przenieś zaznaczone (" + markedPaths.length + ")"}
+          </MenuItem>
+          <MenuItem onSelected={exitMultiSelect}>Zakończ zaznaczanie</MenuItem>
+        </>}
+        <MenuItem onSelected={() => clipboardAction(entry, "copy")}>Kopiuj</MenuItem>
         <MenuItem onSelected={() => clipboardAction(entry, "move")}>Przenieś</MenuItem>
+        {entry.directory && clipboard &&
+          <MenuItem onSelected={() => { void pasteTo(entry.path); }}>
+            {"Wklej do folderu (" + clipboard.paths.length + ")"}
+          </MenuItem>}
       </Menu>,
       parent,
       { bFitToWindow: true, bShiftToFitWindow: true, bPreferPopTop: true }
     );
+  }
+
+  async function pasteTo(path: string) {
+    if (!clipboard || locked.current) return;
+    locked.current = true;
+    setBusy(true);
+    try {
+      const pasted = await withTimeout(pasteMany(clipboard.paths, path, clipboard.mode), 120000);
+      setClipboard(null);
+      setMessage("Wklejono " + pasted.count + " elementów.");
+      const fresh = await withTimeout(fileList(path, hidden, 0, sortBy, descending), 8000);
+      if (page?.path === path) setPage(fresh);
+      if ((rightPage ?? page)?.path === path && splitTree) setRightPage(fresh);
+    } catch (error) {
+      setMessage("Wklejanie nie powiodło się: " + String(error));
+    } finally {
+      locked.current = false;
+      setBusy(false);
+    }
   }
 
   // SteamOS owns the black footer. Expose controller hints through the
@@ -321,8 +429,12 @@ export function FileManagerPage() {
     <DialogControlsSection>
       <Focusable
         style={{ display: "flex", flexDirection: "column", gap: 8, width: "100%", minWidth: 0 }}
-        onCancelActionDescription={editingPath ? "Zamknij edycję" : currentPage?.parent ? "W górę" : "Wstecz"}
-        onCancelButton={editingPath ? event => {
+        onCancelActionDescription={multiSelect ? "Zakończ zaznaczanie" : editingPath ? "Zamknij edycję" : currentPage?.parent ? "W górę" : "Wstecz"}
+        onCancelButton={multiSelect ? event => {
+          event.preventDefault();
+          event.stopPropagation();
+          exitMultiSelect();
+        } : editingPath ? event => {
           event.preventDefault();
           event.stopPropagation();
           setPathDraft(currentPage?.path ?? "");
@@ -333,6 +445,11 @@ export function FileManagerPage() {
           void load(currentPage.parent, hidden, 0, sortBy, descending, currentPane);
         } : undefined}
         onKeyDown={event => {
+          if (multiSelect && (event.key === "Escape" || event.key === "Backspace")) {
+            event.preventDefault();
+            event.stopPropagation();
+            exitMultiSelect();
+          }
           if (event.key === "F5") {
             event.preventDefault();
             void load(currentPage?.path ?? null, hidden, currentPage?.offset ?? 0, sortBy, descending, currentPane);
@@ -399,6 +516,8 @@ export function FileManagerPage() {
           <span>Ukryte: {hidden ? "widoczne" : "niewidoczne"}</span>
           <span style={{ fontWeight: 700 }}>Podział: {splitTree ? "WŁ." : "WYŁ."}</span>
           {splitTree && <span>Panel: {activePane === "left" ? "lewy" : "prawy"}</span>}
+          {multiSelect && <span>Zaznaczanie: {markedPaths.length} (B: wyjdź)</span>}
+          {clipboard && <span>Schowek: {clipboard.paths.length}</span>}
         </div>
 
         {action === "folder" && <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
@@ -410,18 +529,6 @@ export function FileManagerPage() {
             <DialogButton disabled={busy} onClick={() => setAction(null)}>Anuluj</DialogButton>
           </div>
         </div>}
-        {clipboard && <div style={{ display: "flex", flexWrap: "wrap", gap: 6, alignItems: "center" }}>
-          <span style={{ fontSize: 12, opacity: 0.75, overflowWrap: "anywhere" }}>
-            {clipboard.mode === "copy" ? "Kopiuj: " : "Przenieś: "}{clipboard.name}
-          </span>
-          <DialogButton disabled={busy || !currentPage} onClick={() => { void operate("paste"); }}>
-            Wklej
-          </DialogButton>
-          <DialogButton disabled={busy} onClick={() => { setClipboard(null); setMessage(""); }}>
-            Anuluj
-          </DialogButton>
-        </div>}
-
         {/* Two complete file panels, one shared white address bar above. */}
         {page && <Focusable flow-children={splitTree ? "row" : "column"}
           navEntryPreferPosition={NavEntryPositionPreferences.MAINTAIN_Y}
@@ -478,17 +585,20 @@ export function FileManagerPage() {
                       </Focusable>
                     ) : (
                       <DialogButton disabled={busy || entry.symlink}
-                        onOKActionDescription={entry.directory ? "Otwórz" : "Zaznacz"}
+                        onOKActionDescription={multiSelect ? "Zaznacz / odznacz" : entry.directory ? "Otwórz" : "Zaznacz"}
                         onOptionsActionDescription="Opcje"
                         onOptionsButton={event => openFileMenu(entry, event.currentTarget ?? window, pane)}
                         onGamepadFocus={() => activatePane(pane)}
                         style={{ width: "100%", minWidth: 0, textAlign: "left",
                           padding: "7px 9px",
-                          background: activePane === pane && selected?.path === entry.path
+                          background: markedPaths.includes(entry.path) ? "#276f65" :
+                            activePane === pane && selected?.path === entry.path
                             ? "#426b99" : undefined }}
                         onClick={() => {
                           activatePane(pane);
-                          if (entry.directory) {
+                          if (multiSelect) {
+                            toggleMarked(entry.path);
+                          } else if (entry.directory) {
                             void load(entry.path, hidden, 0, sortBy, descending, pane);
                           } else {
                             setSelected(entry);
@@ -498,6 +608,7 @@ export function FileManagerPage() {
                         }}>
                         <span style={{ display: "flex", gap: 7, alignItems: "center",
                           width: "100%", minWidth: 0 }}>
+                          {multiSelect && <span aria-hidden="true">{markedPaths.includes(entry.path) ? "☑" : "☐"}</span>}
                           <span aria-hidden="true">{entry.directory ? "📁" :
                             entry.symlink ? "🔗" : "📄"}</span>
                           <span style={{ flex: 1, minWidth: 0, textAlign: "left",
