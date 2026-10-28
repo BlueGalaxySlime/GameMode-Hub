@@ -1,7 +1,7 @@
 /** Platform-independent module declarations. Platform adapters provide capabilities. */
 export type HubCapability = "storage" | "terminal" | "integrations" | "updates";
 export type HubModule = {
-  id: "home" | "addons" | "files" | "options" | "terminal" | "accounts" | "updates" | "credits" | "protondb";
+  id: "home" | "addons" | "files" | "options" | "terminal" | "accounts" | "updates" | "credits" | "ui";
   title: string;
   capabilities: readonly HubCapability[];
   enabledByDefault: boolean;
@@ -16,5 +16,5 @@ export const CORE_MODULES: readonly HubModule[] = [
   { id:"options", title:"Opcje Huba", capabilities:[], enabledByDefault:true },
   { id:"updates", title:"Aktualizacje", capabilities:["updates"], enabledByDefault:true },
   { id:"credits", title:"Podziękowania", capabilities:[], enabledByDefault:true },
-  { id:"protondb", title:"ProtonDB", capabilities:["integrations"], enabledByDefault:true }
+  { id:"ui", title:"UI", capabilities:["integrations"], enabledByDefault:true }
 ] as const;

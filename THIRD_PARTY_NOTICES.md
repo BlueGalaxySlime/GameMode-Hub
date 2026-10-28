@@ -155,3 +155,15 @@ https://github.com/OMGDuke/protondb-decky
 https://github.com/bschelst/protondb-decky
 Source projects carry GPL licensing. No badge graphics, modified Steam UI
 patches or source code from those plugins have been copied.
+
+## Steam game page patch reference: Game Glance — MIT
+
+The guarded, additive React tree insertion approach of GameMode Hub's
+optional unified game panel was informed by Game Glance, copyright
+(c) 2026 Michael Palma, MIT licensed:
+https://github.com/michpalm/game-glance
+
+The MIT license and copyright notice must be preserved in substantial copies
+of software. GameMode Hub implements its own game model and visuals; this is
+an attribution for the documented integration technique, not a claim of
+endorsement or any partnership.

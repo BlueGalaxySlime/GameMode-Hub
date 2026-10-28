@@ -32,9 +32,15 @@ from flatpak_manager import flatpak_overview, flatpak_update_user, flatpak_updat
 from downloads_manager import DOWNLOADS
 from update_checks import UPDATE_CHECKS
 from protondb_badges import BADGES
+from game_view_settings import (
+    get_options as game_view_options,
+    set_options as game_view_save_options,
+    get_mapping as game_view_mapping,
+    set_mapping as game_view_save_mapping,
+)
 from runtime_state import set_hub_ui_open, get_runtime_state, diagnostics as runtime_diagnostics
 
-CURRENT_VERSION = "0.5.38"
+CURRENT_VERSION = "0.5.39"
 RELEASES_API = "https://api.github.com/repos/BlueGalaxySlime/GameMode-Hub/releases/latest"
 ASSET_NAME = "GameMode-Hub.zip"
 
@@ -152,6 +158,18 @@ class Plugin:
 
     async def hub_ui_open(self, opened):
         return set_hub_ui_open(opened)
+
+    async def game_view_get_options(self):
+        return await asyncio.to_thread(game_view_options)
+
+    async def game_view_set_options(self, options):
+        return await asyncio.to_thread(game_view_save_options, options)
+
+    async def game_view_get_mapping(self, app_id):
+        return await asyncio.to_thread(game_view_mapping, app_id)
+
+    async def game_view_set_mapping(self, app_id, client, steam_id=None):
+        return await asyncio.to_thread(game_view_save_mapping, app_id, client, steam_id)
 
     async def protondb_get_badge(self, app_id, force=False):
         return await asyncio.to_thread(BADGES.lookup, app_id, force)

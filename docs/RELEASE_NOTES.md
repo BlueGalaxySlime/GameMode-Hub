@@ -1,3 +1,12 @@
+# GameMode Hub 0.5.39 (testowy)
+
+- **UI zamiast głównej zakładki ProtonDB:** nowa sekcja **UI → Gaming Mode / Obraz / Konsola**. ProtonDB jest opcjonalnym źródłem informacji w Gaming Mode, a ręczne wyszukiwanie pozostaje dostępne po rozwinięciu. Obraz/Konsola to miejsca na przyszłe moduły; nie wykonują zadań.
+- **Wspólny wygląd informacji o grze (wersja próbna):** po świadomym włączeniu w **UI → Gaming Mode** na ekranie szczegółów gry w SteamOS pojawia się jednakowy pasek dla Steam i skrótów z GOG/Epic/Heroic/Lutris/Bottles: tytuł, źródło, czas gry, ostatnie uruchomienie i ProtonDB, jeżeli dostępne. Oryginalne przyciski SteamOS, instalowanie i komendy launchera pozostają niezmienione. Jest to pierwsza warstwa ujednolicenia, nie pełny zamiennik całej karty gry.
+- **Rozpoznawanie źródła:** na podstawie danych udostępnionych przez stronę SteamOS; nieznane launchery są oznaczane jako „Inny launcher”, bez zgadywania po tytule. Skróty można ręcznie przypisać do właściwego launchera i Steam AppID przez „Źródło / ProtonDB”.
+- **Bezpieczny opt-in:** modyfikacja strony gry domyślnie wyłączona, aktywuje się bez restartowania backendu. Przechwytywanie jest zachowawcze, tylko na trasie gry; kiedy struktura SteamOS nie pasuje, nie wstawia niczego zamiast psuć widok. Odznaki korzystają z istniejącego cache, bez stałego skanowania gier.
+- **Weryfikacja:** testy źródeł i powiązań. Obsługa na Lenovo, w tym współpraca z Unifideck, Game Glance i innymi modyfikatorami interfejsu, wymaga sprawdzenia przed szerszym zastępowaniem widoku GOG.
+- **Bez zmian:** instalator aktualizacji, system pobierania, pliki, transfer, terminal w trybie bezpiecznym i sterowanie B/Y.
+
 # GameMode Hub 0.5.38 (testowy)
 
 - **Zgłoszenia:** tytuł ma teraz widoczny licznik `0 / 110 znaków` analogicznie do opisu `0 / 1200 znaków`; bez zmiany stylu pól, układu ani obsługi B.

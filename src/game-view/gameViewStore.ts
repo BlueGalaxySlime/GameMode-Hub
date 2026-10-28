@@ -1,5 +1,4 @@
 import { callable } from "@decky/api";
-import type { GameClient } from "./types";
 
 /** UI settings are persisted by the plugin backend. No always-on polling. */
 export type GameUiOptions = { enabled: boolean; show_protondb: boolean };
