@@ -1,5 +1,5 @@
 /*
- * SteamHub Library Integration (GPL-3.0-only).
+ * GameMode Hub Library Integration (GPL-3.0-only).
  * Library interception technique adapted from TabMaster's LibraryPatch.tsx
  * by Travis Lane (Tormak) and contributors:
  * https://github.com/Tormak9970/TabMaster
@@ -23,7 +23,7 @@ declare const collectionStore: {
   GetCollection(id: string): any;
 };
 
-export type TabFilter = "all" | "installed" | "favorites" | "non_steam" | "collection";
+export type TabFilter = "all" | "installed" | "favorites" | "non_steam" | "collection" | "hub_collection";
 export type TabDefinition = {
   id: string;
   title: string;
@@ -34,6 +34,12 @@ export type TabDefinition = {
 
 const readEnabled = callable<[], boolean>("get_tab_manager_enabled");
 const readTabs = callable<[], TabDefinition[]>("get_tab_definitions");
+type HubCollection = {
+  id: string; title: string;
+  filter: "manual" | "all" | "installed" | "favorites" | "non_steam";
+  app_ids: string[];
+};
+const readHubCollections = callable<[], HubCollection[]>("get_hub_collections");
 /**
  * Checks Decky's currently loaded plugin list, not the plugins installed
  * on disk. TabMaster being disabled is therefore not a conflict.
@@ -49,6 +55,7 @@ export function detectTabMasterActivity(): TabMasterActivity {
 let active = false;
 let conflict = true; // Fail closed until backend checks the other plugin.
 let definitions: TabDefinition[] = [];
+let hubCollections: HubCollection[] = [];
 let currentPatch: RoutePatch | undefined;
 let renderLibrary: (() => void) | undefined;
 let revision = 0;
@@ -61,14 +68,15 @@ export function tabManagerStatus() {
 export async function startTabManager() {
   const request = ++generation;
   try {
-    const [savedEnabled, savedTabs] = await Promise.all([
-      readEnabled(), readTabs()
+    const [savedEnabled, savedTabs, savedCollections] = await Promise.all([
+      readEnabled(), readTabs(), readHubCollections()
     ]);
     if (request !== generation) return;
     active = savedEnabled;
     // Fail closed only when Decky's active-plugin state is unknown or active.
     conflict = detectTabMasterActivity() !== "inactive";
     definitions = savedTabs;
+    hubCollections = savedCollections;
     syncPatch();
   } catch (error) {
     console.warn("[SteamHub] Tab Manager initialization failed", error);
@@ -89,6 +97,16 @@ export function tabManagerEnabledChanged(value: boolean) {
 export function tabManagerConflictChanged(value: boolean) {
   conflict = value;
   syncPatch();
+}
+
+export function availableHubCollections(): { id: string; title: string }[] {
+  return hubCollections.map(({ id, title }) => ({ id, title }));
+}
+
+export function hubCollectionsChanged(value: HubCollection[]) {
+  hubCollections = value;
+  ++revision;
+  renderLibrary?.();
 }
 
 export function tabManagerTabsChanged(value: TabDefinition[]) {
@@ -147,9 +165,29 @@ function sourceCollection(tab: TabDefinition): any {
 }
 
 function virtualCollection(tab: TabDefinition) {
-  const source = sourceCollection(tab);
-  if (!source) return null;
-  const apps: any[] = Array.from(source.visibleApps ?? source.allApps ?? []);
+  let apps: any[];
+  if (tab.filter === "hub_collection") {
+    const selected = hubCollections.find(item => item.id === tab.collection_id);
+    if (!selected) return null;
+    const sourceTab: TabDefinition = { ...tab, filter: selected.filter === "manual" ? "all" : selected.filter };
+    const source = sourceCollection(sourceTab);
+    if (!source) return null;
+    const pool: any[] = Array.from(source.visibleApps ?? source.allApps ?? []);
+    if (selected.filter === "manual") {
+      const shortcuts = sourceCollection({ ...tab, filter: "non_steam" });
+      pool.push(...Array.from(shortcuts?.visibleApps ?? shortcuts?.allApps ?? []));
+      const ids = new Set(selected.app_ids);
+      apps = pool.filter(app => ids.has(String(app?.appid)));
+    } else {
+      apps = pool;
+    }
+  } else {
+    const source = sourceCollection(tab);
+    if (!source) return null;
+    apps = Array.from(source.visibleApps ?? source.allApps ?? []);
+  }
+  apps = [...new Map(apps.filter(app => app?.appid != null)
+    .map(app => [String(app.appid), app])).values()];
   return {
     AsDeletableCollection: () => null,
     AsDragDropCollection: () => null,
@@ -170,11 +208,11 @@ function virtualCollection(tab: TabDefinition) {
 
 function nativeHubTab(): SteamTab {
   return {
-    id: "SteamHub",
-    title: "SteamHub",
+    id: "GameModeHub",
+    title: "GameMode Hub",
     content: <div style={{ padding: "24px", maxWidth: "860px" }}>
-      <h2>SteamHub</h2>
-      <p>Zarządzanie modułami SteamHub jest dostępne w menu Decky.</p>
+      <h2>GameMode Hub</h2>
+      <p>Zarządzanie modułami GameMode Hub jest dostępne w menu Decky.</p>
       <p>Tab Manager · Biblioteka SteamOS</p>
     </div>,
     renderTabAddon: () => null
@@ -213,7 +251,7 @@ function mergeLibraryTabs(tabs: SteamTab[], deps: any[]): SteamTab[] {
       ? createElement(tabContext.Provider, { value: { label: tab.title } }, grid)
       : grid;
     result.push({
-      id: "SteamHub:" + tab.id,
+      id: "GameModeHub:" + tab.id,
       title: tab.title,
       content,
       renderTabAddon: () => createElement(
