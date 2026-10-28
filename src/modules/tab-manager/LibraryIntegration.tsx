@@ -24,7 +24,7 @@ declare const collectionStore: {
   GetCollection(id: string): any;
 };
 
-export type TabFilter = "all" | "installed" | "favorites" | "non_steam" | "collection" | "hub_collection";
+export type TabFilter = "all" | "installed" | "favorites" | "non_steam" | "collection" | "hub_collection" | "system_tab";
 export type TabDefinition = {
   id: string;
   title: string;
@@ -35,6 +35,8 @@ export type TabDefinition = {
 
 const readEnabled = callable<[], boolean>("get_tab_manager_enabled");
 const readTabs = callable<[], TabDefinition[]>("get_tab_definitions");
+const readHiddenSteamTabs = callable<[], string[]>("get_hidden_steam_tabs");
+const saveHiddenSteamTabs = callable<[string[]], string[]>("save_hidden_steam_tabs");
 type HubCollection = {
   id: string; title: string;
   filter: "manual" | "all" | "installed" | "favorites" | "non_steam";
@@ -57,6 +59,8 @@ let active = false;
 let conflict = true; // Fail closed until backend checks the other plugin.
 let definitions: TabDefinition[] = [];
 let hubCollections: HubCollection[] = [];
+let hiddenSteamTabs: string[] = [];
+let steamTabCatalog: { id: string; title: string }[] = [];
 let currentPatch: RoutePatch | undefined;
 let renderLibrary: (() => void) | undefined;
 let revision = 0;
@@ -69,8 +73,8 @@ export function tabManagerStatus() {
 export async function startTabManager() {
   const request = ++generation;
   try {
-    const [savedEnabled, savedTabs, savedCollections] = await Promise.all([
-      readEnabled(), readTabs(), readHubCollections()
+    const [savedEnabled, savedTabs, savedCollections, savedHidden] = await Promise.all([
+      readEnabled(), readTabs(), readHubCollections(), readHiddenSteamTabs()
     ]);
     if (request !== generation) return;
     active = savedEnabled;
@@ -78,6 +82,7 @@ export async function startTabManager() {
     conflict = detectTabMasterActivity() !== "inactive";
     definitions = savedTabs;
     hubCollections = savedCollections;
+    hiddenSteamTabs = savedHidden;
     syncPatch();
   } catch (error) {
     console.warn("[SteamHub] Tab Manager initialization failed", error);
@@ -98,6 +103,33 @@ export function tabManagerEnabledChanged(value: boolean) {
 export function tabManagerConflictChanged(value: boolean) {
   conflict = value;
   syncPatch();
+}
+
+/** Original Steam cards remain intact and may only be hidden in Hub's view. */
+export function availableSteamLibraryTabs() {
+  const hidden = new Set(hiddenSteamTabs);
+  return steamTabCatalog.map(tab => ({ ...tab, hidden: hidden.has(tab.id) }));
+}
+
+export function hiddenSteamTabsChanged(ids: string[]) {
+  hiddenSteamTabs = ids;
+  ++revision;
+  renderLibrary?.();
+}
+
+export async function setSystemTabHidden(id: string, hide: boolean) {
+  if (!steamTabCatalog.some(tab => tab.id === id)) {
+    throw new Error("Nie znaleziono oryginalnej karty Steam. Otwórz bibliotekę.");
+  }
+  const next = new Set(hiddenSteamTabs);
+  if (hide) next.add(id);
+  else next.delete(id);
+  if (steamTabCatalog.every(tab => next.has(tab.id))) {
+    throw new Error("Co najmniej jedna karta systemowa musi być widoczna.");
+  }
+  const stored = await saveHiddenSteamTabs([...next]);
+  hiddenSteamTabsChanged(stored);
+  return stored;
 }
 
 export function availableHubCollections(): { id: string; title: string }[] {
@@ -226,8 +258,10 @@ function mergeLibraryTabs(tabs: SteamTab[], deps: any[]): SteamTab[] {
   if (!active || conflict || detectTabMasterActivity() !== "inactive") return tabs;
   const template = tabs.find(tab => tab?.id === "AllGames");
   if (!template) return tabs;
-  // Never replace Steam's own tabs or objects; TabManager only appends additions.
-  const result = tabs.map(menuFooter);
+  // Snapshot before filtering, so hidden system cards can always be restored.
+  steamTabCatalog = tabs.map(({ id, title }) => ({ id, title }));
+  // Do not mutate, rename or delete any Steam-owned tab definitions.
+  const result = tabs.filter(tab => !hiddenSteamTabs.includes(tab.id)).map(menuFooter);
   const configured = definitions.filter(tab => !tab.hidden);
   if (!configured.length) return result;
 
@@ -240,6 +274,18 @@ function mergeLibraryTabs(tabs: SteamTab[], deps: any[]): SteamTab[] {
 
   const [sortBy, setSortBy, openSortingMenu] = deps;
   for (const tab of configured) {
+    if (tab.filter === "system_tab") {
+      // A user-owned alias of an original Steam tab: preserve the original
+      // content and its filtering behavior instead of approximating it.
+      const original = tabs.find(candidate => candidate.id === tab.collection_id);
+      if (!original) continue;
+      result.push(menuFooter({
+        ...original,
+        id: "GameModeHub:" + tab.id,
+        title: tab.title
+      }));
+      continue;
+    }
     const collection = virtualCollection(tab);
     if (!collection) continue;
     const grid = createElement(tabGrid, {
