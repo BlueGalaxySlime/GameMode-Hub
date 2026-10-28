@@ -1,14 +1,14 @@
 import { useRef, useState } from "react";
-import { createPortal } from "react-dom";
 import { callable } from "@decky/api";
 import {
   DialogBody, DialogButton, DialogControlsSection, Field,
   Focusable, GamepadButton, NavEntryPositionPreferences, SliderField, TextField
 } from "@decky/ui";
-import { FaChevronLeft, FaChevronRight, FaCompress, FaExpand, FaKeyboard, FaPlus } from "react-icons/fa";
+import { FaEraser, FaKeyboard } from "react-icons/fa";
 import { TerminalView } from "../modules/terminal/TerminalView";
 import type { TerminalLayoutState } from "../modules/terminal/TerminalView";
 import type { TerminalBridge, TerminalRead } from "../modules/terminal/bridge";
+import { getSelectedSlot, selectSlot } from "../modules/terminal/sessionStore";
 
 /** Steam/Decky-specific presentation and RPC adapter.
  * The terminal emulator and PTY core do not import Steam or Decky.
@@ -78,107 +78,70 @@ function SteamKeyboard({ state, buttonStyle }: {
   </>;
 }
 
-function SessionPane({
-  state, number, count, selected, fullScreen, canAdd,
-  add, previous, next, toggleFullscreen
-}: {
+function SessionPane({ state, activeSlot, choose }: {
   state: TerminalLayoutState;
-  number: number;
-  count: number;
-  selected: boolean;
-  fullScreen: boolean;
-  canAdd: boolean;
-  add(): void;
-  previous(): void;
-  next(): void;
-  toggleFullscreen(): void;
+  activeSlot: number;
+  choose(index: number): void;
 }) {
-  const smallButton = { minWidth: "2.15rem", width: "2.15rem", height: "2.05rem", padding: "2px 5px", flexShrink: 0 };
-  const failed = !state.active && !state.pending;
-  const toolbar = <div style={{
-    position: fullScreen ? "fixed" : "relative",
-    zIndex: fullScreen ? 999999 : "auto",
-    top: fullScreen ? "42px" : undefined,
-    left: fullScreen ? 0 : undefined,
-    right: fullScreen ? 0 : undefined,
-    bottom: fullScreen ? "36px" : undefined,
-    boxSizing: "border-box",
-    display: selected ? "flex" : "none",
-    flexDirection: "column",
-    width: "100%", height: fullScreen ? "auto" : "calc(100dvh - 145px)",
-    minHeight: 0, maxHeight: "100%",
-    background: "#111923", overflow: "hidden",
-    padding: fullScreen ? "4px 12px 8px" : "0 8px 6px"
+  const iconStyle = { minWidth: "2.15rem", width: "2.15rem", height: "2.05rem",
+    padding: "2px 5px", flexShrink: 0 };
+  return <div style={{
+    width: "100%", height: "calc(100dvh - 145px)", maxHeight: "calc(100dvh - 145px)",
+    minHeight: 0, boxSizing: "border-box", display: "flex", flexDirection: "column",
+    overflow: "hidden", background: "#111923", padding: "0 7px 6px"
   }}>
     <Focusable flow-children="right" navEntryPreferPosition={NavEntryPositionPreferences.FIRST}
-      style={{ display: "flex", gap: 5, alignItems: "center", flexShrink: 0,
-        padding: "4px 0", minHeight: 40, width: "100%" }}>
-      <DialogButton style={smallButton} aria-label="Poprzednia sesja (LB)"
-        onClick={previous}><FaChevronLeft /></DialogButton>
-      <div style={{ flex: 1, whiteSpace: "nowrap", overflow: "hidden",
-        textOverflow: "ellipsis", fontSize: "1.05rem", fontWeight: 600 }}>
-        Terminal {number}
-      </div>
-      <DialogButton style={smallButton} aria-label="Dodaj sesję terminala"
-        disabled={!canAdd} onClick={add}><FaPlus /></DialogButton>
-      <DialogButton style={smallButton} aria-label="Następna sesja (RB)"
-        onClick={next}><FaChevronRight /></DialogButton>
-      <SteamKeyboard state={state} buttonStyle={smallButton} />
-      <DialogButton style={smallButton} aria-label={fullScreen ? "Zamknij pełny ekran" : "Pełny ekran"}
-        onClick={toggleFullscreen}>{fullScreen ? <FaCompress /> : <FaExpand />}</DialogButton>
+      style={{ display: "flex", gap: 5, alignItems: "center", width: "100%",
+        flexShrink: 0, height: 41 }}>
+      <div style={{ fontWeight: 600, flex: 1, minWidth: 0 }}>Terminal</div>
+      {[0, 1, 2].map(index => (
+        <DialogButton key={index} style={{
+          ...iconStyle, background: activeSlot === index ? "#426b99" : undefined
+        }} aria-label={"Terminal " + (index + 1)}
+          onClick={() => choose(index)}>{index + 1}</DialogButton>
+      ))}
+      <SteamKeyboard state={state} buttonStyle={iconStyle} />
+      <DialogButton style={iconStyle} aria-label="Wyczyść ekran terminala"
+        onClick={state.clear}><FaEraser /></DialogButton>
     </Focusable>
-    <div role="status" aria-live="polite" style={{
-      display: state.active ? "none" : "block", fontSize: "0.77rem",
-      flexShrink: 0, padding: "3px 4px", overflowWrap: "anywhere"
+    {(!state.active) && <div role="status" aria-live="polite" style={{
+      fontSize: "0.78rem", padding: "3px 5px", flexShrink: 0,
+      overflowWrap: "anywhere", maxHeight: "5rem", overflowY: "auto"
     }}>
       {state.status}
-      {failed && <DialogButton onClick={state.start}>Ponów</DialogButton>}
-    </div>
-    <div style={{ flex: "1 1 0", minHeight: 0, overflow: "hidden", width: "100%" }}>
+    </div>}
+    <div style={{ flex: "1 1 0", minHeight: 0, width: "100%", overflow: "hidden" }}>
       {state.terminalElement}
     </div>
   </div>;
-  // Render the fullscreen pane at the document root, outside the clipped
-  // Steam SidebarNavigation subtree. The existing xterm DOM is reattached
-  // by TerminalView when the host changes; PTY sessions stay alive.
-  return fullScreen && selected ? createPortal(toolbar, document.body) : toolbar;
 }
 
 export function DeckyTerminalPage({ fontSize }: { fontSize: number }) {
-  const [sessions, setSessions] = useState<number[]>([1]);
-  const [selectedIndex, setSelectedIndex] = useState(0);
-  const [fullScreen, setFullScreen] = useState(false);
-  const nextNumber = useRef(2);
-
-  const previous = () => setSelectedIndex(index => (index + sessions.length - 1) % sessions.length);
-  const next = () => setSelectedIndex(index => (index + 1) % sessions.length);
-  const add = () => {
-    if (sessions.length >= 3) return;
-    setSessions(previous => [...previous, nextNumber.current++]);
-    setSelectedIndex(sessions.length);
+  // Selected session survives navigating to another Hub page.
+  const [selectedIndex, setSelectedIndex] = useState(getSelectedSlot);
+  const choose = (index: number) => {
+    selectSlot(index);
+    setSelectedIndex(index);
   };
+  const previous = () => choose((selectedIndex + 2) % 3);
+  const next = () => choose((selectedIndex + 1) % 3);
   const onGamepad = (event: { detail: { button: GamepadButton }; preventDefault(): void }) => {
-    if (event.detail.button === GamepadButton.BUMPER_LEFT && sessions.length > 1) {
+    if (event.detail.button === GamepadButton.BUMPER_LEFT) {
       event.preventDefault();
       previous();
-    } else if (event.detail.button === GamepadButton.BUMPER_RIGHT && sessions.length > 1) {
+    } else if (event.detail.button === GamepadButton.BUMPER_RIGHT) {
       event.preventDefault();
       next();
     }
   };
-
-  return <Focusable flow-children="right" onButtonDown={onGamepad}
-    style={{ width: "100%", height: "100%", overflow: "hidden", position: "relative" }}>
-    {sessions.map((number, index) => <div key={number}
-      style={{ display: index === selectedIndex ? "block" : "none", width: "100%" }}>
-      <TerminalView bridge={bridge} fontSize={fontSize}
-        visible={index === selectedIndex} fullScreen={fullScreen} autoStart
-        render={state => <SessionPane
-          state={state} number={number} count={sessions.length}
-          selected={index === selectedIndex} fullScreen={fullScreen}
-          canAdd={sessions.length < 3} add={add} previous={previous} next={next}
-          toggleFullscreen={() => setFullScreen(value => !value)} />} />
-    </div>)}
+  return <Focusable flow-children="right"
+    navEntryPreferPosition={NavEntryPositionPreferences.FIRST}
+    onButtonDown={onGamepad}
+    style={{ width: "100%", height: "100%", overflow: "hidden" }}>
+    <TerminalView key={selectedIndex} bridge={bridge} slotNumber={selectedIndex}
+      fontSize={fontSize} autoStart
+      render={state => <SessionPane state={state}
+        activeSlot={selectedIndex} choose={choose} />} />
   </Focusable>;
 }
 
@@ -195,9 +158,11 @@ export function TerminalOptionsPage({ fontSize, setFontSize }: {
       <Field label="Klawiatura"
         description="Przycisk z ikoną klawiatury otwiera systemową klawiaturę SteamOS, zamiast dodatkowych przycisków w Hubie." />
       <Field label="Sesje"
-        description="W prawym panelu można uruchomić do 3 niezależnych terminali. LB i RB przełączają aktywną sesję." />
-      <Field label="Pełny ekran"
-        description="Ikona obok klawiatury rozszerza terminal na cały ekran i pozwala wrócić do Huba." />
+        description="Trzy stałe sesje 1, 2, 3. Wybór sesji lub LB/RB przełącza między nimi. Sesje są zachowywane po opuszczeniu sekcji Terminal." />
+      <Field label="Wyczyść ekran"
+        description="Ikona gumki usuwa tekst z widoku, ale nie kończy powłoki. Sesje zostają zamknięte dopiero po wyładowaniu SteamHub." />
+      <Field label="Połączenie"
+        description="Jeśli backend Decky nie odpowiada, SteamHub wyłącza dalsze próby automatycznego łączenia, żeby nie zawieszać Gaming Mode." />
     </DialogControlsSection>
   </DialogBody>;
 }
