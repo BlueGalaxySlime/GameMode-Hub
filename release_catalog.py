@@ -11,7 +11,7 @@ DOWNLOAD_PREFIX = "https://github.com/BlueGalaxySlime/GameMode-Hub/releases/down
 CHANNELS = ("test", "stable")
 _STABLE_MIN = (0, 6, 0)
 _TEST_MIN = (0, 5, 3)
-_TAG = re.compile(r"^v?(\\d+)\\.(\\d+)\\.(\\d+)(?:-test\\.(\\d+))?$")
+_TAG = re.compile(r"^v?(\d+)\.(\d+)\.(\d+)(?:-test\.(\d+))?$")
 
 
 def validate_channel(channel):
