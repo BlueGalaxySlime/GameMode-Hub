@@ -42,7 +42,7 @@ test("Y on the focused file or address opens native SteamOS context menu", () =>
   assert.ok(ui.includes("<Menu label={entry.name}"));
   assert.ok(ui.includes('clipboardAction(entry, "copy")'));
   assert.ok(ui.includes('clipboardAction(entry, "move")'));
-  assert.ok(!ui.includes("onSecondaryButton="));
+  assert.ok(ui.includes("onSecondaryButton={event => {")); // X returns to address; Y still owns context menus.
 });
 
 test("file options are in native right-hand submenus, not inline controls", () => {
@@ -249,15 +249,20 @@ test("Y offers a reversible Trash action with explicit confirmation and recovery
   assert.ok(packageCode.includes('"trash_manager.py"'));
 });
 
-test("B in Files never leaves Hub accidentally, even at the home directory", () => {
-  assert.ok(ui.includes('onCancelButton={event => {'));
-  assert.ok(ui.includes('backInFiles();'));
+test("X returns focus to the address bar without navigating, B keeps parent/Back", () => {
+  assert.ok(ui.includes('onSecondaryActionDescription="Pasek adresu"'));
+  assert.ok(ui.includes('onSecondaryButton={event => {'));
+  assert.ok(ui.includes('returnToAddressBar();'));
+  assert.ok(ui.includes('function returnToAddressBar()'));
+  assert.ok(ui.includes('function focusAddressBar()'));
+  assert.ok(ui.includes('pendingAddressFocus.current = true;'));
   assert.ok(ui.includes('addressControlRef.current?.querySelector<HTMLElement>'));
   assert.ok(ui.includes('ref={addressControlRef}'));
-  assert.ok(ui.includes('currentPage?.parent'));
-  assert.ok(ui.includes('event.stopPropagation()'));
+  assert.ok(ui.includes('function backInFiles(): boolean'));
+  assert.ok(ui.includes('navigateDirectory(currentPage.parent, currentPane)'));
+  assert.ok(ui.includes('if (event.defaultPrevented || !backInFiles()) return;'));
   assert.ok(ui.includes('onCancelActionDescription={multiSelect ?'));
-  assert.ok(ui.includes('"Pasek adresu"'));
+  assert.ok(ui.includes('currentPage?.parent ? "Katalog wyżej" : "Wstecz"'));
 });
 
 test("Local Wi-Fi transfer is available via Y in Files without root credentials", () => {

@@ -152,6 +152,7 @@ export function FileManagerPage() {
   const treeScrollRef = useRef<HTMLDivElement>(null);
   const fileScrollRef = useRef<HTMLDivElement>(null);
   const addressControlRef = useRef<HTMLDivElement>(null);
+  const pendingAddressFocus = useRef(false);
   const filesFocusRef = useRef<HTMLDivElement>(null);
   // A clicked directory is removed from the DOM after navigation. Restore
   // focus inside that SAME pane, otherwise Steam selects the sidebar tab.
@@ -560,7 +561,32 @@ export function FileManagerPage() {
     }
   }
 
-  function backInFiles() {
+  function focusAddressBar() {
+    addressControlRef.current?.querySelector<HTMLElement>(
+      'button, [role="button"], [tabindex]'
+    )?.focus({ preventScroll: true });
+  }
+
+  // X returns focus to the path bar; it never changes the current directory.
+  function returnToAddressBar() {
+    if (editingPath) {
+      pendingAddressFocus.current = true;
+      setPathDraft(currentPage?.path ?? "");
+      setEditingPath(false);
+    } else {
+      focusAddressBar();
+    }
+  }
+
+  useLayoutEffect(() => {
+    if (editingPath || !pendingAddressFocus.current) return;
+    pendingAddressFocus.current = false;
+    focusAddressBar();
+  }, [editingPath]);
+
+  // B keeps Back semantics: exit selection/editing, open parent, or let SteamOS
+  // handle it at the root. In particular B must not impersonate X at the root.
+  function backInFiles(): boolean {
     if (multiSelect) {
       exitMultiSelect();
     } else if (editingPath) {
@@ -569,11 +595,9 @@ export function FileManagerPage() {
     } else if (currentPage?.parent) {
       navigateDirectory(currentPage.parent, currentPane);
     } else {
-      // Root has no parent. Keep the gamepad inside Hub rather than exiting it.
-      addressControlRef.current?.querySelector<HTMLElement>(
-        'button, [role="button"], [tabindex]'
-      )?.focus({ preventScroll: true });
+      return false;
     }
+    return true;
   }
 
   // SteamOS owns the black footer. Expose controller hints through the
@@ -589,17 +613,23 @@ export function FileManagerPage() {
           event.stopPropagation();
           openFocusedFilesMenu(event.target ?? window);
         }}
-        onCancelActionDescription={multiSelect ? "Zakończ zaznaczanie" : editingPath ? "Zamknij edycję" : currentPage?.parent ? "Katalog wyżej" : "Pasek adresu"}
+        onCancelActionDescription={multiSelect ? "Zakończ zaznaczanie" : editingPath ? "Zamknij edycję" : currentPage?.parent ? "Katalog wyżej" : "Wstecz"}
         onCancelButton={event => {
+          if (event.defaultPrevented || !backInFiles()) return;
           event.preventDefault();
           event.stopPropagation();
-          backInFiles();
+        }}
+        onSecondaryActionDescription="Pasek adresu"
+        onSecondaryButton={event => {
+          if (event.defaultPrevented) return;
+          event.preventDefault();
+          event.stopPropagation();
+          returnToAddressBar();
         }}
         onKeyDown={event => {
-          if (event.key === "Escape" || multiSelect && event.key === "Backspace") {
+          if ((event.key === "Escape" || multiSelect && event.key === "Backspace") && backInFiles()) {
             event.preventDefault();
             event.stopPropagation();
-            backInFiles();
             return;
           }
           if (event.key === "F5") {
@@ -668,6 +698,13 @@ export function FileManagerPage() {
           ) : (
             <DialogButton disabled={busy}
               onOKActionDescription="Edytuj ścieżkę"
+              onSecondaryActionDescription="Pasek adresu"
+              onSecondaryButton={event => {
+                if (event.defaultPrevented) return;
+                event.preventDefault();
+                event.stopPropagation();
+                returnToAddressBar();
+              }}
               onOptionsActionDescription="Opcje plików"
               onOptionsButton={event => {
                 event.preventDefault();
@@ -741,6 +778,13 @@ export function FileManagerPage() {
                     ) : (
                       <DialogButton disabled={entry.symlink || locked.current}
                         onOKActionDescription={multiSelect ? "Zaznacz / odznacz" : entry.directory ? "Otwórz" : "Zaznacz"}
+                        onSecondaryActionDescription="Pasek adresu"
+                        onSecondaryButton={event => {
+                          if (event.defaultPrevented) return;
+                          event.preventDefault();
+                          event.stopPropagation();
+                          returnToAddressBar();
+                        }}
                         onOptionsActionDescription="Opcje"
                         onOptionsButton={event => {
                            event.preventDefault();

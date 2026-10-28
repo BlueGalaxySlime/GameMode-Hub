@@ -320,23 +320,27 @@ export function DesktopPage() {
     return () => window.clearTimeout(timer);
   }, [editingSearch]);
 
-  function backInDesktop() {
+  // B is the native Back action. It exits editing, then backs out of filters.
+  // At the catalogue root SteamOS is free to handle B normally.
+  function backInDesktop(): boolean {
     if (editingSearch) {
       finishSearch();
     } else if (category !== "all") {
       changeCategory("all");
       setMessage("Widok: Wszystkie.");
-      focusSearchBar();
     } else if (search) {
       setSearch("");
       setMessage("Wyczyszczono wyszukiwanie.");
-      focusSearchBar();
     } else {
-      // At the catalogue root there is no parent. Provide visible feedback,
-      // without navigating out of the Hub or leaving B apparently broken.
-      setMessage("Jesteś w głównym widoku Pulpitu.");
-      focusSearchBar();
+      return false;
     }
+    return true;
+  }
+
+  // X is a dedicated focus shortcut, not Back: never clear a search or filter.
+  function returnToSearchBar() {
+    if (editingSearch) finishSearch();
+    else focusSearchBar();
   }
 
   function focusSearchBar() {
@@ -396,18 +400,24 @@ export function DesktopPage() {
     <DialogControlsSection>
       <Focusable flow-children="column"
         style={{ display: "flex", flexDirection: "column", gap: 8, minWidth: 0, width: "100%" }}
-        onCancelActionDescription={editingSearch ? "Zamknij wyszukiwanie" : "Wróć do wyszukiwania"}
+        onCancelActionDescription={editingSearch ? "Zamknij edycję" : category !== "all" || !!search ? "Cofnij filtr" : "Wstecz"}
         onCancelButton={event => {
+          if (event.defaultPrevented) return;
+          if (!backInDesktop()) return;
+          event.preventDefault();
+          event.stopPropagation();
+        }}
+        onSecondaryActionDescription="Wróć do Szukaj"
+        onSecondaryButton={event => {
           if (event.defaultPrevented) return;
           event.preventDefault();
           event.stopPropagation();
-          backInDesktop();
+          returnToSearchBar();
         }}
         onKeyDown={event => {
-          if (event.key === "Escape") {
+          if (event.key === "Escape" && backInDesktop()) {
             event.preventDefault();
             event.stopPropagation();
-            backInDesktop();
             return;
           }
           if (event.key === "F5") { event.preventDefault(); void refresh(); }
@@ -446,18 +456,24 @@ export function DesktopPage() {
           <Focusable flow-children="column"
             navEntryPreferPosition={NavEntryPositionPreferences.PREFERRED_CHILD}
             onCancelButton={event => {
+              if (event.defaultPrevented || !backInDesktop()) return;
+              event.preventDefault();
+              event.stopPropagation();
+            }}
+            onButtonDown={event => {
+              // Steam TextField sometimes consumes B before the outer handler.
+              // Do not swallow B at the root or steal A/Y/navigation.
+              if (event.detail.button !== GamepadButton.CANCEL || event.defaultPrevented) return;
+              if (!backInDesktop()) return;
+              event.preventDefault();
+              event.stopPropagation();
+            }}
+            onSecondaryActionDescription="Wróć do Szukaj"
+            onSecondaryButton={event => {
               if (event.defaultPrevented) return;
               event.preventDefault();
               event.stopPropagation();
-              backInDesktop();
-            }}
-            onButtonDown={event => {
-              // Some Steam TextField versions consume B before the parent
-              // cancel callback. Handle only B, never A/Y or arrow navigation.
-              if (event.detail.button !== GamepadButton.CANCEL || event.defaultPrevented) return;
-              event.preventDefault();
-              event.stopPropagation();
-              backInDesktop();
+              returnToSearchBar();
             }}
             style={{ width: "100%", minWidth: 0 }}>
           {editingSearch ? (
@@ -476,12 +492,18 @@ export function DesktopPage() {
               }} />
           ) : (
             <DialogButton preferredFocus onOKActionDescription="Szukaj"
-              onCancelActionDescription="Wróć w Pulpicie"
+              onCancelActionDescription="Wstecz"
               onCancelButton={event => {
+                if (event.defaultPrevented || !backInDesktop()) return;
+                event.preventDefault();
+                event.stopPropagation();
+              }}
+              onSecondaryActionDescription="Wróć do Szukaj"
+              onSecondaryButton={event => {
                 if (event.defaultPrevented) return;
                 event.preventDefault();
                 event.stopPropagation();
-                backInDesktop();
+                returnToSearchBar();
               }}
               onOptionsActionDescription="Opcje pulpitu"
               onOptionsButton={event => {
@@ -507,6 +529,13 @@ export function DesktopPage() {
             {visible.map(app => <DialogButton key={app.id}
               disabled={!!working || busy}
               onOKActionDescription="Uruchom"
+              onSecondaryActionDescription="Wróć do Szukaj"
+              onSecondaryButton={event => {
+                if (event.defaultPrevented) return;
+                event.preventDefault();
+                event.stopPropagation();
+                returnToSearchBar();
+              }}
               onOptionsActionDescription="Opcje"
               onOptionsButton={event => openAppMenu(app, event.currentTarget ?? window)}
               onClick={() => { void run(app); }}
