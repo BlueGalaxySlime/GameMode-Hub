@@ -24,7 +24,7 @@ test("pad text selection clamps to input bounds", () => {
 test("multiline up/down keeps visual column as far as possible", () => {
   assert.equal(moveTextCaret("abcd\nx\nxyz", 3, "down", true), 6);
   assert.equal(moveTextCaret("abcd\nx\nxyz", 6, "down", true), 8);
-  assert.equal(moveTextCaret("abcd\nx\nxyz", 8, "up", true), 5);
+  assert.equal(moveTextCaret("abcd\nx\nxyz", 8, "up", true), 6);
 });
 
 test("reverse anchor range never deletes text and reports direction", () => {
