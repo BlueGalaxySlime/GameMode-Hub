@@ -97,13 +97,14 @@ test("credits acknowledge Desktop Apps and XDG standards", () => {
   assert.ok(notices.includes('https://github.com/allmazz/decky-desktop-apps'));
 });
 
-test("B on search consumes SteamOS cancel before it can leave the Hub", () => {
-  assert.ok(page.includes('onCancelActionDescription={editingSearch ? "Zamknij wyszukiwanie" : "Wróć do wyszukiwania"}'));
-  assert.ok(page.includes('onCancelButton={event => {'));
-  assert.ok(page.includes('event.preventDefault();'));
-  assert.ok(page.includes('event.stopPropagation();'));
-  assert.ok(page.includes('finishSearch();'));
+test("X on Desktop goes to Search without changing the catalogue", () => {
+  assert.ok(page.includes('onSecondaryActionDescription="Wróć do Szukaj"'));
+  assert.ok(page.includes('onSecondaryButton={event => {'));
+  assert.ok(page.includes('function returnToSearchBar()'));
+  assert.ok(page.includes('else focusSearchBar();'));
   assert.ok(page.includes('searchControlRef.current?.querySelector<HTMLElement>'));
+  assert.ok(page.includes('returnToSearchBar();'));
+  assert.ok(!page.includes('Jesteś w głównym widoku Pulpitu.'));
 });
 
 test("all View categories have their own selectable menu actions and visible labels", () => {
@@ -125,14 +126,15 @@ test("all sidebar tabs form one contiguous controller-navigation list", () => {
     "Opcje Huba", "Aktualizacje", "Pobieranie", "UI", "Podziękowania", "Zgłoszenia"]);
 });
 
-test("B is captured on Desktop also outside search edit mode", () => {
-  assert.ok(page.includes('onCancelButton={event => {'));
-  assert.ok(page.includes('backInDesktop();'));
+test("B on Desktop backs out of edit and filters, then releases SteamOS Back", () => {
+  assert.ok(page.includes('function backInDesktop(): boolean'));
+  assert.ok(page.includes('if (!backInDesktop()) return;'));
   assert.ok(page.includes('if (editingSearch) {'));
   assert.ok(page.includes('finishSearch();'));
   assert.ok(page.includes('changeCategory("all")'));
-  assert.ok(page.includes('focusSearchBar();'));
-  assert.ok(page.includes('event.stopPropagation();'));
+  assert.ok(page.includes('return false;'));
+  assert.ok(page.includes('onCancelButton={event => {'));
+  assert.ok(page.includes('onSecondaryButton={event => {'));
 });
 
 test("Konta remains the fourth controller tab and now shows Epic only", () => {
@@ -251,6 +253,10 @@ test("Report fields are native focusable Steam rows with A editing, B exiting", 
   assert.ok(reports.includes('onClick={() => setEditingDetail(true)}'));
   assert.ok(reports.includes('finishTitle(event.key === "ArrowDown")'));
   assert.ok(reports.includes('onCancelButton={event => {'));
+  assert.ok(reports.includes('onSecondaryActionDescription="Tytuł zgłoszenia"'));
+  assert.ok(reports.includes('onSecondaryButton={event => {'));
+  assert.ok(reports.includes('function returnToReportTitle()'));
+  assert.ok(reports.includes('restoreButtonFocus(titleRowRef.current)'));
   assert.ok(reports.includes('restoreButtonFocus(detailRowRef.current)'));
   assert.ok(inputs.includes('background: "transparent"'));
   assert.ok(!inputs.slice(inputs.indexOf("export function HubTextArea(")).includes('"#333d50"'));
@@ -320,17 +326,16 @@ test("System Firefox can be updated and bulk includes all installations", () => 
   assert.ok(queue.includes('def enqueue_flatpak(self, target=None, scope="user")'));
 });
 
-test("B on Pulpit search remains inside Hub, with visible root feedback", () => {
+test("Desktop returns X focus after editing while leaving B at root to SteamOS", () => {
   const source = fs.readFileSync("src/hub/DesktopPage.tsx", "utf8");
   assert.ok(source.includes('const restoreSearchFocusRef = useRef(false)'));
   assert.ok(source.includes('restoreSearchFocusRef.current = true;'));
   assert.ok(source.includes('if (editingSearch || !restoreSearchFocusRef.current) return;'));
-  assert.ok(source.includes('focusSearchBar();'));
   assert.ok(source.includes('navEntryPreferPosition={NavEntryPositionPreferences.PREFERRED_CHILD}'));
   assert.ok(source.includes('GamepadButton.CANCEL'));
-  assert.ok(source.includes('onCancelActionDescription="Wróć w Pulpicie"'));
-  assert.ok(source.includes('onCancelButton={event => {'));
-  assert.ok(source.includes('Jesteś w głównym widoku Pulpitu.'));
+  assert.ok(source.includes('onCancelActionDescription="Wstecz"'));
+  assert.ok(source.includes('onSecondaryActionDescription="Wróć do Szukaj"'));
+  assert.ok(source.includes('returnToSearchBar();'));
   assert.ok(source.includes('Wyczyszczono wyszukiwanie.'));
   assert.ok(source.includes("'button, [role=\"button\"]'"));
   assert.ok(!source.includes("'button, [role=\"button\"], [tabindex]'"));
