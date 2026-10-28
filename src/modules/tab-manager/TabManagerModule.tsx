@@ -20,6 +20,10 @@ const setEnabled = callable<[boolean], boolean>("set_tab_manager_enabled");
 const detectTabMaster = callable<[], boolean>("get_tabmaster_installed");
 const getTabs = callable<[], TabDefinition[]>("get_tab_definitions");
 const saveTabs = callable<[TabDefinition[]], TabDefinition[]>("save_tab_definitions");
+const listProfiles = callable<[], string[]>("list_tab_profiles");
+const saveProfile = callable<[string], string[]>("save_tab_profile");
+const loadProfile = callable<[string], TabDefinition[]>("load_tab_profile");
+const deleteProfile = callable<[string], string[]>("delete_tab_profile");
 
 /** Independent Tab Manager UI. Does not patch Steam's library until the engine is ready. */
 export function TabManagerModule() {
@@ -28,6 +32,8 @@ export function TabManagerModule() {
   const [conflict, setConflict] = useState(false);
   const [tabs, setTabs] = useState<TabDefinition[]>([]);
   const [name, setName] = useState("");
+  const [profileName, setProfileName] = useState("");
+  const [profiles, setProfiles] = useState<string[]>([]);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editingTitle, setEditingTitle] = useState("");
   const [error, setError] = useState("");
@@ -35,8 +41,8 @@ export function TabManagerModule() {
   useEffect(() => {
     let mounted = true;
     detectTabMaster().then(value => { if (mounted) { setConflict(value); tabManagerConflictChanged(value); } }).catch(() => {});
-    Promise.all([getEnabled(), getTabs()])
-      .then(([value, definitions]) => { if (mounted) { updateEnabled(value); setTabs(definitions); } })
+    Promise.all([getEnabled(), getTabs(), listProfiles()])
+      .then(([value, definitions, savedProfiles]) => { if (mounted) { updateEnabled(value); setTabs(definitions); setProfiles(savedProfiles); } })
       .catch(() => { if (mounted) setError("Nie udało się odczytać ustawień zakładek."); })
       .finally(() => { if (mounted) setBusy(false); });
     return () => { mounted = false; };
@@ -56,6 +62,40 @@ export function TabManagerModule() {
     try { const stored = await saveTabs(next); setTabs(stored); tabManagerTabsChanged(stored); }
     catch { setError("Błąd zapisu zakładek."); }
     finally { setBusy(false); }
+  }
+
+  async function storeProfile() {
+    const title = profileName.trim();
+    if (!title) return;
+    setBusy(true);
+    setError("");
+    try { setProfiles(await saveProfile(title)); setProfileName(""); }
+    catch { setError("Nie udało się zapisać profilu."); }
+    finally { setBusy(false); }
+  }
+
+  async function applyProfile(title: string) {
+    setBusy(true);
+    setError("");
+    try {
+      const newTabs = await loadProfile(title);
+      setTabs(newTabs);
+      tabManagerTabsChanged(newTabs);
+    } catch { setError("Nie udało się wczytać profilu."); }
+    finally { setBusy(false); }
+  }
+
+  async function removeProfile(title: string) {
+    setBusy(true);
+    setError("");
+    try { setProfiles(await deleteProfile(title)); }
+    catch { setError("Nie udało się usunąć profilu."); }
+    finally { setBusy(false); }
+  }
+
+  function duplicate(tab: TabDefinition) {
+    const id = "copy-" + Date.now().toString(36) + "-" + Math.random().toString(36).slice(2, 9);
+    void persist([...tabs, { ...tab, id, title: tab.title + " (kopia)" }]);
   }
 
   function add() {
@@ -116,7 +156,16 @@ export function TabManagerModule() {
         <ToggleField label="Widoczna" checked={!tab.hidden} disabled={busy} onChange={visible => void persist(tabs.map(t => t.id === tab.id ? { ...t, hidden: !visible } : t))} />
         <ButtonItem disabled={busy || index === 0} onClick={() => move(index, -1)}>W górę</ButtonItem>
         <ButtonItem disabled={busy || index === tabs.length - 1} onClick={() => move(index, 1)}>W dół</ButtonItem>
+        <ButtonItem disabled={busy} onClick={() => duplicate(tab)}>Duplikuj</ButtonItem>
         <ButtonItem disabled={busy} onClick={() => void persist(tabs.filter(t => t.id !== tab.id))}>Usuń</ButtonItem>
+      </PanelSectionRow>)}
+      <PanelSectionRow><div>Profile zakładek</div></PanelSectionRow>
+      <PanelSectionRow><TextField label="Nazwa profilu" value={profileName} onChange={event => setProfileName(event.target.value)} /></PanelSectionRow>
+      <PanelSectionRow><ButtonItem disabled={busy || !profileName.trim()} onClick={storeProfile}>Zapisz aktualny układ jako profil</ButtonItem></PanelSectionRow>
+      {profiles.map(profile => <PanelSectionRow key={profile}>
+        <div>{profile}</div>
+        <ButtonItem disabled={busy} onClick={() => applyProfile(profile)}>Wczytaj</ButtonItem>
+        <ButtonItem disabled={busy} onClick={() => removeProfile(profile)}>Usuń profil</ButtonItem>
       </PanelSectionRow>)}
     </>}
     {conflict && enabled && <PanelSectionRow><div>Integracja z biblioteką jest wstrzymana, dopóki wykrywany jest TabMaster.</div></PanelSectionRow>}
