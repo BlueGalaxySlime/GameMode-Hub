@@ -51,6 +51,13 @@ class UpdateChecksTests(unittest.TestCase):
                 break
             time.sleep(0.01)
         self.assertEqual(len(self.calls), 2)
+        # The second check writes its cache asynchronously; wait before deleting
+        # the TemporaryDirectory to avoid a cleanup race on GitHub Actions.
+        for _ in range(150):
+            if restored.status()["state"] == "ready":
+                break
+            time.sleep(0.01)
+        self.assertEqual(restored.status()["state"], "ready")
 
     def test_manual_force_and_post_update_invalidation(self):
         self.checker.request()
