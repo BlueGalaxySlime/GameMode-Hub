@@ -19,9 +19,10 @@ if _PLUGIN_ROOT not in sys.path:
 from hub_settings import (
     get_selected_addons, set_selected_addons, get_update_channel, set_update_channel,
     get_hub_preferences, set_hub_preferences,
+    get_favorite_folders, set_favorite_folders,
 )
 from release_catalog import RELEASES_API as RELEASE_CATALOG_API, catalog, validate_channel
-from file_manager import listing as list_files, create_folder, rename_entry, paste_entry
+from file_manager import listing as list_files, create_folder, rename_entry, paste_entry, paste_entries
 
 CURRENT_VERSION = "0.5.12"
 RELEASES_API = "https://api.github.com/repos/BlueGalaxySlime/GameMode-Hub/releases/latest"
@@ -161,6 +162,15 @@ class Plugin:
 
     async def files_paste(self, source, destination, mode):
         return await asyncio.to_thread(paste_entry, source, destination, mode)
+
+    async def files_paste_many(self, sources, destination, mode):
+        return await asyncio.to_thread(paste_entries, sources, destination, mode)
+
+    async def get_favorite_folders(self):
+        return await asyncio.to_thread(get_favorite_folders)
+
+    async def set_favorite_folders(self, paths):
+        return await asyncio.to_thread(set_favorite_folders, paths)
 
     async def _main(self):
         pass
