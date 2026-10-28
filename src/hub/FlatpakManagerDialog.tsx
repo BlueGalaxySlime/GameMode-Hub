@@ -1,24 +1,9 @@
 import { useEffect, useRef, useState } from "react";
-import { callable } from "@decky/api";
-import { DialogButton, Focusable, ModalRoot, NavEntryPositionPreferences } from "@decky/ui";
-import { withTimeout } from "../utils/withTimeout";
+ import { DialogButton, Focusable, ModalRoot, NavEntryPositionPreferences } from "@decky/ui";
+import { useFlatpakChecks } from "./flatpakChecks";
 import { enqueueFlatpakDownload, useDownloads, isDownloadActive } from "./downloads";
 
-type FlatpakApp = {
-  id: string; installation: string; origin: string; branch: string;
-  version: string; updateable: boolean;
-};
-type Overview = { apps: FlatpakApp[]; error: string };
-type FlatpakTask = {
-  id: number;
-  state: "idle" | "preparing" | "running" | "cancelling" |
-         "success" | "failed" | "cancelled";
-  target: string;
-  message: string;
-  elapsed: number;
-};
-
-const readFlatpaks = callable<[], Overview>("flatpak_overview");
+ 
 // Updates are owned by the independent Downloads module, not by this dialog.
 
 /** Native Steam controls remain usable while Flatpak updates in the backend.
@@ -28,38 +13,15 @@ export function FlatpakManagerDialog({ selectedId, bulkRequested = false, onUpda
   selectedId?: string; bulkRequested?: boolean; onUpdated?: () => void;
   closeModal?: () => void;
 }) {
-  const [data, setData] = useState<Overview | null>(null);
-  const [checking, setChecking] = useState(false);
+  const { data, refresh } = useFlatpakChecks();
+  const checking = !data || data.state === "checking" || data.state === "never";
   const { jobs, active } = useDownloads();
   const task = jobs.find(job => isDownloadActive(job)) ?? jobs[0] ?? null;
   const [message, setMessage] = useState("");
   const [confirm, setConfirm] = useState<{ id: string; scope: "user" | "system" } | null>(null);
   const [confirmAll, setConfirmAll] = useState(bulkRequested);
-  const mounted = useRef(false);
-  const checkInFlight = useRef(false);
-  const startedTask = useRef(false);
+   const startedTask = useRef(false);
   const lastFinished = useRef(0);
-
-  async function refresh() {
-    if (checkInFlight.current) return;
-    checkInFlight.current = true;
-    if (mounted.current) setChecking(true);
-    try {
-      const list = await withTimeout(readFlatpaks(), 40000);
-      if (mounted.current) setData(list);
-    } catch {
-      if (mounted.current) setMessage("Nie można sprawdzić dostępnych aktualizacji.");
-    } finally {
-      checkInFlight.current = false;
-      if (mounted.current) setChecking(false);
-    }
-  }
-
-  useEffect(() => {
-    mounted.current = true;
-    void refresh();
-    return () => { mounted.current = false; };
-  }, []);
 
   useEffect(() => {
     if (!task || isDownloadActive(task) || task.id <= lastFinished.current) return;
@@ -125,7 +87,7 @@ export function FlatpakManagerDialog({ selectedId, bulkRequested = false, onUpda
       <div role="status" style={{ fontSize: 12 }}>
         {updating
           ? task?.message + " (" + task?.elapsed + " s) — możesz zamknąć okno"
-          : checking ? "Sprawdzanie repozytoriów Flatpak…" :
+          : checking ? "Sprawdzanie repozytoriów Flatpak w tle…" :
             data?.error || ("Zainstalowanych: " + apps.length +
               ". Dostępne aktualizacje: " + total + ".")}
       </div>
@@ -190,7 +152,7 @@ export function FlatpakManagerDialog({ selectedId, bulkRequested = false, onUpda
         navEntryPreferPosition={NavEntryPositionPreferences.MAINTAIN_X}
         style={{ display: "flex", flexDirection: "row", gap: 8 }}>
         <DialogButton disabled={checking || !!confirm || confirmAll}
-          onClick={() => { void refresh(); }}>Sprawdź ponownie</DialogButton>
+          onClick={() => { void refresh(true); }}>Sprawdź ponownie</DialogButton>
         <DialogButton onClick={() => closeModal?.()}>Zamknij</DialogButton>
       </Focusable>
     </div>

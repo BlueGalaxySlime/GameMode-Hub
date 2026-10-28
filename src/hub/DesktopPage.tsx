@@ -11,6 +11,7 @@ import { HubTextInput } from "./HubTextInput";
 import { effectiveDesktopCategory, filterDesktopApps } from "../core/desktopCatalog";
 import { DesktopRulesDialog, ResetDesktopRulesDialog } from "./DesktopRulesDialog";
 import { FlatpakManagerDialog } from "./FlatpakManagerDialog";
+import { useFlatpakChecks } from "./flatpakChecks";
 import type { DesktopCategory, DesktopSort } from "../core/desktopCatalog";
 import {
   createSteamDesktopShortcut, openSteamDesktopShortcut, removeSteamDesktopShortcut
@@ -30,10 +31,7 @@ const listDesktopApps = callable<[], DesktopApp[]>("desktop_list_apps");
 const readState = callable<[], DesktopState>("desktop_get_state");
 const updateSetting = callable<[string, string, boolean | number | string | null], SavedApp>("desktop_set_setting");
 const resetDesktopCategories = callable<[], { reset: number; state: DesktopState }>("desktop_reset_categories");
-const flatpakOverview = callable<[], {
-  apps: { id: string; installation: string; updateable: boolean }[]; error: string;
-}>("flatpak_overview");
-const rememberTemporary = callable<[number], number[]>("desktop_remember_temporary");
+ const rememberTemporary = callable<[number], number[]>("desktop_remember_temporary");
 const forgetTemporary = callable<[number], number[]>("desktop_forget_temporary");
 
 const categories: { key: Category; label: string }[] = [
@@ -69,9 +67,7 @@ export function DesktopPage() {
   const categorySavingRef = useRef(false);
   const rulesModalOpenRef = useRef(false);
   const flatpakModalOpenRef = useRef(false);
-  const [flatpakStatus, setFlatpakStatus] = useState<
-    { state: "checking" | "ready" | "error"; count: number }
-  >({ state: "checking", count: 0 });
+  const { data: flatpakStatus, refresh: checkFlatpakUpdates } = useFlatpakChecks();
 
   async function refresh() {
     setBusy(true);
@@ -101,20 +97,7 @@ export function DesktopPage() {
     }
   }
 
-  async function checkFlatpakUpdates() {
-    setFlatpakStatus({ state: "checking", count: 0 });
-    try {
-      const result = await withTimeout(flatpakOverview(), 40000);
-      if (result.error) throw new Error(result.error);
-      setFlatpakStatus({
-        state: "ready", count: result.apps.filter(app => app.updateable).length
-      });
-    } catch {
-      setFlatpakStatus({ state: "error", count: 0 });
-    }
-  }
-
-  useEffect(() => { void refresh(); void checkFlatpakUpdates(); }, []);
+  useEffect(() => { void refresh(); }, []);
 
   async function save(app: DesktopApp, key: string, value: boolean | number | string | null) {
     const saved = await withTimeout(updateSetting(app.id, key, value), 5000);
@@ -436,11 +419,15 @@ export function DesktopPage() {
           <span>Sortowanie: {sortOptions.find(item => item.key === sortMode)?.label ?? "Nazwa A–Z"}</span>
           <span>Reguły: .desktop / Flatpak + własne przypisania</span>
           <span aria-label="Stan aktualizacji Flatpak">
-            {flatpakStatus.state === "checking" ? "Sprawdzanie aktualizacji…" :
+            {!flatpakStatus || flatpakStatus.state === "never" ? "Aktualizacje: nie sprawdzano" :
+              flatpakStatus.state === "checking" ? "Sprawdzanie aktualizacji…" :
               flatpakStatus.state === "error" ? "Nie udało się sprawdzić aktualizacji" :
               flatpakStatus.count ? "Dostępne aktualizacje: " + flatpakStatus.count :
               "Brak aktualizacji"}
           </span>
+          {flatpakStatus?.checked_at && <span>
+            Sprawdzono: {new Date(flatpakStatus.checked_at * 1000).toLocaleString("pl-PL")}
+          </span>}
         </div>
         {/* Read-only context. There is no second action that merely resets to Wszystkie. */}
         <div aria-label="Ścieżka pulpitu" style={{ display: "flex", gap: 6,

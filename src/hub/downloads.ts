@@ -22,10 +22,14 @@ export const isDownloadActive = (job: Download) =>
   ["queued", "preparing", "running", "cancelling"].includes(job.state);
 
 export async function enqueueFlatpakDownload(id: string | null, scope: "user" | "system" = "user") {
-  return withTimeout(enqueue(id, scope), 8000);
+  const value = await withTimeout(enqueue(id, scope), 8000);
+  window.dispatchEvent(new Event("gamemodehub-downloads-changed"));
+  return value;
 }
 export async function cancelDownload(id: number) {
-  return withTimeout(cancel(id), 8000);
+  const value = await withTimeout(cancel(id), 8000);
+  window.dispatchEvent(new Event("gamemodehub-downloads-changed"));
+  return value;
 }
 
 export function useDownloads(interval = 1800) {
@@ -33,22 +37,38 @@ export function useDownloads(interval = 1800) {
   const [error, setError] = useState("");
   useEffect(() => {
     let alive = true;
-    let inFlight = false;
-    async function read() {
-      if (inFlight) return;
-      inFlight = true;
+    let working = false;
+    let timeout: ReturnType<typeof setTimeout> | null = null;
+    async function load() {
+      if (!alive || working) return;
+      working = true;
+      let active = 0;
       try {
-        const snapshot = await withTimeout(getDownloads(), 6000);
-        if (alive) { setData(snapshot); setError(""); }
+        const result = await withTimeout(getDownloads(), 6000);
+        active = result.active;
+        if (alive) { setData(result); setError(""); }
       } catch {
         if (alive) setError("Stan pobierania jest niedostępny.");
       } finally {
-        inFlight = false;
+        working = false;
+        if (alive) {
+          if (timeout) clearTimeout(timeout);
+          timeout = setTimeout(() => { void load(); }, active ? interval : 30000);
+        }
       }
     }
-    void read();
-    const timer = window.setInterval(() => { void read(); }, interval);
-    return () => { alive = false; window.clearInterval(timer); };
+    function changed() {
+      if (timeout) clearTimeout(timeout);
+      timeout = null;
+      void load();
+    }
+    void load();
+    window.addEventListener("gamemodehub-downloads-changed", changed);
+    return () => {
+      alive = false;
+      if (timeout) clearTimeout(timeout);
+      window.removeEventListener("gamemodehub-downloads-changed", changed);
+    };
   }, [interval]);
   return { ...data, error };
 }
