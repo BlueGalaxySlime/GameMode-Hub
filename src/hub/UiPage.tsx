@@ -4,12 +4,17 @@ import { DialogBody, DialogButton, DialogControlsSection, Field, Focusable,
 import { gameUiOptions, saveGameUi, subscribeGameUi } from "../game-view/gameViewStore";
 import { useHubSessionState } from "./useHubSessionState";
 import { ProtonDBPage } from "./ProtonDBPage";
+import { TabManagerModule } from "../modules/tab-manager/TabManagerModule";
+import { CollectionsModule } from "../modules/collection-manager/CollectionsModule";
 
 type Category = "gaming" | "display" | "console";
+type GamingModule = "overview" | "cards" | "collections";
 
-/** One UI module. ProtonDB is a data source in the game screen, not a hub page. */
+/** Optimization groups gameplay, library, picture and console controls. */
 export function UiPage() {
   const [category, setCategory] = useHubSessionState<Category>("ui.category","gaming");
+  const [gamingModule, setGamingModule] =
+    useHubSessionState<GamingModule>("ui.gamingModule", "overview");
   const settings = useSyncExternalStore(subscribeGameUi, gameUiOptions);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
@@ -33,7 +38,16 @@ export function UiPage() {
       <DialogButton preferredFocus={category==="console"}
         onClick={()=>setCategory("console")}>Konsola</DialogButton>
     </Focusable>
-    {category==="gaming" ? <>
+    {category==="gaming" && <>
+      <Focusable flow-children="row"
+        navEntryPreferPosition={NavEntryPositionPreferences.MAINTAIN_X}
+        style={{display:"flex",flexDirection:"row",gap:8,flexWrap:"wrap"}}>
+        <DialogButton onClick={()=>setGamingModule("overview")}>Ogólne</DialogButton>
+        <DialogButton onClick={()=>setGamingModule("cards")}>Karty</DialogButton>
+        <DialogButton onClick={()=>setGamingModule("collections")}>Kolekcje</DialogButton>
+      </Focusable>
+    </>}
+    {category==="gaming" && gamingModule==="overview" && <>
       <Field label="Wspólne zakładki gry"
         description="Wzór nawigacji jak w SteamOS. Steam zachowuje własne działające zakładki, a skróty GOG, Epic i innych launcherów otrzymują zakładki z ich nazwami i obsługiwanymi funkcjami. Nie zastępuje Unifideck ani przycisku Graj.">
         <Toggle value={settings.enabled} disabled={saving}
@@ -50,7 +64,10 @@ export function UiPage() {
         {showLookup ? "Ukryj ręczne sprawdzanie ProtonDB" : "Sprawdź grę ręcznie w ProtonDB"}
       </DialogButton>
       {showLookup && <ProtonDBPage />}
-    </> : <Field
+    </>}
+    {category==="gaming" && gamingModule==="cards" && <TabManagerModule />}
+    {category==="gaming" && gamingModule==="collections" && <CollectionsModule />}
+    {category!=="gaming" && <Field
       label={category==="display" ? "Obraz" : "Konsola"}
       description={category==="display"
         ? "Przyszłe ustawienia wyglądu ekranu gry będą tu dodawane osobno. Obecnie brak aktywnych modyfikacji obrazu."
