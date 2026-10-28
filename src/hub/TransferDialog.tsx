@@ -75,18 +75,21 @@ export function TransferDialog({ selectedFile, closeModal }: {
     <div style={{ display: "flex", flexDirection: "column", gap: 10, padding: 12,
       width: "min(84vw, 520px)", maxWidth: "100%", boxSizing: "border-box",
       overflowWrap: "anywhere" }}>
-      <strong>Transfer Wi-Fi — Mac i Steam Deck</strong>
+      <strong>Transfer Wi-Fi — Mac i Lenovo / SteamOS</strong>
       <div style={{ fontSize: 12 }}>
-        Bez logowania roota, SSH i dodatkowego programu. Oba urządzenia muszą być
+        Bez hasła roota, SSH i dodatkowego programu. Oba urządzenia muszą być
         w tej samej zaufanej sieci Wi-Fi.
       </div>
       {status?.active ? <>
-        <div>Na Macu lub drugim komputerze otwórz w przeglądarce:</div>
+        <div><b>Mac → Lenovo:</b> na Macu otwórz w przeglądarce poniższy adres.
+          Po wpisaniu kodu wybierz plik w Safari i naciśnij „Wyślij na urządzenie”.</div>
         <div style={{ fontWeight: 700, fontSize: 16, userSelect: "text" }}>{status.url}</div>
         <div>Kod parowania: <strong style={{ fontSize: 20, letterSpacing: 2 }}>
           {status.pin}
         </strong></div>
-        <div style={{ fontSize: 12 }}>Otrzymane pliki: {status.folder}</div>
+        <div style={{ fontSize: 12 }}>Pliki z Maca zapisujemy tutaj: {status.folder}</div>
+        <div style={{ fontSize: 12 }}><b>Lenovo → Mac:</b> w Plikach zaznacz plik,
+          naciśnij Y → „Udostępnij przez Wi-Fi”, a na Macu wybierz „Odśwież listę”.</div>
         <div style={{ fontSize: 12 }}>
           Pozostały czas: około {Math.ceil(status.expiresIn / 60)} min.
           Sesja zamyka się również po wyłączeniu Huba.
@@ -99,8 +102,9 @@ export function TransferDialog({ selectedFile, closeModal }: {
         </DialogButton>
       </> : <>
         <div style={{ fontSize: 12 }}>
-          Po uruchomieniu Hub udostępni wyłącznie folder odbiorczy i pliki,
-          które wskażesz w Plikach. Nikt nie otrzyma dostępu do całego dysku.
+          Mac → Lenovo: na Macu wybierzesz plik w Safari i wyślesz go do folderu odbiorczego.
+          Lenovo → Mac: w Plikach udostępnisz wskazany plik przez Y.
+          Nikt nie otrzyma dostępu do całego dysku.
         </div>
         <DialogButton disabled={busy} onClick={() => { void start(); }}>
           Uruchom transfer

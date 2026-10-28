@@ -111,10 +111,15 @@ border-bottom:1px solid #566}a{color:#b6ddff}small{color:#bdc7d7}</style>"""
     base = '<!doctype html><html lang="pl"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>GameMode Hub Transfer</title>' + style + '</head><body><h2>GameMode Hub — Transfer Wi-Fi</h2>'
     if not paired:
         return base + '<p>Wpisz 8-cyfrowy kod widoczny w Hubie na Steam Decku.</p><form method="post" action="/pair"><input type="text" name="pin" inputmode="numeric" pattern="[0-9]{8}" maxlength="8" autocomplete="off" required autofocus><button type="submit">Połącz</button></form><small>Tylko zaufana sieć lokalna. Połączenie HTTP nie jest szyfrowane.</small></body></html>'
-    return base + """<p>Połączono. Pliki trafiają do folderu <b>Downloads / GameMode Hub Transfer</b>.
-Aby pobrać inny plik ze Steam Decka, wybierz go w Hubie: Pliki → Y → Udostępnij przez Wi-Fi.</p>
-<p><label>Wyślij plik: <input type="file" id="file"></label>
-<button id="send">Wyślij</button></p><p id="info" role="status"></p><p><button id="reload">Odśwież listę</button></p>
+    return base + """<p>Połączono! <b>Mac → urządzenie z GameMode Hub:</b>
+wybierz plik na Macu, potem naciśnij „Wyślij na urządzenie”.</p>
+<p>Pliki trafiają do folderu <b>Downloads / GameMode Hub Transfer</b>.
+Nie zastępujemy istniejących plików.</p>
+<p><label>Plik z Maca: <input type="file" id="file"></label>
+<button id="send">Wyślij na urządzenie</button></p>
+<p><b>Urządzenie → Mac:</b> aby pobrać inny plik, na urządzeniu
+wybierz w Hubie Pliki → Y na pliku → Udostępnij przez Wi-Fi, a następnie
+kliknij poniżej „Odśwież listę”.</p><p id="info" role="status"></p><p><button id="reload">Odśwież listę</button></p>
 <ul id="files"></ul><small>Transfer działa tylko do zamknięcia sesji w Hubie; bez hasła roota.</small>
 <script>
 const info=document.getElementById('info');
@@ -125,7 +130,7 @@ a.href='/download?item='+encodeURIComponent(f.id);a.textContent=f.name;
 li.append(a,document.createTextNode(' ('+Math.ceil(f.size/1024)+' KiB)'));list.append(li)}}
 document.getElementById('reload').onclick=()=>void refresh();
 document.getElementById('send').onclick=()=>{const f=document.getElementById('file').files[0];
-if(!f){info.textContent='Wybierz plik.';return}
+if(!f){info.textContent='Wybierz plik z Maca.';return}
 const req=new XMLHttpRequest();req.open('POST','/upload');req.setRequestHeader('X-File-Name',encodeURIComponent(f.name));
 req.upload.onprogress=e=>{if(e.lengthComputable)info.textContent='Wysyłanie '+Math.round(e.loaded/e.total*100)+'%';};
 req.onload=()=>{info.textContent=req.status===201?'Przesłano: '+f.name:'Błąd: '+req.responseText;
@@ -199,7 +204,28 @@ class TransferManager:
                     return (peer.is_private and host == manager.address[0] + ":" + str(manager.address[1]))
 
                 def _allowed_post(self):
-                    return self.headers.get("Origin") == "http://" + manager.address[0] + ":" + str(manager.address[1])
+                    """Accept Safari's same-origin POSTs even if Origin is omitted.
+
+                    Some browser versions omit Origin on normal navigation
+                    forms or same-origin uploads. Reject any explicitly
+                    foreign Origin, Referer, or Fetch Metadata; missing
+                    headers alone are not proof of a cross-origin request.
+                    _trusted() separately enforces exact IP:port Host and
+                    LAN peer, and mutations still require a PIN/cookie.
+                    """
+                    expected = "http://" + manager.address[0] + ":" + str(manager.address[1])
+                    origin = self.headers.get("Origin")
+                    if origin is not None and origin != expected:
+                        return False
+                    referer = self.headers.get("Referer")
+                    if referer is not None:
+                        parsed = urlsplit(referer)
+                        if parsed.scheme != "http" or parsed.netloc != manager.address[0] + ":" + str(manager.address[1]):
+                            return False
+                    fetch_site = self.headers.get("Sec-Fetch-Site")
+                    if fetch_site is not None and fetch_site.lower() not in ("same-origin", "none"):
+                        return False
+                    return True
 
                 def _paired(self):
                     value = SimpleCookie()

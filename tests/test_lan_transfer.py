@@ -73,6 +73,49 @@ class TransferTests(unittest.TestCase):
             self.open("pair", data=b"pin=00000000", headers={"Origin": "http://evil.local"})
         self.assertEqual(error.exception.code, 403)
 
+    def test_safari_pair_without_origin_and_upload_from_mac(self):
+        """Safari may omit Origin on same-origin form POSTs.
+
+        Pairing still requires the PIN, and the upload still requires
+        a session cookie. The receiving directory must not be overwritten.
+        """
+        state = self.manager.start()
+        browser = build_opener(HTTPCookieProcessor(CookieJar()))
+        url = state["url"]
+        form = urlencode({"pin": state["pin"]}).encode()
+        headers = {"Referer": url, "Sec-Fetch-Site": "same-origin"}
+        with browser.open(Request(url + "pair", data=form, headers=headers),
+                          timeout=5) as reply:
+            self.assertEqual(reply.status, 200)
+        payload = b"from Safari on Mac"
+        with browser.open(Request(url + "upload", data=payload,
+                                  headers={**headers, "X-File-Name": "mac-document.txt"}),
+                          timeout=5) as reply:
+            self.assertEqual(reply.status, 201)
+        target = self.home / "Downloads/GameMode Hub Transfer/mac-document.txt"
+        self.assertEqual(target.read_bytes(), payload)
+        with self.assertRaises(HTTPError) as error:
+            browser.open(Request(url + "upload", data=b"overwritten",
+                                 headers={**headers, "X-File-Name": "mac-document.txt"}),
+                         timeout=5)
+        self.assertEqual(error.exception.code, 409)
+        self.assertEqual(target.read_bytes(), payload)
+
+    def test_foreign_referer_and_cross_site_fetch_metadata_rejected(self):
+        state = self.manager.start()
+        origin = state["url"].rstrip("/")
+        data = urlencode({"pin": state["pin"]}).encode()
+        for headers in (
+            {"Referer": "http://evil.example/pair"},
+            {"Sec-Fetch-Site": "cross-site"},
+            {"Origin": "null"},
+            {"Origin": "http://evil.example", "Sec-Fetch-Site": "same-origin"},
+            {"Origin": origin, "Referer": "http://evil.example/"},
+        ):
+            with self.subTest(headers=headers), self.assertRaises(HTTPError) as error:
+                self.open("pair", data=data, headers=headers)
+            self.assertEqual(error.exception.code, 403)
+
     def test_upload_download_and_exclusive_file_creation(self):
         browser, url = self.paired()
         data = b"hello from Mac"

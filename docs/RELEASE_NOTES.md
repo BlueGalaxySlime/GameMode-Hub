@@ -1,3 +1,12 @@
+# GameMode Hub 0.5.25 (testowy)
+
+- **Transfer Mac → Lenovo / SteamOS:** Safari po wpisaniu kodu parowania może wysłać formularz bez nagłówka Origin. Serwer teraz obsługuje takie żądania z tej samej lokalnej strony, nie odrzucając ich automatycznie jako „Odmowa dostępu”.
+- **Ochrona pozostaje:** obce Origin, Referer i Sec-Fetch-Site są odrzucane; wymagany jest dokładny lokalny adres IP z portem, lokalne połączenie oraz kod parowania. Wysyłanie plików nadal wymaga aktywnej sesji i nie nadpisuje istniejących plików. Transfer bez sudo i haseł roota.
+- **Czytelniejsze kierunki:** okno Transfer Wi-Fi w Hubie i strona w Safari opisują oddzielnie Mac → Lenovo (wybierz plik w Safari i wyślij) oraz Lenovo → Mac (udostępnij wybrany plik w Hubie, a następnie pobierz w Safari).
+- **Testy regresji:** nowe testy parowania i przesłania pliku z Safari bez nagłówka Origin oraz odmowy obcych stron i nadpisywania istniejących danych.
+- **Nie zmieniono:** Ulubionych, obsługi B, kont i pozostałych funkcji Huba.
+- **Uwaga:** HTTP nie jest szyfrowane; tylko zaufana sieć lokalna. Po aktualizacji wymagany test w rzeczywistym Safari na Macu i Lenovo.
+
 # GameMode Hub 0.5.24 (testowy)
 
 - **Pliki — Transfer Wi-Fi:** Y na pasku adresu → „Transfer Wi-Fi…” otwiera panel ręcznego uruchamiania serwera w lokalnej sieci. Hub pokazuje adres dla przeglądarki Maca i 8-cyfrowy kod parowania. Nie wymaga roota, hasła administratora, SSH ani opuszczania Gaming Mode.
