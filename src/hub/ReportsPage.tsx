@@ -41,6 +41,13 @@ export function ReportsPage() {
     restoreButtonFocus(detailRowRef.current);
   }
 
+  // X always returns to the first report field without changing the draft.
+  function returnToReportTitle() {
+    if (editingTitle) setEditingTitle(false);
+    if (editingDetail) setEditingDetail(false);
+    restoreButtonFocus(titleRowRef.current);
+  }
+
   async function copyReport() {
     try {
       await navigator.clipboard.writeText("[Błąd] " + title.trim() + "\n\n" + body);
@@ -60,6 +67,13 @@ export function ReportsPage() {
           event.stopPropagation();
           if (editingTitle) finishTitle();
           else finishDetail();
+        }}
+        onSecondaryActionDescription="Tytuł zgłoszenia"
+        onSecondaryButton={event => {
+          if (event.defaultPrevented) return;
+          event.preventDefault();
+          event.stopPropagation();
+          returnToReportTitle();
         }}
         style={{ display: "flex", flexDirection: "column", width: "100%",
           minWidth: 0, gap: 8, padding: "4px 0" }}>
@@ -82,6 +96,13 @@ export function ReportsPage() {
               }} />
           ) : (
             <DialogButton onOKActionDescription="Edytuj tytuł"
+              onSecondaryActionDescription="Tytuł zgłoszenia"
+              onSecondaryButton={event => {
+                if (event.defaultPrevented) return;
+                event.preventDefault();
+                event.stopPropagation();
+                returnToReportTitle();
+              }}
               onClick={() => setEditingTitle(true)}
               style={{ width: "100%", minWidth: 0, textAlign: "left" }}>
               {title || "Tytuł błędu (np. Y nie otwiera menu)…"}
@@ -106,6 +127,13 @@ export function ReportsPage() {
               onChange={event => setDetail(event.target.value.slice(0, MAX_TEXT))} />
           ) : (
             <DialogButton onOKActionDescription="Edytuj opis"
+              onSecondaryActionDescription="Tytuł zgłoszenia"
+              onSecondaryButton={event => {
+                if (event.defaultPrevented) return;
+                event.preventDefault();
+                event.stopPropagation();
+                returnToReportTitle();
+              }}
               onClick={() => setEditingDetail(true)}
               style={{ width: "100%", minWidth: 0, textAlign: "left",
                 minHeight: 104, whiteSpace: "pre-wrap", overflowWrap: "anywhere" }}>
