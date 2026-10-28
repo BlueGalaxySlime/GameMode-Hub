@@ -68,6 +68,7 @@ export function FileManagerPage() {
   // Clipboard and selection are RAM-only, never serialized to disk.
   const [page, setPage] = useHubSessionState<DirectoryPage | null>("files.page", null);
   const [pathDraft, setPathDraft] = useHubSessionState("files.pathDraft", "");
+  const [editingPath, setEditingPath] = useHubSessionState("files.editingPath", false);
   const [hidden, setHidden] = useHubSessionState("files.hidden", false);
   const [sortBy, setSortBy] = useHubSessionState<SortBy>("files.sortBy", "name");
   const [descending, setDescending] = useHubSessionState("files.descending", false);
@@ -125,6 +126,7 @@ export function FileManagerPage() {
       if (fileScrollRef.current) fileScrollRef.current.scrollTop = 0;
       setPage(response);
       setPathDraft(response.path);
+      setEditingPath(false);
       setSelected(null);
       setAction(null);
       setName("");
@@ -297,29 +299,55 @@ export function FileManagerPage() {
             void load(page?.path ?? null, hidden, page?.offset ?? 0);
           }
         }}>
-        {/* Focus the address field and press Y for the native file options menu.
-            A/keyboard editing of the path still works as before. */}
-        <Focusable flow-children="column"
-          onOptionsActionDescription="Opcje plików"
-          onOptionsButton={event => {
-            event.preventDefault();
-            event.stopPropagation();
-            openBrowserMenu(event.currentTarget ?? window);
-          }}
-          onContextMenu={event => {
-            event.preventDefault();
-            openBrowserMenu(event.currentTarget);
-          }}>
-          <TextField value={pathDraft} placeholder="/home/deck/…"
-            aria-label="Ścieżka katalogu — Y: opcje plików"
-            onChange={event => setPathDraft(event.target.value)}
-            onKeyDown={event => {
-              if (event.key === "Enter") {
+        {/* The address bar is directly focusable: Y opens the same native menu
+            used by entries; A enables text editing of the path. */}
+        <div onContextMenu={event => {
+          event.preventDefault();
+          openBrowserMenu(event.currentTarget);
+        }}>
+          {editingPath ? (
+            <Focusable flow-children="row"
+              navEntryPreferPosition={NavEntryPositionPreferences.MAINTAIN_X}
+              style={{ display: "flex", alignItems: "center", gap: 5 }}>
+              <div style={{ flex: "1 1 0", minWidth: 0 }}>
+                <TextField value={pathDraft} placeholder="/home/deck/…"
+                  aria-label="Edytuj ścieżkę katalogu"
+                  onChange={event => setPathDraft(event.target.value)}
+                  onKeyDown={event => {
+                    if (event.key === "Enter") {
+                      event.preventDefault();
+                      void load(pathDraft, hidden);
+                    }
+                    if (event.key === "Escape") {
+                      setPathDraft(page?.path ?? "");
+                      setEditingPath(false);
+                    }
+                  }} />
+              </div>
+              <DialogButton disabled={busy} onClick={() => { void load(pathDraft, hidden); }}
+                style={{ width: "auto", minWidth: 0, padding: "6px 10px" }}>Przejdź</DialogButton>
+              <DialogButton disabled={busy} onClick={() => {
+                setPathDraft(page?.path ?? "");
+                setEditingPath(false);
+              }} style={{ width: "auto", minWidth: 0, padding: "6px 10px" }}>Anuluj</DialogButton>
+            </Focusable>
+          ) : (
+            <DialogButton disabled={busy}
+              onOKActionDescription="Edytuj ścieżkę"
+              onOptionsActionDescription="Opcje plików"
+              onOptionsButton={event => {
                 event.preventDefault();
-                void load(pathDraft, hidden);
-              }
-            }} />
-        </Focusable>
+                event.stopPropagation();
+                openBrowserMenu(event.currentTarget ?? window);
+              }}
+              onClick={() => setEditingPath(true)}
+              style={{ width: "100%", minWidth: 0, textAlign: "left",
+                padding: "8px 12px", overflow: "hidden",
+                textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+              {page?.path ?? (pathDraft || "/home/deck")}
+            </DialogButton>
+          )}
+        </div>
 
         {/* Each breadcrumb is a focusable controller target, within allowed roots. */}
         {!!page && <div style={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: 4, minWidth: 0 }}>
