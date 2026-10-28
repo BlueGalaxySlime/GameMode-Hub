@@ -68,6 +68,23 @@ class HubSelectionTests(unittest.TestCase):
             self.assertFalse(saved["autoKeyboard"])
             self.assertEqual(hub_settings.get_hub_preferences(), saved)
 
+    def test_favorite_folders_persist_and_reject_escaping_home(self):
+        import file_manager
+        home = Path(self.root.name) / "home"
+        home.mkdir()
+        mods = home / "Mod manager"
+        mods.mkdir()
+        with patch.object(file_manager, "_allowed_roots", return_value=[("Dom", home)]), \
+             patch.object(hub_settings, "FAVORITE_FOLDERS_FILE", Path(self.root.name) / "favs.json"):
+            self.assertEqual(hub_settings.get_favorite_folders(), [])
+            self.assertEqual(hub_settings.set_favorite_folders([str(mods)]), [str(mods)])
+            self.assertEqual(hub_settings.get_favorite_folders(), [str(mods)])
+            with self.assertRaises(PermissionError):
+                hub_settings.set_favorite_folders([str(Path(self.root.name))])
+            with self.assertRaises(ValueError):
+                hub_settings.set_favorite_folders(["relative/path"])
+            self.assertEqual(hub_settings.set_favorite_folders([]), [])
+
     def test_reject_invalid_input(self):
         for invalid in ("a", {}, [8], [""], ["x" * 101]):
             with self.subTest(invalid=invalid), self.assertRaises(ValueError):
