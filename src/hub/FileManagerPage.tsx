@@ -3,7 +3,8 @@ import { callable } from "@decky/api";
 import { DialogBody, DialogButton, DialogControlsSection, Focusable, Menu, MenuItem, NavEntryPositionPreferences, showContextMenu, TextField, Toggle } from "@decky/ui";
 import { withTimeout } from "../utils/withTimeout";
 import { breadcrumbs } from "../core/filePath";
-import { getHubPreferences, readHubSession, subscribeHubPreferences, writeHubSession } from "../core/hubSession";
+import { applyHubPreferences, getHubPreferences, readHubSession, subscribeHubPreferences, writeHubSession } from "../core/hubSession";
+import type { HubPreferences } from "../core/hubSession";
 import { useHubSessionState } from "./useHubSessionState";
 
 type SortBy = "name" | "type" | "size" | "date";
@@ -24,6 +25,7 @@ const fileList = callable<
 const makeFolder = callable<[string, string], { path: string }>("files_mkdir");
 const renameFile = callable<[string, string], { path: string }>("files_rename");
 const pasteFile = callable<[string, string, "copy" | "move"], { path: string }>("files_paste");
+const saveHubOptions = callable<[HubPreferences], HubPreferences>("set_hub_preferences");
 
 const sortOptions = [
   { data:"name-asc", label:"Nazwa A–Z", by:"name", descending:false },
@@ -78,10 +80,28 @@ export function FileManagerPage() {
   const splitTree = options.splitFileTree;
   const [message, setMessage] = useState("");
   const [busy, setBusy] = useState(false);
+  const [savingSplit, setSavingSplit] = useState(false);
   const request = useRef(0);
   const locked = useRef(false);
   const treeScrollRef = useRef<HTMLDivElement>(null);
   const fileScrollRef = useRef<HTMLDivElement>(null);
+
+  async function changeSplitTree(enabled: boolean) {
+    if (savingSplit) return;
+    const previous = getHubPreferences();
+    const next = applyHubPreferences({ ...previous, splitFileTree: enabled });
+    setSavingSplit(true);
+    setMessage("");
+    try {
+      const saved = await withTimeout(saveHubOptions(next), 4000);
+      applyHubPreferences(saved);
+    } catch {
+      applyHubPreferences(previous);
+      setMessage("Nie udało się zapisać ustawienia podziału drzewa plików.");
+    } finally {
+      setSavingSplit(false);
+    }
+  }
 
   async function load(path: string | null, showHidden: boolean,
     offset = 0, order: SortBy = sortBy, reverse = descending) {
@@ -293,7 +313,13 @@ export function FileManagerPage() {
               void load(page?.path ?? null, value);
             }} />
           </label>
-          <div style={{ flex: "0 0 auto", width: "auto", maxWidth: 205 }}>
+          <label style={{ display: "inline-flex", flex: "0 0 auto",
+            gap: 4, alignItems: "center", fontSize: 12 }}>
+            Podział drzewa
+            <Toggle value={splitTree} disabled={savingSplit}
+              onChange={value => { void changeSplitTree(value); }} />
+          </label>
+          <div style={{ flex: "0 0 auto", width: "auto", maxWidth: 205 }}> 
             <DialogButton disabled={busy}
               onOKActionDescription="Sortuj"
               style={{ minWidth: 0, width: "auto", padding: "5px 9px" }}
