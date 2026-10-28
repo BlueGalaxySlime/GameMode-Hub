@@ -140,3 +140,4 @@ export function ReportsPage() {
       </Focusable>
     </DialogControlsSection>
   </DialogBody>;
+}
