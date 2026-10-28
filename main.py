@@ -39,6 +39,8 @@ from game_view_settings import (
     set_mapping as game_view_save_mapping,
 )
 from runtime_state import set_hub_ui_open, get_runtime_state, diagnostics as runtime_diagnostics
+import tab_manager
+import collection_manager
 
 CURRENT_VERSION = "0.5.46"
 RELEASES_API = "https://api.github.com/repos/BlueGalaxySlime/GameMode-Hub/releases/latest"
@@ -173,6 +175,38 @@ class Plugin:
 
     async def protondb_get_badge(self, app_id, force=False):
         return await asyncio.to_thread(BADGES.lookup, app_id, force)
+
+    # UI > Gaming Mode > Karty: activation and layout are independent of collections.
+    async def get_tab_manager_enabled(self):
+        return await asyncio.to_thread(tab_manager._read_tab_manager_enabled)
+
+    async def set_tab_manager_enabled(self, enabled):
+        return await asyncio.to_thread(tab_manager._write_tab_manager_enabled, enabled)
+
+    async def get_tab_definitions(self):
+        return await asyncio.to_thread(tab_manager.read_tabs)
+
+    async def save_tab_definitions(self, tabs):
+        return await asyncio.to_thread(tab_manager.save_tabs, tabs)
+
+    async def list_tab_profiles(self):
+        return await asyncio.to_thread(tab_manager.list_tab_profiles)
+
+    async def save_tab_profile(self, name):
+        return await asyncio.to_thread(tab_manager.save_tab_profile, name)
+
+    async def load_tab_profile(self, name):
+        return await asyncio.to_thread(tab_manager.load_tab_profile, name)
+
+    async def delete_tab_profile(self, name):
+        return await asyncio.to_thread(tab_manager.delete_tab_profile, name)
+
+    # UI > Gaming Mode > Kolekcje: no mutation of Steam's collection database.
+    async def get_hub_collections(self):
+        return await asyncio.to_thread(collection_manager.read_collections)
+
+    async def save_hub_collections(self, collections):
+        return await asyncio.to_thread(collection_manager.save_collections, collections)
 
     async def hub_runtime_state(self):
         active = DOWNLOADS.list()["active"]
