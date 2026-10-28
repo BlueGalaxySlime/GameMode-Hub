@@ -14,7 +14,7 @@ if not DIST.is_dir() or not any(DIST.rglob("*.js")):
     raise SystemExit("Missing compiled frontend in dist/. Run npm run build first.")
 
 files = [ROOT / name for name in (
-    "plugin.json", "main.py", "hub_settings.py", "release_catalog.py", "file_manager.py", "desktop_apps.py", "trash_manager.py", "lan_transfer.py", "flatpak_manager.py", "package.json",
+    "plugin.json", "main.py", "hub_settings.py", "release_catalog.py", "file_manager.py", "desktop_apps.py", "trash_manager.py", "lan_transfer.py", "flatpak_manager.py", "downloads_manager.py", "package.json",
     "THIRD_PARTY_NOTICES.md", "LICENSE"
 )]
 files += sorted(path for path in DIST.rglob("*") if path.is_file())

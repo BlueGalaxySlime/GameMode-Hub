@@ -1,3 +1,12 @@
+# GameMode Hub 0.5.34 (testowy)
+
+- **Nowy moduł Pobieranie:** osobna kolejka backendu `downloads_manager.py` zamiast trzymania aktualizacji wewnątrz okien Huba. Aktualizacja Flatpak dodawana jest do kolejki i trwa także po zamknięciu okna Huba lub bocznego menu Decky, dopóki działa backend dodatku.
+- **Dwa widoki:** Pobieranie w panelu bocznym Decky pod „Otwórz GameMode Hub” oraz jako osobna zakładka w Hubie obok Aktualizacji. Oba widoki pokazują wspólne zadania, ich stan, czas trwania i anulowanie.
+- **Bez powielania:** wielokrotne kliknięcie tego samego zadania nie uruchamia go drugi raz; tylko jedno polecenie Flatpak działa jednocześnie. Pozostałe trafiają do kolejki.
+- **Historia po aktualizacji wtyczki:** minimalny stan zadań zapisywany w `~/.config/gamemodehub/downloads.json`, bez haseł, logów i tokenów. Po restarcie backendu niezakończone zadania są oznaczane jako przerwane (bez automatycznego ponownego pobierania). Zamknięcie samego okna nie przerywa zadania; przeładowanie całego pluginu/Decky może je przerwać.
+- **Bezpieczne zachowanie:** żadnych dodatkowych uprawnień, roota, usług zewnętrznych ani jednoczesnych aktualizacji systemowych Flatpak. Zachowano oryginalne style i obsługę SteamOS.
+- **Testy:** kolejka, anulowanie oczekujących zadań, pojedyncze wykonanie, stan po ponownym otwarciu i po restarcie backendu.
+
 # GameMode Hub 0.5.33 (testowy)
 
 - **Flatpak — brak blokady Huba:** polecenie aktualizacji uruchamia się w osobnym, nadzorowanym zadaniu. Kliknięcie Aktualizuj nie czeka kilku minut na odpowiedź i nie blokuje kontrolera.

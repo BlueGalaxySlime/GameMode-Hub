@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { callable } from "@decky/api";
 import { DialogButton, Focusable, ModalRoot, NavEntryPositionPreferences } from "@decky/ui";
 import { withTimeout } from "../utils/withTimeout";
+import { enqueueFlatpakDownload, useDownloads, isDownloadActive } from "./downloads";
 
 type FlatpakApp = {
   id: string; installation: string; origin: string; branch: string;
@@ -18,12 +19,7 @@ type FlatpakTask = {
 };
 
 const readFlatpaks = callable<[], Overview>("flatpak_overview");
-const taskStart = callable<[string | null], FlatpakTask>("flatpak_task_start");
-const taskStatus = callable<[], FlatpakTask>("flatpak_task_status");
-const taskCancel = callable<[], FlatpakTask>("flatpak_task_cancel");
-const taskActive = (job: FlatpakTask | null): boolean =>
-  !!job && (job.state === "preparing" || job.state === "running" ||
-            job.state === "cancelling");
+// Updates are owned by the independent Downloads module, not by this dialog.
 
 /** Native Steam controls remain usable while Flatpak updates in the backend.
  * Closing with B never kills the process; only explicit Cancel does that.
@@ -34,7 +30,8 @@ export function FlatpakManagerDialog({ selectedId, bulkRequested = false, onUpda
 }) {
   const [data, setData] = useState<Overview | null>(null);
   const [checking, setChecking] = useState(false);
-  const [task, setTask] = useState<FlatpakTask | null>(null);
+  const { jobs, active } = useDownloads();
+  const task = jobs.find(job => isDownloadActive(job)) ?? jobs[0] ?? null;
   const [message, setMessage] = useState("");
   const [confirm, setConfirm] = useState<string | null>(null);
   const [confirmAll, setConfirmAll] = useState(bulkRequested);
@@ -58,59 +55,32 @@ export function FlatpakManagerDialog({ selectedId, bulkRequested = false, onUpda
     }
   }
 
-  async function poll() {
-    try {
-      const current = await withTimeout(taskStatus(), 5000);
-      if (!mounted.current) return;
-      setTask(current);
-      if (current.id > lastFinished.current &&
-          ["success", "failed", "cancelled"].includes(current.state)) {
-        lastFinished.current = current.id;
-        setMessage(current.message);
-        if (current.state === "success") onUpdated?.();
-        void refresh();
-      }
-    } catch {
-      if (mounted.current) setMessage("Nie można odczytać stanu aktualizacji.");
-    }
-  }
-
   useEffect(() => {
     mounted.current = true;
-    void taskStatus().then(current => {
-      if (!mounted.current) return;
-      setTask(current);
-      lastFinished.current = current.id;
-      if (!taskActive(current)) void refresh();
-    }).catch(() => { if (mounted.current) void refresh(); });
-    const timer = window.setInterval(() => { void poll(); }, 1500);
-    return () => { mounted.current = false; window.clearInterval(timer); };
+    void refresh();
+    return () => { mounted.current = false; };
   }, []);
 
+  useEffect(() => {
+    if (!task || isDownloadActive(task) || task.id <= lastFinished.current) return;
+    lastFinished.current = task.id;
+    if (task.state === "success") onUpdated?.();
+    void refresh();
+  }, [task?.id, task?.state]);
+
   async function start(target: string | null) {
-    if (startedTask.current || checking || taskActive(task)) return;
+    if (startedTask.current || checking || active > 0) return;
     startedTask.current = true;
     setConfirm(null);
     setConfirmAll(false);
     setMessage("");
     try {
-      const started = await withTimeout(taskStart(target), 12000);
-      if (mounted.current) setTask(started);
+      await enqueueFlatpakDownload(target);
+      setMessage("Dodano do Pobierania. Możesz zamknąć okno lub przejść do gry.");
     } catch {
-      if (mounted.current) setMessage("Nie uruchomiono aktualizacji. Sprawdź, czy nie trwa inna.");
+      setMessage("Nie udało się dodać zadania do Pobierania.");
     } finally {
       startedTask.current = false;
-    }
-  }
-
-  async function cancel() {
-    if (!taskActive(task)) return;
-    setMessage("Zlecono anulowanie aktualizacji…");
-    try {
-      const result = await withTimeout(taskCancel(), 6000);
-      if (mounted.current) setTask(result);
-    } catch {
-      if (mounted.current) setMessage("Nie udało się potwierdzić anulowania.");
     }
   }
 
@@ -120,7 +90,7 @@ export function FlatpakManagerDialog({ selectedId, bulkRequested = false, onUpda
   const total = apps.filter(item => item.updateable).length;
   const userUpdates = apps.filter(item =>
     item.updateable && item.installation === "user").length;
-  const updating = taskActive(task);
+  const updating = active > 0;
 
   return <ModalRoot onCancel={() => closeModal?.()}>
     <div style={{ display: "flex", flexDirection: "column", gap: 8, padding: 12,
@@ -132,7 +102,7 @@ export function FlatpakManagerDialog({ selectedId, bulkRequested = false, onUpda
       </div>
       <div role="status" style={{ fontSize: 12 }}>
         {updating
-          ? task?.message + " (" + task?.elapsed + " s)"
+          ? task?.message + " (" + task?.elapsed + " s) — możesz zamknąć okno"
           : checking ? "Sprawdzanie repozytoriów Flatpak…" :
             data?.error || ("Zainstalowanych: " + apps.length +
               ". Dostępne aktualizacje: " + total + ".")}
@@ -188,10 +158,8 @@ export function FlatpakManagerDialog({ selectedId, bulkRequested = false, onUpda
       <Focusable flow-children="row"
         navEntryPreferPosition={NavEntryPositionPreferences.MAINTAIN_X}
         style={{ display: "flex", flexDirection: "row", gap: 8 }}>
-        {updating ?
-          <DialogButton onClick={() => { void cancel(); }}>Anuluj aktualizację</DialogButton> :
-          <DialogButton disabled={checking || !!confirm || confirmAll}
-            onClick={() => { void refresh(); }}>Sprawdź ponownie</DialogButton>}
+        <DialogButton disabled={checking || !!confirm || confirmAll}
+          onClick={() => { void refresh(); }}>Sprawdź ponownie</DialogButton>
         <DialogButton onClick={() => closeModal?.()}>Zamknij</DialogButton>
       </Focusable>
     </div>

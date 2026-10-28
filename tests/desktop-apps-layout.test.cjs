@@ -274,12 +274,31 @@ test("Flatpak task does not lock modal and all user updates run in one process",
   const svc = fs.readFileSync("flatpak_manager.py", "utf8");
   assert.ok(dialog.includes('onCancel={() => closeModal?.()}'));
   assert.ok(dialog.includes('<DialogButton onClick={() => closeModal?.()}>Zamknij</DialogButton>'));
-  assert.ok(dialog.includes('"flatpak_task_start"'));
-  assert.ok(dialog.includes('"flatpak_task_status"'));
-  assert.ok(dialog.includes('"flatpak_task_cancel"'));
-  assert.ok(dialog.includes('Anuluj aktualizację'));
+  assert.ok(dialog.includes('enqueueFlatpakDownload(target)'));
+  assert.ok(dialog.includes('useDownloads()'));
+  assert.ok(dialog.includes('Możesz zamknąć okno'));
   assert.ok(dialog.includes('task?.elapsed'));
   assert.ok(svc.includes('start_new_session=True'));
   assert.ok(svc.includes('os.killpg('));
   assert.ok(svc.includes('class FlatpakUpdateTask:'));
+});
+
+test("Downloads is a separate Decky/Hub screen backed by nonblocking queue", () => {
+  const quick = fs.readFileSync("src/index.tsx", "utf8");
+  const manager = fs.readFileSync("downloads_manager.py", "utf8");
+  const downloads = fs.readFileSync("src/hub/DownloadsPage.tsx", "utf8");
+  const flatpak = fs.readFileSync("src/hub/FlatpakManagerDialog.tsx", "utf8");
+  assert.ok(quick.includes('<PanelSection title="Pobieranie">'));
+  assert.ok(quick.includes('routerHook.addRoute(HUB_ROUTE + "/downloads"'));
+  assert.ok(hub.includes('title: "Pobieranie"'));
+  assert.ok(hub.includes('<DownloadsPage />'));
+  assert.ok(downloads.includes('useDownloads()'));
+  assert.ok(downloads.includes('Anuluj zadanie'));
+  assert.ok(flatpak.includes('enqueueFlatpakDownload(target)'));
+  assert.ok(flatpak.includes('Możesz zamknąć okno'));
+  assert.ok(manager.includes('class DownloadManager:'));
+  assert.ok(manager.includes('STATE_FILE = Path.home()'));
+  assert.ok(manager.includes('threading.Thread('));
+  assert.ok(manager.includes('if existing is not None:'));
+  assert.ok(bundle.includes('"downloads_manager.py"'));
 });
