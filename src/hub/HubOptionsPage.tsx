@@ -45,6 +45,11 @@ export function HubOptionsPage() {
         <Toggle value={options.saveSession} disabled={saving}
           onChange={value => { void update("saveSession", value); }} />
       </Field>
+      <Field label="Automatycznie pokazuj klawiaturę"
+        description="Włącz: klawiatura ekranowa Steam przy edycji pól Huba. Wyłącz: pola przyjmują tekst z klawiatury fizycznej bez automatycznego wywoływania ekranowej. Ustawienie wspólne dla Plików i Terminala.">
+        <Toggle value={options.autoKeyboard} disabled={saving}
+          onChange={value => { void update("autoKeyboard", value); }} />
+      </Field>
       {error && <Field label="Błąd" description={error} />}
     </DialogControlsSection>
   </DialogBody>;
