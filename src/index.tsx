@@ -12,6 +12,7 @@ type DeckyInstaller = {
 };
 const checkUpdates = callable<[], UpdateResult>("check_updates");
 const getTabManagerEnabled = callable<[], boolean>("get_tab_manager_enabled");
+const getTabmasterInstalled = callable<[], boolean>("get_tabmaster_installed");
 const setTabManagerEnabled = callable<[boolean], boolean>("set_tab_manager_enabled");
 const VERSION = "0.2.3";
 
@@ -24,8 +25,10 @@ function Content() {
   const [tabEnabled, setTabEnabled] = useState(false);
   const [tabBusy, setTabBusy] = useState(true);
   const [tabError, setTabError] = useState("");
+  const [tabmasterInstalled, setTabmasterInstalled] = useState(false);
   useEffect(() => {
     let active = true;
+    getTabmasterInstalled().then(v => { if (active) setTabmasterInstalled(v); }).catch(() => {});
     getTabManagerEnabled().then(v => { if (active) setTabEnabled(v); })
       .catch(() => { if (active) setTabError("Błąd odczytu ustawienia."); })
       .finally(() => { if (active) setTabBusy(false); });
@@ -94,7 +97,8 @@ function Content() {
     </PanelSection>
     <PanelSection title="Moduły · Tab Manager">
       <PanelSectionRow><ToggleField label="Tab Manager" checked={tabEnabled} disabled={tabBusy} onChange={changeTab} /></PanelSectionRow>
-      <PanelSectionRow><div>Możliwy konflikt z TabMasterem. Zarządzanie zakładkami jest w przygotowaniu; przełącznik obecnie zapamiętuje ustawienie.</div></PanelSectionRow>
+      {tabmasterInstalled && <PanelSectionRow><div>Wykryto TabMaster. Równoczesne zarządzanie zakładkami może powodować konflikt.</div></PanelSectionRow>}
+      <PanelSectionRow><div>Mechanizm zarządzania zakładkami jest w przygotowaniu. Przełącznik obecnie zapisuje wybór.</div></PanelSectionRow>
       {tabError && <PanelSectionRow><div role="alert">{tabError}</div></PanelSectionRow>}
     </PanelSection>
     <PanelSection title="Aktualizacje">
