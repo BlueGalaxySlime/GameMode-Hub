@@ -190,12 +190,18 @@ test("gamepad focus scrolls through full plain text instead of opening submenus"
   assert.ok(infoScroll.includes('maxHeight: "min(66vh, 620px)"'));
 });
 
-test("removing a favourite deletes only its bookmark, never the underlying folder", () => {
-  assert.ok(ui.includes('Dodaj zakładkę bieżącego folderu'));
-  assert.ok(ui.includes('Otwórz zakładkę: ★ '));
-  assert.ok(ui.includes('Usuń zakładkę (bez usuwania plików): '));
+test("favourites show one short row per folder; A opens, Right offers only remove", () => {
+  assert.ok(ui.includes('<MenuGroup label="Ulubione">'));
+  assert.ok(ui.includes('>Dodaj</MenuItem>'));
+  assert.ok(ui.includes('function favoriteLabel(path: string)'));
+  assert.ok(ui.includes('onSelected={() => { void load(path, hidden); }}'));
+  assert.ok(ui.includes('onMoveRight={() => openRemoveFavoriteMenu(path)}'));
+  assert.ok(ui.includes('<Menu label={favoriteLabel(path)} cancelText="Wstecz">'));
   assert.ok(ui.includes('changeFavorites(favorites.filter(p => p !== path))'));
-  assert.ok(!ui.includes('Usuń zapisany folder'));
+  assert.ok(ui.includes('>\n          Usuń\n        </MenuItem>'));
+  assert.ok(!ui.includes('Otwórz zakładkę:'));
+  assert.ok(!ui.includes('Usuń zakładkę'));
+  assert.ok(!ui.includes('Dodaj zakładkę bieżącego folderu'));
   assert.ok(!ui.includes('unlink('));
   assert.ok(!ui.includes('rmdir('));
 });
