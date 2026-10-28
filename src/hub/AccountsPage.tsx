@@ -1,26 +1,33 @@
 import { useEffect, useState } from "react";
 import { callable } from "@decky/api";
 import {
-  DialogBody, DialogButton, DialogControlsSection, DialogControlsSectionHeader, Field
+  DialogBody, DialogButton, DialogControlsSection, DialogControlsSectionHeader,
+  Dropdown, Field
 } from "@decky/ui";
 import { withTimeout } from "../utils/withTimeout";
 import { GamepadScrollArea } from "./GamepadScrollArea";
+import { useHubSessionState } from "./useHubSessionState";
 import { identifyEpicLaunchers, openEpicLauncher } from "./epicAccountAdapter";
 import type { EpicLauncher } from "./epicAccountAdapter";
 import type { DesktopApp } from "./DesktopPage";
 
 const listDesktopApps = callable<[], DesktopApp[]>("desktop_list_apps");
+const ACCOUNT_OPTIONS = [{ data: "epic", label: "Epic Games" }];
 
 /**
- * Intentionally no Epic username, password, 2FA, OAuth callback, cookie,
- * Legendary auth.json, Unifideck RPC or KWallet read path in Hub.
+ * Hub intentionally does not collect an Epic username, password, 2FA code,
+ * OAuth callback, cookie or token. Login happens in the user-installed
+ * launcher; the selector below stores only non-secret UI choices in RAM.
  */
 export function AccountsPage() {
+  const [selectedAccount, setSelectedAccount] = useHubSessionState<"epic">("accounts.selected", "epic");
+  const [selectedLauncherId, setSelectedLauncherId] = useHubSessionState("accounts.epic.launcher", "");
   const [launchers, setLaunchers] = useState<EpicLauncher[]>([]);
   const [loading, setLoading] = useState(false);
   const [opening, setOpening] = useState(false);
   const [message, setMessage] = useState("");
   const [checked, setChecked] = useState(false);
+  const chosenLauncher = launchers.find(launcher => launcher.app.id === selectedLauncherId) ?? launchers[0];
 
   async function refresh() {
     setLoading(true);
@@ -29,7 +36,7 @@ export function AccountsPage() {
       const apps = await withTimeout(listDesktopApps(), 12000);
       setLaunchers(identifyEpicLaunchers(apps));
     } catch {
-      // Do not expose potentially sensitive process paths or backend errors.
+      // Backend error messages may contain local paths; never display them.
       setLaunchers([]);
       setMessage("Nie można sprawdzić zainstalowanych launcherów.");
     } finally {
@@ -42,15 +49,15 @@ export function AccountsPage() {
     void refresh();
   }, []);
 
-  async function open(launcher: EpicLauncher) {
-    if (opening) return;
+  async function signIn() {
+    if (opening || !chosenLauncher) return;
     setOpening(true);
     setMessage("");
     try {
-      await openEpicLauncher(launcher);
-      setMessage("Uruchomiono launcher. Logowanie i wylogowanie wykonuj tylko w nim.");
+      await openEpicLauncher(chosenLauncher);
+      setMessage("Otworzono launcher. Zaloguj się w jego oknie. Hub nie może potwierdzić stanu sesji.");
     } catch {
-      setMessage("Launcher nie uruchomił się w Gaming Mode. Sprawdź skrót w zakładce Pulpit.");
+      setMessage("Nie udało się uruchomić launchera w Gaming Mode. Sprawdź skrót w zakładce Pulpit.");
     } finally {
       setOpening(false);
     }
@@ -59,28 +66,49 @@ export function AccountsPage() {
   return <DialogBody>
     <GamepadScrollArea>
       <DialogControlsSection>
-        <DialogControlsSectionHeader>Konta — Epic Games (test)</DialogControlsSectionHeader>
-        <Field label="Epic Games" focusable highlightOnFocus
-          description="Status konta: niezweryfikowany. Hub celowo nie czyta danych uwierzytelniania i nie zgaduje, czy jesteś zalogowany." />
-        <Field label="Wykrywanie launcherów"
-          description="Wyświetlane są tylko rozpoznane skróty aplikacji z Pulpitu. To nie jest potwierdzenie autentyczności programu ani sesji.">
-          <DialogButton disabled={loading || opening} onClick={() => { void refresh(); }}>
-            {loading ? "Sprawdzanie…" : "Odśwież"}
-          </DialogButton>
+        <DialogControlsSectionHeader>Konta</DialogControlsSectionHeader>
+        <Field label="Wybierz konto"
+          description="Lista rozwijana w dół, obsługiwana przyciskiem A i padem. Na razie testujemy wyłącznie Epic Games.">
+          <Dropdown rgOptions={ACCOUNT_OPTIONS} selectedOption={selectedAccount}
+            onChange={option => {
+              if (option.data === "epic") setSelectedAccount("epic");
+            }} />
         </Field>
-        {launchers.map(launcher => <Field key={launcher.app.id}
-          label={launcher.label} focusable highlightOnFocus
-          description={launcher.provider === "epic"
-            ? "Zewnętrzny Epic Games Launcher. Dane logowania pozostają w jego własnym środowisku."
-            : "Opcjonalny launcher Heroic/Legendary. Hub nie odczytuje ani nie przenosi jego sesji."}>
-          <DialogButton disabled={loading || opening} onClick={() => { void open(launcher); }}>
-            {opening ? "Uruchamianie…" : "Otwórz"}
-          </DialogButton>
-        </Field>)}
-        {checked && !loading && !launchers.length && <Field
-          label="Nie znaleziono launchera"
-          description="Zainstaluj i skonfiguruj launcher w trybie pulpitu. Jeśli istnieje pod inną nazwą, uruchom go przez Pulpit Huba; nie zgadujemy, który skrót jest bezpieczny." />}
-        {!!message && <Field label="Informacja" description={message} focusable highlightOnFocus />}
+        {selectedAccount === "epic" && <>
+          <Field label="Epic Games" focusable highlightOnFocus
+            description="Stan sesji: niezweryfikowany. Hub nie czyta tokenów ani nie udaje, że potwierdził zalogowanie." />
+          {launchers.length > 1 && <Field label="Launcher do logowania"
+            description="Wybierz aplikację, która otworzy własny ekran logowania.">
+            <Dropdown
+              rgOptions={launchers.map(launcher => ({
+                data: launcher.app.id, label: launcher.label
+              }))}
+              selectedOption={chosenLauncher?.app.id ?? ""}
+              onChange={option => {
+                if (launchers.some(launcher => launcher.app.id === option.data))
+                  setSelectedLauncherId(String(option.data));
+              }} />
+          </Field>}
+          <Field label="Logowanie do Epic Games"
+            description={chosenLauncher
+              ? "Przycisk uruchamia " + chosenLauncher.label + ". Hasło i 2FA wpisujesz wyłącznie w tym programie."
+              : "Nie znaleziono obsługiwanego launchera. Najpierw zainstaluj go na pulpicie; Hub nie ma własnego formularza hasła."}>
+            <DialogButton disabled={loading || opening || !chosenLauncher}
+              onClick={() => { void signIn(); }}>
+              {opening ? "Uruchamianie…" : "Zaloguj"}
+            </DialogButton>
+          </Field>
+          <Field label="Wykrywanie launcherów"
+            description="Sprawdzamy wyłącznie rozpoznane skróty z Pulpitu. Nazwa skrótu nie potwierdza autentyczności programu.">
+            <DialogButton disabled={loading || opening} onClick={() => { void refresh(); }}>
+              {loading ? "Sprawdzanie…" : "Odśwież"}
+            </DialogButton>
+          </Field>
+          {checked && !loading && !launchers.length && <Field
+            label="Brak launchera Epic"
+            description="Możesz zainstalować Epic Games Launcher przez Proton w trybie pulpitu. Po instalacji wybierz Odśwież. Samo logowanie na stronie WWW nie podłączy biblioteki do Huba." />}
+          {!!message && <Field label="Informacja" description={message} focusable highlightOnFocus />}
+        </>}
       </DialogControlsSection>
       <DialogControlsSection>
         <DialogControlsSectionHeader>Bezpieczeństwo konta</DialogControlsSectionHeader>
