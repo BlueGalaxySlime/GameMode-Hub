@@ -41,6 +41,7 @@ from game_view_settings import (
 from runtime_state import set_hub_ui_open, get_runtime_state, diagnostics as runtime_diagnostics
 import tab_manager
 import collection_manager
+import library_backup
 
 CURRENT_VERSION = "0.5.47"
 RELEASES_API = "https://api.github.com/repos/BlueGalaxySlime/GameMode-Hub/releases/latest"
@@ -207,6 +208,15 @@ class Plugin:
 
     async def save_hub_collections(self, collections):
         return await asyncio.to_thread(collection_manager.save_collections, collections)
+
+    async def get_hub_library_backups(self):
+        return await asyncio.to_thread(library_backup.list_backups)
+
+    async def create_hub_library_backup(self):
+        return await asyncio.to_thread(library_backup.create_backup)
+
+    async def restore_hub_library_backup(self, backup_id):
+        return await asyncio.to_thread(library_backup.restore_backup, backup_id)
 
     async def hub_runtime_state(self):
         active = DOWNLOADS.list()["active"]
