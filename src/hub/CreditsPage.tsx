@@ -1,5 +1,6 @@
+import { useState } from "react";
 import {
-  DialogBody, DialogControlsSection, DialogControlsSectionHeader, Field
+  DialogBody, DialogButton, DialogControlsSection, DialogControlsSectionHeader, Field
 } from "@decky/ui";
 
 type Credit = { project: string; authors: string; reason: string; license: string; source: string };
@@ -39,9 +40,22 @@ const externalProjects: Credit[] = [
 ];
 
 function CreditRow({ credit }: { credit: Credit }) {
-  return <Field label={credit.project}
-    description={credit.authors + " — " + credit.reason + " Licencja: " +
-      credit.license + ". Źródło: " + credit.source} />;
+  const [expanded, setExpanded] = useState(true);
+  // Focusable Steam button gives the controller a real navigation target.
+  // Moving through credits with D-pad scrolls the dialog with focus.
+  return <div style={{ display: "flex", flexDirection: "column", gap: 3 }}>
+    <DialogButton onClick={() => setExpanded(value => !value)}
+      onOKActionDescription={expanded ? "Zwiń opis" : "Rozwiń opis"}
+      style={{ width: "100%", textAlign: "left", minWidth: 0,
+        fontWeight: 600, padding: "7px 9px" }}>
+      {credit.project + (expanded ? " ▴" : " ▾")}
+    </DialogButton>
+    {expanded && <div style={{ padding: "1px 8px 12px", fontSize: 12,
+      opacity: 0.86, overflowWrap: "anywhere" }}>
+      {credit.authors + " — " + credit.reason + " Licencja: " +
+        credit.license + ". Źródło: " + credit.source}
+    </div>}
+  </div>;
 }
 
 export function CreditsPage() {
@@ -49,7 +63,7 @@ export function CreditsPage() {
     <DialogControlsSection>
       <DialogControlsSectionHeader>Podziękowania</DialogControlsSectionHeader>
       <Field label="Twórcy oprogramowania open source"
-        description="Dziękujemy autorom za pracę wykorzystaną w GameMode Hub. Poniżej podajemy, komu i za co należą się podziękowania." />
+        description="Dziękujemy autorom za pracę wykorzystaną w GameMode Hub. Przechodź po projektach krzyżakiem; A rozwija lub zwija szczegóły." />
     </DialogControlsSection>
     <DialogControlsSection>
       <DialogControlsSectionHeader>Wykorzystany lub zaadaptowany kod</DialogControlsSectionHeader>
