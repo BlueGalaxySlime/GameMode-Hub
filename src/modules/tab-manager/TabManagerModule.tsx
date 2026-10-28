@@ -202,9 +202,10 @@ export function TabManagerModule() {
         </DialogButton>}
       <DialogButton disabled={busy || index === 0} onClick={() => move(index, -1)}>Wyżej</DialogButton>
       <DialogButton disabled={busy || index === tabs.length - 1} onClick={() => move(index, 1)}>Niżej</DialogButton>
-      <DialogButton disabled={busy || tabs.length >= 64} onClick={() => addTab(tab.title + " (kopia)", tab.filter)}>
-        Duplikuj
-      </DialogButton>
+      <DialogButton disabled={busy || tabs.length >= 64} onClick={() => {
+        const id = "copy-" + Date.now().toString(36) + "-" + Math.random().toString(36).slice(2, 8);
+        void persist([...tabs, { ...tab, id, title: tab.title + " (kopia)" }]);
+      }}>Duplikuj</DialogButton>
       {deleteId === tab.id ? <>
         <Field label="Usunąć kartę?" description="Kolekcje i gry pozostaną bez zmian." />
         <DialogButton disabled={busy} onClick={() => void persist(tabs.filter(t => t.id !== tab.id))}>Potwierdź</DialogButton>
