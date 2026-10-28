@@ -1,3 +1,10 @@
+# GameMode Hub 0.5.15 (testowy)
+
+- **Podziękowania, Pulpit, Terminal:** cofnięto rozwijane opisy. Cały tekst jest zawsze widoczny, jak dawniej. Wiersze tekstu są dostępne dla krzyżaka; fokus automatycznie przewija stronę w dół i w górę, bez używania dotyku.
+- **Pliki — ulubione:** nazwy operacji rozróżniają otwarcie zakładki i usunięcie zakładki. Usuwanie zakładki usuwa wyłącznie zapisany skrót, nigdy katalog ani pliki z dysku. Usunięto dodatkowe zagłębione menu „Usuń zapisany folder”.
+- **Testy:** nowe kontrole dla stałego tekstu, przewijania kontrolerem i niedestrukcyjnego usuwania zakładek.
+- Nie zmieniono struktury plików ani zabezpieczeń kopiowania, ustawień podziału ekranu i bezpiecznego trybu terminala.
+
 # GameMode Hub 0.5.14 (testowy)
 
 - **Pliki — fokus:** po otwarciu katalogu lub przejściu poziom wyżej interfejs przenosi fokus do nowego drzewa zamiast oddawać go zakładkom bocznym. Podczas wczytywania przyciski listy pozostają nawigowalne, co zapobiega utracie fokusu.
