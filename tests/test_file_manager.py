@@ -91,17 +91,49 @@ class FileManagerTests(unittest.TestCase):
             with self.assertRaises(PermissionError):
                 file_manager.create_folder(str(self.home), "test")
 
-    def test_folders_cannot_copy_recursively_or_move_into_themselves(self):
+    def test_copy_folder_recursively_but_never_into_itself(self):
         folder = self.home / "parent"
         folder.mkdir()
         child = folder / "child"
         child.mkdir()
+        (child / "mod.ini").write_text("x=1")
         with self.assertRaises(ValueError):
             file_manager.paste_entry(str(folder), str(child), "move")
         target = self.home / "other"
         target.mkdir()
-        with self.assertRaises(ValueError):
+        result = file_manager.paste_entry(str(folder), str(target), "copy")
+        self.assertEqual((Path(result["path"]) / "child" / "mod.ini").read_text(), "x=1")
+        with self.assertRaises(FileExistsError):
             file_manager.paste_entry(str(folder), str(target), "copy")
+        with self.assertRaises(ValueError):
+            file_manager.paste_entry(str(folder), str(child), "copy")
+
+    def test_copy_folder_rejects_nested_symlinks(self):
+        folder = self.home / "mods"
+        folder.mkdir()
+        (folder / "escape").symlink_to(self.external, target_is_directory=True)
+        target = self.home / "target"
+        target.mkdir()
+        with self.assertRaises(PermissionError):
+            file_manager.paste_entry(str(folder), str(target), "copy")
+        self.assertFalse((target / "mods").exists())
+
+    def test_paste_many_copies_and_preflights_name_conflicts(self):
+        source = self.home / "mods"
+        source.mkdir()
+        a, b = source / "a.txt", source / "b.txt"
+        a.write_text("a")
+        b.write_text("b")
+        target = self.home / "target"
+        target.mkdir()
+        result = file_manager.paste_entries([str(a), str(b)], str(target), "copy")
+        self.assertEqual(result["count"], 2)
+        self.assertEqual((target / "a.txt").read_text(), "a")
+        self.assertEqual((target / "b.txt").read_text(), "b")
+        with self.assertRaises(FileExistsError):
+            file_manager.paste_entries([str(a), str(b)], str(target), "copy")
+        with self.assertRaises(ValueError):
+            file_manager.paste_entries([str(a), str(a)], str(self.home), "move")
 
 
     def test_sort_before_pagination(self):
