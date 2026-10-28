@@ -16,5 +16,5 @@ export const CORE_MODULES: readonly HubModule[] = [
   { id:"options", title:"Opcje Huba", capabilities:[], enabledByDefault:true },
   { id:"updates", title:"Aktualizacje", capabilities:["updates"], enabledByDefault:true },
   { id:"credits", title:"Podziękowania", capabilities:[], enabledByDefault:true },
-  { id:"ui", title:"UI", capabilities:["integrations"], enabledByDefault:true }
+  { id:"ui", title:"Optymalizacja", capabilities:["integrations"], enabledByDefault:true }
 ] as const;
