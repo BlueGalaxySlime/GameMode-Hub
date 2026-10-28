@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { callable } from "@decky/api";
-import { DialogButton, DialogControlsSection, Field } from "@decky/ui";
+import { DialogButton, DialogControlsSection, DialogControlsSectionHeader, Field } from "@decky/ui";
 import { HubTextInput } from "../../hub/HubTextInput";
 import { hubCollectionsChanged } from "../tab-manager/LibraryIntegration";
 
@@ -102,8 +102,7 @@ export function CollectionsModule() {
   }
 
   return <DialogControlsSection>
-    <Field label="Kolekcje Huba"
-      description="Kolekcje przechowują gry i reguły, a nie karty nawigacji. Można je później wyświetlać w osobnych kartach Gaming Mode. Zmiana lub usunięcie karty nie usuwa kolekcji." />
+    <DialogControlsSectionHeader>Kolekcje</DialogControlsSectionHeader>
     <Field label="Nowa kolekcja">
       <HubTextInput value={name} disabled={busy} placeholder="Nazwa kolekcji"
         onChange={event => setName(event.target.value)} onEditValue={setName} />
@@ -135,8 +134,7 @@ export function CollectionsModule() {
         setGameId("");
       }}>{addingTo === collection.id ? "Ukryj przypisania" : "Przypisane gry"}</DialogButton>
       {addingTo === collection.id && <>
-        <Field label="Dodaj grę przez Steam AppID"
-          description="Ręczne przypisanie AppID działa również dla skrótów spoza Steam. Nie modyfikuje oryginalnych kolekcji Steam.">
+        <Field label="Dodaj grę (AppID)">
           <HubTextInput value={gameId} disabled={busy} placeholder="AppID"
             onChange={event => setGameId(event.target.value)} onEditValue={setGameId} />
         </Field>
@@ -159,7 +157,7 @@ export function CollectionsModule() {
       </> : <DialogButton disabled={busy} onClick={() => setConfirmDelete(collection.id)}>Usuń kolekcję</DialogButton>}
     </div>)}
     {!busy && !collections.length && <Field label="Brak kolekcji"
-      description="Utwórz pierwszą kolekcję. Będzie niezależna od kart biblioteki." />}
+      description="Dodaj kolekcję, aby przypisywać gry i reguły." />}
     {error && <Field label="Błąd" description={error} />}
   </DialogControlsSection>;
 }
