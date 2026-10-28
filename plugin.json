@@ -8,7 +8,7 @@
       "utility",
       "launcher"
     ],
-    "description": "SteamOS-style full-screen addon dashboard and update manager.",
-    "image": "https://opengraph.githubassets.com/1/BlueGalaxySlime/SteamOS-Hub"
+    "description": "GameMode Hub — Quick Access panel for SteamOS Gaming Mode. Legacy Decky identity retained for upgrades.",
+    "image": "https://opengraph.githubassets.com/1/BlueGalaxySlime/GameMode-Hub"
   }
 }

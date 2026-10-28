@@ -26,7 +26,7 @@ class HubSelectionTests(unittest.TestCase):
 
     def test_deduplicate_and_exclude_steamhub_itself(self):
         self.assertEqual(
-            hub_settings.set_selected_addons(["Decky Terminal", "SteamHub", "Decky Terminal"]),
+            hub_settings.set_selected_addons(["Decky Terminal", "SteamHub", "GameModeHub", "GameMode Hub", "Decky Terminal"]),
             ["Decky Terminal"]
         )
 

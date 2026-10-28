@@ -13,7 +13,7 @@ function openHub() {
 function QuickAccessContent() {
   return <PanelSection>
     <PanelSectionRow>
-      <ButtonItem layout="below" onClick={openHub}>Otwórz SteamHub</ButtonItem>
+      <ButtonItem layout="below" onClick={openHub}>Otwórz GameMode Hub</ButtonItem>
     </PanelSectionRow>
   </PanelSection>;
 }
@@ -21,8 +21,8 @@ function QuickAccessContent() {
 export default definePlugin(() => {
   routerHook.addRoute(HUB_ROUTE, () => <HubPage />);
   return {
-    name: "SteamHub",
-    titleView: <div className={staticClasses.Title}>SteamHub</div>,
+    name: "GameMode Hub",
+    titleView: <div className={staticClasses.Title}>GameMode Hub</div>,
     content: <QuickAccessContent />,
     icon: <FaTools />,
     onDismount: () => { routerHook.removeRoute(HUB_ROUTE); }

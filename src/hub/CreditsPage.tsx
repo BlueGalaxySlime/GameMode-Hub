@@ -49,7 +49,7 @@ export function CreditsPage() {
     <DialogControlsSection>
       <DialogControlsSectionHeader>Podziękowania</DialogControlsSectionHeader>
       <Field label="Twórcy oprogramowania open source"
-        description="Dziękujemy autorom za pracę wykorzystaną w SteamOS Hub. Poniżej podajemy, komu i za co należą się podziękowania." />
+        description="Dziękujemy autorom za pracę wykorzystaną w GameMode Hub. Poniżej podajemy, komu i za co należą się podziękowania." />
     </DialogControlsSection>
     <DialogControlsSection>
       <DialogControlsSectionHeader>Wykorzystany lub zaadaptowany kod</DialogControlsSectionHeader>

@@ -6,7 +6,7 @@ import {
 } from "@decky/ui";
 import { RequestTimeoutError, withTimeout } from "../utils/withTimeout";
 
-const VERSION = "0.5.0";
+const VERSION = "0.5.1";
 type UpdateResult = {
   current: string;
   latest: string | null;
@@ -25,7 +25,7 @@ async function checkBrowser(): Promise<UpdateResult> {
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), 7000);
   try {
-    const response = await fetch("https://api.github.com/repos/BlueGalaxySlime/SteamOS-Hub/releases/latest",
+    const response = await fetch("https://api.github.com/repos/BlueGalaxySlime/GameMode-Hub/releases/latest",
       { signal: controller.signal, cache: "no-store", headers: { Accept: "application/vnd.github+json" } });
     if (!response.ok) throw new Error("GitHub HTTP " + response.status);
     const data = await response.json();
@@ -33,7 +33,7 @@ async function checkBrowser(): Promise<UpdateResult> {
     const asset = Array.isArray(data.assets)
       ? data.assets.find((a: { name?: string }) => a.name === "SteamHub.zip") : undefined;
     const url = typeof asset?.browser_download_url === "string" &&
-      asset.browser_download_url.startsWith("https://github.com/BlueGalaxySlime/SteamOS-Hub/releases/download/")
+      asset.browser_download_url.startsWith("https://github.com/BlueGalaxySlime/GameMode-Hub/releases/download/")
       ? asset.browser_download_url : null;
     const sha256 = typeof asset?.digest === "string" && /^sha256:[a-fA-F0-9]{64}$/.test(asset.digest)
       ? asset.digest.slice(7) : null;
@@ -79,7 +79,7 @@ export function UpdaterPage() {
       } else {
         setMessage(result.latest && result.latest !== VERSION
           ? "Wydanie " + result.latest + " nie jest nowsze lub nie ma poprawnej sumy SHA-256."
-          : "SteamHub " + VERSION + " jest aktualny.");
+          : "GameMode Hub " + VERSION + " jest aktualny.");
       }
     } catch (error) {
       setMessage(error instanceof RequestTimeoutError
@@ -121,8 +121,8 @@ export function UpdaterPage() {
 
   return <DialogBody>
     <DialogControlsSection>
-      <DialogControlsSectionHeader>Aktualizacje SteamHub</DialogControlsSectionHeader>
-      <Field label="Zainstalowana wersja" description={"SteamHub " + VERSION} />
+      <DialogControlsSectionHeader>Aktualizacje GameMode Hub</DialogControlsSectionHeader>
+      <Field label="Zainstalowana wersja" description={"GameMode Hub " + VERSION} />
       <Field label="Sprawdź aktualizacje" description="Sprawdzanie odbywa się ręcznie w GitHub Releases.">
         <DialogButton disabled={checking} onClick={() => { void check(); }}>
           {checking ? "Czekaj…" : "Sprawdź"}

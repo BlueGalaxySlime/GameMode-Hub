@@ -1,4 +1,4 @@
-"""SteamHub release checker. Installation is delegated to Decky Loader."""
+"""GameMode Hub release checker. Installation is delegated to Decky Loader."""
 import asyncio
 import json
 import re
@@ -18,8 +18,8 @@ if _PLUGIN_ROOT not in sys.path:
 
 from hub_settings import get_selected_addons, set_selected_addons
 
-CURRENT_VERSION = "0.5.0"
-RELEASES_API = "https://api.github.com/repos/BlueGalaxySlime/SteamOS-Hub/releases/latest"
+CURRENT_VERSION = "0.5.1"
+RELEASES_API = "https://api.github.com/repos/BlueGalaxySlime/GameMode-Hub/releases/latest"
 ASSET_NAME = "SteamHub.zip"
 
 
@@ -60,7 +60,7 @@ def _fetch_latest_release():
         RELEASES_API,
         headers={
             "Accept": "application/vnd.github+json",
-            "User-Agent": "SteamHub/0.5.0",
+            "User-Agent": "GameModeHub/0.5.1",
             "X-GitHub-Api-Version": "2022-11-28",
         },
     )
@@ -73,7 +73,7 @@ def _fetch_latest_release():
     digest = str(asset.get("digest") or "") if asset else ""
     sha256 = digest[7:] if re.fullmatch(r"sha256:[0-9a-fA-F]{64}", digest) else None
     url = asset.get("browser_download_url") if asset else None
-    if url and not url.startswith("https://github.com/BlueGalaxySlime/SteamOS-Hub/releases/download/"):
+    if url and not url.startswith("https://github.com/BlueGalaxySlime/GameMode-Hub/releases/download/"):
         url = None
     parsed_latest = _version(latest)
     newer = parsed_latest is not None and parsed_latest > _version(CURRENT_VERSION)
@@ -104,7 +104,7 @@ class Plugin:
         # Hardware fail-safe: even a stale Steam/Decky frontend must not start
         # PTYs while the reported Steam UI reset is being investigated.
         raise RuntimeError(
-            "Terminal SteamHub tymczasowo wylaczony: ryzyko restartu Gaming Mode."
+            "Terminal GameMode Hub tymczasowo wylaczony: ryzyko restartu Gaming Mode."
         )
 
     async def terminal_read(self, session_id):

@@ -1,4 +1,4 @@
-"""Unit tests for SteamHub Tab Manager backend (python -m unittest discover -s tests)."""
+"""Unit tests for GameMode Hub Tab Manager backend (python -m unittest discover -s tests)."""
 import io
 import json
 import tempfile
@@ -36,7 +36,7 @@ class TabManagerTests(unittest.TestCase):
             "assets": [{
                 "name": "SteamHub.zip",
                 "digest": "sha256:" + "a" * 64,
-                "browser_download_url": "https://github.com/BlueGalaxySlime/SteamOS-Hub/releases/download/v0.3.0/SteamHub.zip",
+                "browser_download_url": "https://github.com/BlueGalaxySlime/GameMode-Hub/releases/download/v0.3.0/SteamHub.zip",
             }],
         }
         with (patch.object(main, "CURRENT_VERSION", "0.2.3"),

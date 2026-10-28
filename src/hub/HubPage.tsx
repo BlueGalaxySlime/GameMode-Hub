@@ -34,7 +34,7 @@ async function listInstalledAddons(): Promise<InstalledAddon[]> {
   return response.filter((plugin: unknown): plugin is InstalledAddon => {
     return typeof plugin === "object" && plugin !== null &&
       typeof (plugin as InstalledAddon).name === "string" &&
-      (plugin as InstalledAddon).name !== "SteamHub";
+      !["GameMode Hub", "GameModeHub", "GameMode Hub"].includes((plugin as InstalledAddon).name);
   }).map(plugin => ({
     name: plugin.name,
     disabled: plugin.disabled === true,
@@ -48,7 +48,7 @@ function Overview({ selected, installed }: {
 }) {
   return <DialogBody>
     <DialogControlsSection>
-      <DialogControlsSectionHeader>SteamHub</DialogControlsSectionHeader>
+      <DialogControlsSectionHeader>GameMode Hub</DialogControlsSectionHeader>
       <Field label="Moje dodatki" description="Wybrane dodatki pojawiają się w menu po lewej stronie.">
         <div>{selected.length}</div>
       </Field>
@@ -62,7 +62,7 @@ function Overview({ selected, installed }: {
         </Field>;
       })}
       {!selected.length && <Field label="Brak wybranych dodatków"
-        description="Otwórz Dodatki, aby wybrać te, które mają być widoczne w SteamHub." />}
+        description="Otwórz Dodatki, aby wybrać te, które mają być widoczne w GameMode Hub." />}
     </DialogControlsSection>
   </DialogBody>;
 }
@@ -106,7 +106,7 @@ type RuntimeLoader = { plugins?: RuntimePlugin[] };
 /**
  * Legacy Decky plugin panels are not a stable public embedding API.
  * Only attempt to render them after an explicit button press, so a broken
- * plugin never prevents opening the main SteamHub settings screen.
+ * plugin never prevents opening the main GameMode Hub settings screen.
  */
 function loadedPluginContent(name: string): ReactNode | null {
   const loader = (window as Window & { DeckyPluginLoader?: RuntimeLoader }).DeckyPluginLoader;
@@ -121,7 +121,7 @@ class ExternalPanelBoundary extends Component<
   state = { failed: false };
   static getDerivedStateFromError() { return { failed: true }; }
   componentDidCatch(error: unknown) {
-    console.error("[SteamHub] External plugin panel error", error);
+    console.error("[GameMode Hub] External plugin panel error", error);
   }
   render() {
     return this.state.failed
@@ -171,9 +171,9 @@ function AddonOptions({ name, addon, selected, remove }: {
       {advanced && <>
         <Field label="Stan dodatku"
           description={addon?.disabled ? "Wyłączony w Decky" : addon ? "Aktywny w Decky" : "Niezainstalowany"} />
-        <Field label="Panel w SteamHub"
+        <Field label="Panel w GameMode Hub"
           description={originalContent ? "Wykryty panel oryginalnej wtyczki" : "Interfejs nie jest dostępny przez bieżący loader"} />
-        <Field label="Widoczny w SteamHub">
+        <Field label="Widoczny w GameMode Hub">
           <Toggle value={selected} onChange={value => { if (!value) remove(); }} />
         </Field>
         <Field label="Zarządzanie w Decky" description="Wtyczka zachowuje własne ustawienia oraz aktualizacje.">

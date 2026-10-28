@@ -1,4 +1,4 @@
-"""SteamHub selections persisted independently of the Decky plugin installation.
+"""GameMode Hub selections persisted independently of the Decky plugin installation.
 
 Do not modify, enable, disable, or otherwise manage the selected plugins.
 """
@@ -16,7 +16,7 @@ def validate_selection(names):
     for name in names:
         if not isinstance(name, str) or not (1 <= len(name) <= 100):
             raise ValueError("Invalid addon name")
-        if name == "SteamHub":
+        if name in ("SteamHub", "GameModeHub", "GameMode Hub"):
             continue
         if name not in result:
             result.append(name)
