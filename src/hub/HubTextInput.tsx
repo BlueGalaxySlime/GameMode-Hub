@@ -181,6 +181,14 @@ function TextEditControls({ value, disabled, onEditValue, onExitEdit, multiline,
   const suffix = value.slice(selection.end);
 
   return <Focusable ref={containerRef} flow-children="column"
+    onCancelActionDescription={selecting ? "Wyjdź z zaznaczania" : "Zamknij edycję"}
+    onCancelButton={event => {
+      if (event.defaultPrevented || !editor()) return;
+      event.preventDefault();
+      event.stopPropagation();
+      if (selectingRef.current) exitSelectionMode();
+      else onExitEdit?.();
+    }}
     onOptionsActionDescription="Edycja tekstu"
     onOptionsButton={event => {
       if (event.defaultPrevented || !editor()) return;
