@@ -24,7 +24,7 @@ from hub_settings import (
 from release_catalog import RELEASES_API as RELEASE_CATALOG_API, catalog, validate_channel
 from file_manager import listing as list_files, create_folder, rename_entry, paste_entry, paste_entries
 
-CURRENT_VERSION = "0.5.12"
+CURRENT_VERSION = "0.5.13"
 RELEASES_API = "https://api.github.com/repos/BlueGalaxySlime/GameMode-Hub/releases/latest"
 ASSET_NAME = "GameMode-Hub.zip"
 
