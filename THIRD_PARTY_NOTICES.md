@@ -77,6 +77,17 @@ The XDG Desktop Entry and Trash formats are public freedesktop.org standards:
 https://specifications.freedesktop.org/
 No third-party Trash implementation is bundled.
 
+## UniFiDeck — external Decky integration (read-only)
+
+Project: UniFiDeck, mubaraknumann and contributors.
+Upstream: https://github.com/mubaraknumann/unifideck
+License: GPL-3.0-or-later (the project's published license).
+
+GameMode Hub invokes only UniFiDeck's status-check backend route via Decky
+Loader and displays sanitized per-store connection states. Authentication,
+storefront access, secrets and logout remain exclusively in UniFiDeck.
+No UniFiDeck auth code or credential files are bundled or copied.
+
 ## External integrations and platform (no plugin implementation copied)
 
 - Decky Loader / @decky/ui: SteamDeckHomebrew and contributors — native

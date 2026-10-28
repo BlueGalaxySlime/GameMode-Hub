@@ -2,12 +2,13 @@ import { useEffect, useRef, useState } from "react";
 import { callable } from "@decky/api";
 import {
   DialogBody, DialogButton, DialogControlsSection, Focusable,
-  Menu, MenuGroup, MenuItem, NavEntryPositionPreferences, showContextMenu
+  Menu, MenuGroup, MenuItem, NavEntryPositionPreferences, showContextMenu, showModal
 } from "@decky/ui";
 import { withTimeout } from "../utils/withTimeout";
 import { useHubSessionState } from "./useHubSessionState";
 import { HubTextInput } from "./HubTextInput";
-import { filterDesktopApps } from "../core/desktopCatalog";
+import { effectiveDesktopCategory, filterDesktopApps } from "../core/desktopCatalog";
+import { DesktopRulesDialog } from "./DesktopRulesDialog";
 import type { DesktopCategory, DesktopSort } from "../core/desktopCatalog";
 import {
   createSteamDesktopShortcut, openSteamDesktopShortcut, removeSteamDesktopShortcut
@@ -18,13 +19,14 @@ export type DesktopApp = {
 };
 type SavedApp = {
   favorite?: boolean; hidden?: boolean; shortcut?: number | null; lastOpened?: number | null;
+  category?: "auto" | "flatpak" | "system";
 };
 type DesktopState = { apps: Record<string, SavedApp>; temporary: number[] };
 type Category = DesktopCategory;
 
 const listDesktopApps = callable<[], DesktopApp[]>("desktop_list_apps");
 const readState = callable<[], DesktopState>("desktop_get_state");
-const updateSetting = callable<[string, string, boolean | number | null], SavedApp>("desktop_set_setting");
+const updateSetting = callable<[string, string, boolean | number | string | null], SavedApp>("desktop_set_setting");
 const rememberTemporary = callable<[number], number[]>("desktop_remember_temporary");
 const forgetTemporary = callable<[number], number[]>("desktop_forget_temporary");
 
@@ -57,6 +59,7 @@ export function DesktopPage() {
   const [working, setWorking] = useState<string | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
   const searchControlRef = useRef<HTMLDivElement>(null);
+  const categorySavingRef = useRef(false);
 
   async function refresh() {
     setBusy(true);
@@ -88,7 +91,7 @@ export function DesktopPage() {
 
   useEffect(() => { void refresh(); }, []);
 
-  async function save(app: DesktopApp, key: string, value: boolean | number | null) {
+  async function save(app: DesktopApp, key: string, value: boolean | number | string | null) {
     const saved = await withTimeout(updateSetting(app.id, key, value), 5000);
     setStored(previous => ({ ...previous, apps: { ...previous.apps, [app.id]: saved } }));
   }
@@ -169,6 +172,32 @@ export function DesktopPage() {
     }
   }
 
+  async function assignCategory(app: DesktopApp, next: "auto" | "flatpak" | "system") {
+    if (working || categorySavingRef.current) return;
+    categorySavingRef.current = true;
+    setWorking(app.id);
+    setMessage("");
+    try {
+      await save(app, "category", next);
+      setMessage(next === "auto" ? "Przywrócono automatyczne przypisanie." :
+        "Przypisano do: " + (next === "flatpak" ? "Flatpak" : "Systemowe") + ".");
+    } catch {
+      setMessage("Nie udało się zapisać reguły.");
+    } finally {
+      categorySavingRef.current = false;
+      setWorking(null);
+    }
+  }
+
+  function openRules() {
+    const countFlatpak = apps.filter(app => app.flatpak).length;
+    const countOverrides = apps.filter(app =>
+      stored.apps[app.id]?.category && stored.apps[app.id].category !== "auto").length;
+    window.setTimeout(() => showModal(
+      <DesktopRulesDialog automaticFlatpak={countFlatpak} overridden={countOverrides} />
+    ), 0);
+  }
+
   function openAppMenu(app: DesktopApp, parent: EventTarget) {
     const prefs = stored.apps[app.id] ?? {};
     showContextMenu(
@@ -182,6 +211,19 @@ export function DesktopPage() {
         <MenuItem onSelected={() => { void toggleFlag(app, "hidden"); }}>
           {prefs.hidden ? "Pokaż" : "Ukryj"}
         </MenuItem>
+        <MenuGroup label="Przypisanie">
+          {([
+            { key: "auto", label: "Automatycznie (" +
+              (app.flatpak ? "Flatpak" : "Systemowe") + ")" },
+            { key: "flatpak", label: "Flatpak" },
+            { key: "system", label: "Systemowe" }
+          ] as const).map(item => <MenuItem key={item.key}
+            selected={(prefs.category ?? "auto") === item.key}
+            onSelected={() => { void assignCategory(app, item.key); }}
+            onClick={() => { void assignCategory(app, item.key); }}>
+            {item.label}
+          </MenuItem>)}
+        </MenuGroup>
       </Menu>,
       parent,
       { bFitToWindow: true, bShiftToFitWindow: true, bPreferPopTop: true }
@@ -240,6 +282,9 @@ export function DesktopPage() {
               onSelected={() => setSortMode(item.key)}
               onClick={() => setSortMode(item.key)}>{item.label}</MenuItem>)}
         </MenuGroup>
+        <MenuGroup label="Reguły widoku">
+          <MenuItem onSelected={openRules} onClick={openRules}>Pokaż reguły</MenuItem>
+        </MenuGroup>
       </Menu>,
       parent,
       { bFitToWindow: true, bShiftToFitWindow: true, bPreferPopTop: true }
@@ -273,6 +318,7 @@ export function DesktopPage() {
           <span>Widok: lista</span>
           <span>Aplikacje: {visible.length}</span>
           <span>Sortowanie: {sortOptions.find(item => item.key === sortMode)?.label ?? "Nazwa A–Z"}</span>
+          <span>Reguły: .desktop / Flatpak + własne przypisania</span>
         </div>
         {/* Read-only context. There is no second action that merely resets to Wszystkie. */}
         <div aria-label="Ścieżka pulpitu" style={{ display: "flex", gap: 6,
@@ -336,6 +382,10 @@ export function DesktopPage() {
                 <span style={{ flex: "1 1 0", minWidth: 0,
                   overflow: "hidden", whiteSpace: "nowrap", textOverflow: "ellipsis" }}>
                   {app.name}
+                </span>
+                <span style={{ fontSize: 11, opacity: 0.7, flexShrink: 0 }}>
+                  {effectiveDesktopCategory(app, stored.apps[app.id]) === "flatpak" ? "Flatpak" : "System"}
+                  {stored.apps[app.id]?.category && stored.apps[app.id].category !== "auto" ? " *" : ""}
                 </span>
                 {stored.apps[app.id]?.favorite && <span aria-label="Ulubiona">★</span>}
                 {stored.apps[app.id]?.shortcut && <span style={{ fontSize: 11, opacity: 0.7 }}>Steam</span>}

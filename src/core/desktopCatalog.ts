@@ -5,10 +5,16 @@ export type DesktopSort = "recommended" | "name-asc" | "name-desc" | "recent";
 export type DesktopAppMeta = { id: string; name: string; flatpak: boolean };
 export type DesktopAppPreference = {
   favorite?: boolean; hidden?: boolean; shortcut?: number | null; lastOpened?: number | null;
+  category?: "auto" | "flatpak" | "system";
 };
 
 export function searchableName(value: string) {
   return value.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLocaleLowerCase("pl");
+}
+
+export function effectiveDesktopCategory(app: DesktopAppMeta, pref: DesktopAppPreference = {}) {
+  if (pref.category === "flatpak" || pref.category === "system") return pref.category;
+  return app.flatpak ? "flatpak" : "system";
 }
 
 export function filterDesktopApps<T extends DesktopAppMeta>(
@@ -27,8 +33,9 @@ export function filterDesktopApps<T extends DesktopAppMeta>(
       return false;
     }
     if (category === "favorites" && !preferences.favorite) return false;
-    if (category === "flatpak" && !app.flatpak) return false;
-    if (category === "system" && app.flatpak) return false;
+    const effective = effectiveDesktopCategory(app, preferences);
+    if (category === "flatpak" && effective !== "flatpak") return false;
+    if (category === "system" && effective !== "system") return false;
     return !query || searchableName(app.name).includes(query);
   }).sort((a, b) => {
     const pa = stored[a.id] ?? {};

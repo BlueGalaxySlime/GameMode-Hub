@@ -11,7 +11,7 @@ const js = ts.transpileModule(source, {
 }).outputText;
 const env = { exports: {}, Map, Set };
 vm.runInNewContext(js, env);
-const { filterDesktopApps, searchableName } = env.exports;
+const { filterDesktopApps, searchableName, effectiveDesktopCategory } = env.exports;
 
 const apps = [
   { id: "firefox", name: "Firefox", flatpak: true },
@@ -61,4 +61,18 @@ test("Original input data is not mutated by catalogue sorting", () => {
   const before = apps.map(app => app.id);
   filterDesktopApps(apps, stored, "all", "", "name-desc");
   assert.deepEqual(apps.map(app => app.id), before);
+});
+
+test("manual Flatpak and System assignments override auto metadata", () => {
+  const manuallyAssigned = {
+    ...stored,
+    dolphin: { category: "flatpak" },
+    heroic: { category: "system" }
+  };
+  const flatpak = filterDesktopApps(apps, manuallyAssigned, "flatpak", "", "name-asc");
+  assert.deepEqual(flatpak.map(item => item.id), ["dolphin", "firefox"]);
+  const system = filterDesktopApps(apps, manuallyAssigned, "system", "", "name-asc");
+  assert.deepEqual(system.map(item => item.id), ["heroic", "steam"]);
+  assert.equal(effectiveDesktopCategory(apps[1], manuallyAssigned.dolphin), "flatpak");
+  assert.equal(effectiveDesktopCategory(apps[2], { category: "auto" }), "flatpak");
 });

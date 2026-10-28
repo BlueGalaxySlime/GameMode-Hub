@@ -85,7 +85,9 @@ def list_desktop_apps():
                     "bin": executable, "cmd": arguments,
                     "workdir": working or str(Path(os.environ.get("DECKY_USER_HOME") or Path.home())),
                     "flatpak": entry.get("X-Flatpak", fallback="") != "" or
-                               "flatpak" in path.parts,
+                               "flatpak" in path.parts or
+                               Path(executable).name == "flatpak" or
+                               any(token.startswith("flatpak-") for token in path.parts),
                 }
             except (OSError, UnicodeError, configparser.Error, ValueError):
                 continue
@@ -126,6 +128,8 @@ def get_desktop_state():
                 valid_apps[key] = {
                     "favorite": stored.get("favorite") is True,
                     "hidden": stored.get("hidden") is True,
+                    "category": stored.get("category") if stored.get("category") in
+                        ("auto", "flatpak", "system") else "auto",
                     "shortcut": _shortcut_id(stored["shortcut"]) if stored.get("shortcut") is not None else None,
                     "lastOpened": stored.get("lastOpened") if type(stored.get("lastOpened")) is int and
                         0 <= stored["lastOpened"] < 10**16 else None,
@@ -154,8 +158,10 @@ def _save(value):
 
 def set_desktop_setting(app_id, key, value):
     app_id = _app_id(app_id)
-    if key not in ("favorite", "hidden", "shortcut", "lastOpened"):
+    if key not in ("favorite", "hidden", "shortcut", "lastOpened", "category"):
         raise ValueError("Nieznane ustawienie aplikacji.")
+    if key == "category" and value not in ("auto", "flatpak", "system"):
+        raise ValueError("Nieznane przypisanie kategorii.")
     if key in ("favorite", "hidden") and type(value) is not bool:
         raise ValueError("Oczekiwano włączone/wyłączone.")
     if key == "shortcut" and value is not None:

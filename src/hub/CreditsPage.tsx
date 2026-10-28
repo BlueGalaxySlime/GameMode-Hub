@@ -30,6 +30,12 @@ const reusedCode: Credit[] = [
 
 const externalProjects: Credit[] = [
   {
+    project: "UniFiDeck",
+    authors: "mubaraknumann i współtwórcy",
+    reason: "Integracja stanu połączeń sklepów poprzez odczyt API wtyczki Decky, bez kopiowania kodu uwierzytelniania i bez dostępu do tokenów.",
+    license: "GPL-3.0-or-later", source: "github.com/mubaraknumann/unifideck"
+  },
+  {
     project: "freedesktop.org / XDG",
     authors: "Społeczność freedesktop.org",
     reason: "Standardy wpisów aplikacji .desktop oraz kosza Trash, z których korzysta Pulpit i Pliki. Własna implementacja obsługi metadanych.",

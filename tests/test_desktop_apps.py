@@ -57,6 +57,24 @@ class DesktopAppsTests(unittest.TestCase):
         desktop_apps.forget_temporary_shortcut(456)
         self.assertEqual(desktop_apps.get_desktop_state()["temporary"], [])
 
+    def test_auto_classifies_flatpak_run_without_x_flatpak_marker(self):
+        self.desktop_file("flat.desktop", "Type=Application\nName=Flat Test\n"
+                          "Exec=/usr/bin/flatpak run org.example.Test %U\n")
+        found = desktop_apps.list_desktop_apps()
+        self.assertEqual(len(found), 1)
+        self.assertTrue(found[0]["flatpak"])
+
+    def test_category_override_persists_and_is_validated(self):
+        value = desktop_apps.set_desktop_setting("org.example.Test", "category", "flatpak")
+        self.assertEqual(value["category"], "flatpak")
+        self.assertEqual(desktop_apps.get_desktop_state()["apps"]["org.example.Test"]["category"],
+                         "flatpak")
+        desktop_apps.set_desktop_setting("org.example.Test", "category", "auto")
+        self.assertEqual(desktop_apps.get_desktop_state()["apps"]["org.example.Test"]["category"],
+                         "auto")
+        with self.assertRaises(ValueError):
+            desktop_apps.set_desktop_setting("org.example.Test", "category", "hidden")
+
     def test_invalid_preferences_rejected(self):
         for value in ("not bool", None, 1):
             with self.subTest(value=value), self.assertRaises(ValueError):

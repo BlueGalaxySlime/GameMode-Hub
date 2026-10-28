@@ -2,7 +2,7 @@
   "name": "gamemode-hub-decky",
   "private": true,
   "license": "GPL-3.0-only",
-  "version": "0.5.22",
+  "version": "0.5.23",
   "type": "module",
   "scripts": {
     "build": "rollup -c",

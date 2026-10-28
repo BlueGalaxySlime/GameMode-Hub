@@ -227,7 +227,7 @@ export function HubPage() {
       hideTitle: true, padding: "none" as const,
       content: <DeckyTerminalPage fontSize={terminalFontSize} /> },
     { title: "Konta", route: HUB_ROUTE + "/accounts", icon: <FaUserCircle />,
-      content: <AccountsPage /> },
+      content: <AccountsPage installed={installed} /> },
     { title: "Dodatki", route: HUB_ROUTE + "/addons", icon: <FaPuzzlePiece />,
       content: <AddonSelector installed={installed} selected={selected} pending={busy}
         error={error} toggle={toggle} reload={() => { void refresh(); }} /> },

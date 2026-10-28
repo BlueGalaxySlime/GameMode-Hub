@@ -141,7 +141,33 @@ test("Konta is fourth tab without mock login buttons", () => {
   assert.deepEqual(tabs, ["Pulpit", "Pliki", "Terminal", "Konta", "Dodatki"]);
   assert.ok(hub.includes('content: <AccountsPage />'));
   const source = fs.readFileSync("src/hub/AccountsPage.tsx", "utf8");
-  assert.ok(source.includes("Łączenie z usługami nie jest jeszcze dostępne."));
+  assert.ok(source.includes("Stan sklepów pobierany bezpośrednio z UniFiDeck"));
+  assert.ok(source.includes('readUnifideckStatuses()'));
+  assert.ok(source.includes('label={item.name}'));
   assert.ok(source.includes("<GamepadScrollArea>"));
   assert.ok(!source.includes("oauth"));
+});
+
+test("Accounts uses UniFiDeck read-only RPC, never reads credential files", () => {
+  const bridge = fs.readFileSync("src/hub/unifideckBridge.ts", "utf8");
+  assert.ok(bridge.includes('backend.callable("loader/call_plugin_method")'));
+  assert.ok(bridge.includes('invoke("Unifideck", "check_store_status")'));
+  assert.ok(!bridge.includes('invoke("Unifideck", "store_auth")'));
+  assert.ok(!bridge.includes('.config/legendary'));
+  assert.ok(!bridge.includes('gog_token.json'));
+  assert.ok(bridge.includes('candidate.available'));
+  assert.ok(hub.includes('content: <AccountsPage installed={installed} />'));
+});
+
+test("Desktop View exposes readable auto rules and per-app category overrides", () => {
+  assert.ok(page.includes('<MenuGroup label="Reguły widoku">'));
+  assert.ok(page.includes('Pokaż reguły'));
+  assert.ok(page.includes('showModal('));
+  assert.ok(page.includes('<MenuGroup label="Przypisanie">'));
+  assert.ok(page.includes('assignCategory(app, item.key)'));
+  assert.ok(page.includes('effectiveDesktopCategory(app, stored.apps[app.id])'));
+  assert.ok(page.includes('Reguły: .desktop / Flatpak + własne przypisania'));
+  const rules = fs.readFileSync("src/hub/DesktopRulesDialog.tsx", "utf8");
+  assert.ok(rules.includes('wpisem X-Flatpak'));
+  assert.ok(rules.includes('Ręcznie przypisane: {overridden}'));
 });

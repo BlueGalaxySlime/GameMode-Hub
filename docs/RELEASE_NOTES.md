@@ -1,3 +1,12 @@
+# GameMode Hub 0.5.23 (testowy)
+
+- **Konta / UniFiDeck:** jeśli zainstalowano i włączono UniFiDeck, Hub pobiera przez Decky wyłącznie status zalogowania sklepów ze źródłowej wtyczki. Nie czyta ani nie zapisuje tokenów, haseł lub plików uwierzytelniania; logowanie, wylogowanie i odświeżanie sesji pozostają w UniFiDeck. „Odśwież” sprawdza bieżący stan.
+- **Pulpit / Reguły widoku:** w menu Y na pasku pojawia się „Reguły widoku → Pokaż reguły”. Reguły opisują rozpoznawanie Flatpak (X-Flatpak, eksport, polecenie flatpak) i pozostałych aplikacji systemowych.
+- **Pulpit / własne kategorie:** Y na aplikacji → „Przypisanie” pozwala ustawić Automatycznie, Flatpak lub Systemowe. To tylko klasyfikacja w Hubie; nie zmienia instalacji ani uruchamiania. Własne ustawienia zapisywane są w preferencjach Huba i zaznaczane na liście.
+- **Podziękowania i licencje:** UniFiDeck wymieniony jako projekt zewnętrzny, którego statusy są odczytywane poprzez API.
+- **Pozostawiono bez zmian:** Ulubione, obsługę B, kolejność zakładek i funkcję Kosza.
+- **Testy:** dodano regresje automatycznej klasyfikacji, ręcznych reguł i odczytu tylko statusów. Wymagany test na urządzeniu z UniFiDeck.
+
 # GameMode Hub 0.5.22 (testowy)
 
 - **Obsługa B:** zidentyfikowano przypadek, w którym B z listy Pulpitu albo korzenia Plików wracał od razu do ekranu Steam. Pulpit przechwytuje teraz anulowanie również poza polem wyszukiwania; zamyka edycję, wraca z kategorii do Wszystkich, czyści wyszukiwanie lub przenosi fokus na pasek. Pliki zachowują B do katalogu nadrzędnego, ale w korzeniu B kieruje fokus na pasek adresu, zamiast opuszczać Huba.
