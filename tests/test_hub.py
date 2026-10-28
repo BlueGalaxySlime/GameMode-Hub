@@ -45,13 +45,15 @@ class HubSelectionTests(unittest.TestCase):
 
     def test_hub_options_defaults_persist_and_validate(self):
         with patch.object(hub_settings, "HUB_PREFERENCES_FILE", Path(self.root.name) / "prefs.json"):
-            defaults = {"saveSession": True, "splitFileTree": False, "autoKeyboard": True}
+            defaults = {"saveSession": True, "splitFileTree": False, "autoKeyboard": True,
+                        "developerMode": False}
             self.assertEqual(hub_settings.get_hub_preferences(), defaults)
-            chosen = {"saveSession": False, "splitFileTree": True, "autoKeyboard": False}
+            chosen = {"saveSession": False, "splitFileTree": True, "autoKeyboard": False,
+                      "developerMode": True}
             self.assertEqual(hub_settings.set_hub_preferences(chosen), chosen)
             self.assertEqual(hub_settings.get_hub_preferences(), chosen)
             for bad in ({}, {"saveSession": "false", "splitFileTree": True},
-                        {"autoKeyboard": "false"},
+                        {"autoKeyboard": "false"}, {"developerMode": "false"},
                         {"saveSession": True, "splitFileTree": False, "extra": 1}):
                 with self.subTest(bad=bad), self.assertRaises(ValueError):
                     hub_settings.set_hub_preferences(bad)
@@ -61,7 +63,8 @@ class HubSelectionTests(unittest.TestCase):
         with patch.object(hub_settings, "HUB_PREFERENCES_FILE", path):
             path.write_text(json.dumps({"saveSession": False, "splitFileTree": True}))
             self.assertEqual(hub_settings.get_hub_preferences(),
-                             {"saveSession": False, "splitFileTree": True, "autoKeyboard": True})
+                             {"saveSession": False, "splitFileTree": True, "autoKeyboard": True,
+                               "developerMode": False})
             saved = hub_settings.set_hub_preferences({
                 "saveSession": False, "splitFileTree": True, "autoKeyboard": False
             })
