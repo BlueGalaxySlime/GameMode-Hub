@@ -19,9 +19,18 @@ test("turning session save off clears sessions and prevents new saves",()=>{
   applyHubPreferences({saveSession:true,splitFileTree:false});
   assert.equal(readHubSession("files.path",null),null);
 });
-test("split controls only directory tree preference",()=>{
+test("split and automatic keyboard are independent Hub preferences",()=>{
+  applyHubPreferences({saveSession:true,splitFileTree:true,autoKeyboard:false});
+  assert.equal(getHubPreferences().splitFileTree,true);
+  assert.equal(getHubPreferences().autoKeyboard,false);
+  assert.equal(getHubPreferences().saveSession,true);
+  applyHubPreferences({saveSession:true,splitFileTree:false,autoKeyboard:true});
+  assert.equal(getHubPreferences().autoKeyboard,true);
+  assert.equal(getHubPreferences().splitFileTree,false);
+});
+test("legacy two-key preferences preserve the keyboard default",()=>{
+  applyHubPreferences({saveSession:true,splitFileTree:false,autoKeyboard:true});
   applyHubPreferences({saveSession:true,splitFileTree:true});
   assert.equal(getHubPreferences().splitFileTree,true);
-  assert.equal(getHubPreferences().saveSession,true);
-  applyHubPreferences({saveSession:true,splitFileTree:false});
+  assert.equal(getHubPreferences().autoKeyboard,true);
 });
