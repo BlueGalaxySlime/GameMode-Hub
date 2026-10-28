@@ -41,10 +41,12 @@ jobs:
         run: node --test tests/update-timeout.test.cjs
       - name: Verify terminal safe mode
         run: node --test tests/terminal-safe-mode.test.cjs
-      - name: Verify plugin identity and ZIP contents
-        run: node --test tests/gamemode-identity.test.cjs && python3 tests/check_package.py
+      - name: Verify plugin identity
+        run: node --test tests/gamemode-identity.test.cjs
       - name: Create Decky plugin ZIP
         run: python3 scripts/package.py
+      - name: Verify ZIP identity and safe contents
+        run: python3 tests/check_package.py
       - uses: actions/upload-artifact@v4
         with:
           name: GameMode-Hub-build
