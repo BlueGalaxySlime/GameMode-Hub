@@ -95,3 +95,54 @@ def set_hub_preferences(value):
     temp.write_text(json.dumps(options), encoding="utf-8")
     temp.replace(HUB_PREFERENCES_FILE)
     return options
+
+
+# Favourite destinations survive app updates; only validated directories are saved.
+FAVORITE_FOLDERS_FILE = SELECTION_FILE.parent / "favorite_folders.json"
+MAX_FAVORITES = 32
+
+
+def validate_favorites(paths):
+    if not isinstance(paths, list) or len(paths) > MAX_FAVORITES:
+        raise ValueError("Nieprawidłowa lista ulubionych folderów.")
+    from file_manager import _normalize
+    result = []
+    for path in paths:
+        if not isinstance(path, str) or len(path) > 4096:
+            raise ValueError("Nieprawidłowa ścieżka ulubionego.")
+        folder = _normalize(path)
+        if not folder.is_dir():
+            raise NotADirectoryError("Ulubiony folder nie istnieje.")
+        name = str(folder)
+        if name not in result:
+            result.append(name)
+    return result
+
+
+def get_favorite_folders():
+    try:
+        data = json.loads(FAVORITE_FOLDERS_FILE.read_text(encoding="utf-8"))
+        if not isinstance(data, list):
+            return []
+        # A removed disk/mounted drive may temporarily be inaccessible.
+        from file_manager import _normalize
+        result = []
+        for value in data[:MAX_FAVORITES]:
+            try:
+                folder = _normalize(value)
+                if folder.is_dir() and str(folder) not in result:
+                    result.append(str(folder))
+            except (OSError, ValueError, TypeError, PermissionError):
+                continue
+        return result
+    except (OSError, ValueError, TypeError):
+        return []
+
+
+def set_favorite_folders(paths):
+    favorites = validate_favorites(paths)
+    FAVORITE_FOLDERS_FILE.parent.mkdir(parents=True, exist_ok=True)
+    temp = FAVORITE_FOLDERS_FILE.with_suffix(".tmp")
+    temp.write_text(json.dumps(favorites, ensure_ascii=False), encoding="utf-8")
+    temp.replace(FAVORITE_FOLDERS_FILE)
+    return favorites
