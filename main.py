@@ -26,8 +26,9 @@ from file_manager import listing as list_files, create_folder, rename_entry, pas
 from desktop_apps import (list_desktop_apps, get_desktop_state, set_desktop_setting,
                           remember_temporary_shortcut, forget_temporary_shortcut)
 from trash_manager import trash_entry, list_trash, restore_entry
+from lan_transfer import TransferManager
 
-CURRENT_VERSION = "0.5.23"
+CURRENT_VERSION = "0.5.24"
 RELEASES_API = "https://api.github.com/repos/BlueGalaxySlime/GameMode-Hub/releases/latest"
 ASSET_NAME = "GameMode-Hub.zip"
 
@@ -100,6 +101,7 @@ class Plugin:
         # Load PTY engine only when actually needed. An engine import error
         # must never prevent Decky from loading SteamHub's updater/settings.
         self._terminal = None
+        self._transfer = TransferManager()
 
     async def terminal_ping(self):
         # Lightweight handshake works even when the Linux PTY engine is broken.
@@ -127,7 +129,7 @@ class Plugin:
         raise RuntimeError("Terminal wylaczony w trybie bezpiecznym.")
 
     async def _unload(self):
-        pass
+        await asyncio.to_thread(self._transfer.stop)
 
     async def get_selected_addons(self):
         return await asyncio.to_thread(get_selected_addons)
@@ -153,6 +155,18 @@ class Plugin:
         return await asyncio.wait_for(
             asyncio.to_thread(_fetch_releases, channel), timeout=10
         )
+
+    async def transfer_status(self):
+        return await asyncio.to_thread(self._transfer.status)
+
+    async def transfer_start(self):
+        return await asyncio.to_thread(self._transfer.start)
+
+    async def transfer_stop(self):
+        return await asyncio.to_thread(self._transfer.stop)
+
+    async def transfer_share(self, path):
+        return await asyncio.to_thread(self._transfer.share, path)
 
     async def files_list(self, path=None, hidden=False, offset=0, sort_by="name", descending=False):
         return await asyncio.to_thread(list_files, path, hidden, offset, sort_by, descending)

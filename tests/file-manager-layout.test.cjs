@@ -253,3 +253,31 @@ test("B in Files never leaves Hub accidentally, even at the home directory", () 
   assert.ok(ui.includes('onCancelActionDescription={multiSelect ?'));
   assert.ok(ui.includes('"Pasek adresu"'));
 });
+
+test("Local Wi-Fi transfer is available via Y in Files without root credentials", () => {
+  const transferUi = fs.readFileSync("src/hub/TransferDialog.tsx", "utf8");
+  const backend = fs.readFileSync("main.py", "utf8");
+  const transport = fs.readFileSync("lan_transfer.py", "utf8");
+  assert.ok(ui.includes('onSelected={() => openTransferDialog()}>Transfer Wi-Fi...'));
+  assert.ok(ui.includes('onSelected={() => openTransferDialog(entry.path)}'));
+  assert.ok(ui.includes('Udostępnij przez Wi-Fi'));
+  assert.ok(transferUi.includes('transfer_start'));
+  assert.ok(transferUi.includes('transfer_stop'));
+  assert.ok(transferUi.includes('transfer_share'));
+  assert.ok(transferUi.includes('transfer_status'));
+  assert.ok(transferUi.includes('<ModalRoot'));
+  assert.ok(transferUi.includes('Kod parowania'));
+  assert.ok(transferUi.includes('HTTP nie jest szyfrowane'));
+  for (const method of ['transfer_status', 'transfer_start', 'transfer_stop', 'transfer_share']) {
+    assert.ok(backend.includes('async def ' + method + '('));
+  }
+  assert.ok(transport.includes('if os.geteuid() == 0:'));
+  assert.ok(transport.includes('ThreadingHTTPServer'));
+  assert.ok(transport.includes('os.O_NOFOLLOW'));
+  assert.ok(transport.includes('os.link(tmp, dest, follow_symlinks=False)'));
+  assert.ok(transport.includes('SESSION_SECONDS = 30 * 60'));
+  assert.ok(!transport.includes('subprocess.'));
+  assert.ok(!transport.includes('sudo '));
+  const pkg = fs.readFileSync('scripts/package.py', 'utf8');
+  assert.ok(pkg.includes('"lan_transfer.py"'));
+});

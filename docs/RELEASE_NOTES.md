@@ -1,3 +1,12 @@
+# GameMode Hub 0.5.24 (testowy)
+
+- **Pliki — Transfer Wi-Fi:** Y na pasku adresu → „Transfer Wi-Fi…” otwiera panel ręcznego uruchamiania serwera w lokalnej sieci. Hub pokazuje adres dla przeglądarki Maca i 8-cyfrowy kod parowania. Nie wymaga roota, hasła administratora, SSH ani opuszczania Gaming Mode.
+- **Mac → Steam Deck:** po sparowaniu użytkownik wysyła pliki z dowolnej przeglądarki; zapis wyłącznie do „Downloads/GameMode Hub Transfer” bez nadpisywania istniejących danych. Pojedynczy plik do 2 GiB.
+- **Steam Deck → Mac:** Y na wybranym pliku → „Udostępnij przez Wi-Fi”; plik jest dostępny do pobrania tylko w bieżącej sesji, bez kopiowania i bez udostępniania całego dysku.
+- **Ochrona:** transfer jest wyłączony przy starcie, blokowany dla procesów root, przypisany do lokalnego interfejsu IPv4 i kończy się po 30 minutach, po ręcznym zatrzymaniu lub wyładowaniu wtyczki. Pairing z limitem błędnych prób, tokenem ciasteczka i kontrolą Host/Origin. Bez dostępu do plików ukrytych i bez dowiązań.
+- **Uwaga o bezpieczeństwie:** połączenie korzysta z lokalnego HTTP bez szyfrowania i jest przeznaczone tylko do zaufanej prywatnej sieci Wi-Fi; nie używać w publicznych sieciach. Uruchomienie wtyczki jako root jest celowo odrzucane.
+- **Testy:** nowe testy autoryzacji, upload/download, ochrony przed nadpisywaniem, path traversal i root. Wymagany test na Steam Decku i Macu.
+
 # GameMode Hub 0.5.23 (testowy)
 
 - **Konta / UniFiDeck:** jeśli zainstalowano i włączono UniFiDeck, Hub pobiera przez Decky wyłącznie status zalogowania sklepów ze źródłowej wtyczki. Nie czyta ani nie zapisuje tokenów, haseł lub plików uwierzytelniania; logowanie, wylogowanie i odświeżanie sesji pozostają w UniFiDeck. „Odśwież” sprawdza bieżący stan.

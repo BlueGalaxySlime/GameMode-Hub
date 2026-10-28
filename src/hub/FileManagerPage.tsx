@@ -9,6 +9,7 @@ import { useHubSessionState } from "./useHubSessionState";
 import { HubTextInput } from "./HubTextInput";
 import { CreateFolderDialog } from "./CreateFolderDialog";
 import { ConfirmTrashDialog, TrashListDialog } from "./TrashDialogs";
+import { TransferDialog } from "./TransferDialog";
 
 type SortBy = "name" | "type" | "size" | "date";
 type Entry = {
@@ -386,6 +387,11 @@ export function FileManagerPage() {
     }
   }
 
+  function openTransferDialog(selectedFile?: string) {
+    // Run once the Steam menu releases controller focus.
+    window.setTimeout(() => showModal(<TransferDialog selectedFile={selectedFile} />), 0);
+  }
+
   function openTrashDialog() {
     window.setTimeout(() => showModal(
       <TrashListDialog onRestored={() => {
@@ -420,6 +426,7 @@ export function FileManagerPage() {
       <Menu label="Opcje plików">
         <MenuItem disabled={!currentPage} onSelected={openCreateFolderDialog}>Nowy folder...</MenuItem>
         <MenuItem onSelected={openTrashDialog}>Kosz</MenuItem>
+        <MenuItem onSelected={() => openTransferDialog()}>Transfer Wi-Fi...</MenuItem>
         <MenuGroup label="Ulubione">
           <MenuItem disabled={!currentPage || savingFavorites ||
             (favorites.length >= 32 && !favorites.includes(currentPage.path))}
@@ -497,6 +504,9 @@ export function FileManagerPage() {
         <MenuItem onSelected={() => clipboardAction(entry, "copy")}>Kopiuj</MenuItem>
         <MenuItem onSelected={() => clipboardAction(entry, "move")}>Przenieś</MenuItem>
         <MenuItem onSelected={() => confirmTrash(entry)}>Przenieś do Kosza</MenuItem>
+        {!entry.directory && <MenuItem onSelected={() => openTransferDialog(entry.path)}>
+          Udostępnij przez Wi-Fi
+        </MenuItem>}
         {entry.directory && clipboard &&
           <MenuItem onSelected={() => { void pasteTo(entry.path); }}>
             {"Wklej do folderu (" + clipboard.paths.length + ")"}
