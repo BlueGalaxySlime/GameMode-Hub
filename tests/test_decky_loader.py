@@ -32,6 +32,9 @@ instance = module.Plugin()
 assert instance._terminal is None, "PTY must not start while loading plugin"
 response = asyncio.run(instance.terminal_ping())
 assert response["ok"] is True and response["protocol"] == 2
+options = asyncio.run(instance.get_hub_preferences())
+assert isinstance(options["autoKeyboard"], bool)
+assert isinstance(options["saveSession"], bool)
 # A packaged module from the same directory must also remain importable.
 import terminal_core
 print(json.dumps({"version": response["version"], "protocol": response["protocol"]}))
