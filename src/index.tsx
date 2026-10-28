@@ -1,6 +1,6 @@
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { FaTools } from "react-icons/fa";
-import { ButtonItem, PanelSection, PanelSectionRow, staticClasses } from "@decky/ui";
+import { ButtonItem, ToggleField, PanelSection, PanelSectionRow, staticClasses } from "@decky/ui";
 import { callable, definePlugin } from "@decky/api";
 
 type UpdateResult = {
@@ -11,6 +11,8 @@ type DeckyInstaller = {
   callable: (method: string) => (...args: unknown[]) => Promise<unknown>;
 };
 const checkUpdates = callable<[], UpdateResult>("check_updates");
+const getTabManagerEnabled = callable<[], boolean>("get_tab_manager_enabled");
+const setTabManagerEnabled = callable<[boolean], boolean>("set_tab_manager_enabled");
 const VERSION = "0.2.3";
 
 function Content() {
@@ -19,6 +21,23 @@ function Content() {
   const [busy, setBusy] = useState(false);
   const [lastChecked, setLastChecked] = useState<string | null>(null);
   const inProgress = useRef(false);
+  const [tabEnabled, setTabEnabled] = useState(false);
+  const [tabBusy, setTabBusy] = useState(true);
+  const [tabError, setTabError] = useState("");
+  useEffect(() => {
+    let active = true;
+    getTabManagerEnabled().then(v => { if (active) setTabEnabled(v); })
+      .catch(() => { if (active) setTabError("Błąd odczytu ustawienia."); })
+      .finally(() => { if (active) setTabBusy(false); });
+    return () => { active = false; };
+  }, []);
+  async function changeTab(value: boolean) {
+    setTabBusy(true);
+    setTabError("");
+    try { setTabEnabled(await setTabManagerEnabled(value)); }
+    catch { setTabError("Błąd zapisu ustawienia."); }
+    finally { setTabBusy(false); }
+  }
 
   async function check() {
     if (inProgress.current) return;
@@ -72,6 +91,11 @@ function Content() {
     </PanelSection>
     <PanelSection title="Moduły (w przygotowaniu)">
       <PanelSectionRow><div>Game Manager · Library Manager · Terminal</div></PanelSectionRow>
+    </PanelSection>
+    <PanelSection title="Moduły · Tab Manager">
+      <PanelSectionRow><ToggleField label="Tab Manager" checked={tabEnabled} disabled={tabBusy} onChange={changeTab} /></PanelSectionRow>
+      <PanelSectionRow><div>Możliwy konflikt z TabMasterem. Zarządzanie zakładkami jest w przygotowaniu; przełącznik obecnie zapamiętuje ustawienie.</div></PanelSectionRow>
+      {tabError && <PanelSectionRow><div role="alert">{tabError}</div></PanelSectionRow>}
     </PanelSection>
     <PanelSection title="Aktualizacje">
       <PanelSectionRow><div role="status" aria-live="polite">{message}</div></PanelSectionRow>
