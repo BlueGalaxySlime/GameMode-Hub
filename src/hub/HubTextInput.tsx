@@ -12,6 +12,7 @@ type EditControlsProps = {
   onEditValue?: (next: string) => void;
   onExitEdit?: () => void;
   multiline: boolean;
+  startInSelectionMode?: boolean;
   children: ReactNode;
 };
 
@@ -21,15 +22,16 @@ type EditControlsProps = {
  * the Hub focus to a neighbouring control. B exits selection mode, never
  * starts it. Outside that mode B is left entirely to the parent/SteamOS.
  */
-function TextEditControls({ value, disabled, onEditValue, onExitEdit, multiline, children }: EditControlsProps) {
+function TextEditControls({ value, disabled, onEditValue, onExitEdit, multiline,
+  startInSelectionMode = false, children }: EditControlsProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const selectionRowRef = useRef<HTMLDivElement>(null);
   const anchorRef = useRef(0);
   const headRef = useRef(0);
-  const selectingRef = useRef(false);
+  const selectingRef = useRef(startInSelectionMode && !!value);
   const lastDirectionRef = useRef<{ direction: TextDirection | null; at: number }>({ direction: null, at: 0 });
   const lastClearRef = useRef<string | null>(null);
-  const [selecting, setSelecting] = useState(false);
+  const [selecting, setSelecting] = useState(startInSelectionMode && !!value);
   const [message, setMessage] = useState("");
 
   function editor(): Editor | null {
@@ -74,7 +76,8 @@ function TextEditControls({ value, disabled, onEditValue, onExitEdit, multiline,
     if (!selectingRef.current) return;
     selectingRef.current = false;
     setSelecting(false);
-    restoreCaret(headRef.current);
+    if (onExitEdit) onExitEdit();
+    else restoreCaret(headRef.current);
   }
 
   function moveSelection(direction: TextDirection) {
@@ -98,9 +101,12 @@ function TextEditControls({ value, disabled, onEditValue, onExitEdit, multiline,
     onEditValue(next);
     anchorRef.current = caret;
     headRef.current = caret;
-    selectingRef.current = false;
-    setSelecting(false);
-    restoreCaret(caret);
+    if (selectingRef.current) {
+      setSelectionRevision(revision => revision + 1);
+      window.setTimeout(focusSelectionRow, 0);
+    } else {
+      restoreCaret(caret);
+    }
   }
 
   function selectionRange() {
@@ -112,7 +118,7 @@ function TextEditControls({ value, disabled, onEditValue, onExitEdit, multiline,
   }
 
   function openTextMenu(parent: EventTarget) {
-    if (disabled || !editor()) return;
+    if (disabled || (!editor() && !selectingRef.current)) return;
     const range = selectionRange();
     const { start, end } = range;
     const highlighted = value.slice(start, end);
@@ -183,7 +189,7 @@ function TextEditControls({ value, disabled, onEditValue, onExitEdit, multiline,
   return <Focusable ref={containerRef} flow-children="column"
     onCancelActionDescription={selecting ? "Wyjdź z zaznaczania" : "Zamknij edycję"}
     onCancelButton={event => {
-      if (event.defaultPrevented || !editor()) return;
+      if (event.defaultPrevented || (!editor() && !selectingRef.current)) return;
       event.preventDefault();
       event.stopPropagation();
       if (selectingRef.current) exitSelectionMode();
@@ -191,7 +197,7 @@ function TextEditControls({ value, disabled, onEditValue, onExitEdit, multiline,
     }}
     onOptionsActionDescription="Edycja tekstu"
     onOptionsButton={event => {
-      if (event.defaultPrevented || !editor()) return;
+      if (event.defaultPrevented || (!editor() && !selectingRef.current)) return;
       event.preventDefault();
       event.stopPropagation();
       openTextMenu(event.currentTarget ?? window);
@@ -202,7 +208,7 @@ function TextEditControls({ value, disabled, onEditValue, onExitEdit, multiline,
       openTextMenu(event.currentTarget);
     }}
     style={{ width: "100%", minWidth: 0 }}>
-    <div style={{ display: selecting ? "none" : undefined }}>{children}</div>
+    {!selecting && children}
     {selecting && <div ref={selectionRowRef} style={{ width: "100%" }}>
       <DialogButton preferredFocus
         onCancelActionDescription="Wyjdź z zaznaczania"
@@ -274,12 +280,14 @@ export type HubTextInputProps = {
   style?: CSSProperties;
   "aria-label"?: string;
   focusOnMount?: boolean;
+  startInSelectionMode?: boolean;
 };
 
 export function HubTextInput(props: HubTextInputProps) {
   const options = useSyncExternalStore(subscribeHubPreferences, getHubPreferences);
-  const { focusOnMount, onEditValue, onExitEdit, ...fieldProps } = props;
+  const { focusOnMount, startInSelectionMode, onEditValue, onExitEdit, ...fieldProps } = props;
   return <TextEditControls value={props.value} multiline={false} disabled={props.disabled}
+    startInSelectionMode={startInSelectionMode}
     onEditValue={onEditValue} onExitEdit={onExitEdit}>
     {options.autoKeyboard
       ? <TextField {...fieldProps} focusOnMount={focusOnMount} />
@@ -306,13 +314,15 @@ export type HubTextAreaProps = {
   style?: CSSProperties;
   "aria-label"?: string;
   focusOnMount?: boolean;
+  startInSelectionMode?: boolean;
   onKeyDown?: KeyboardEventHandler<HTMLTextAreaElement>;
 };
 
 export function HubTextArea(props: HubTextAreaProps) {
   const options = useSyncExternalStore(subscribeHubPreferences, getHubPreferences);
-  const { focusOnMount, onEditValue, onExitEdit, ...fieldProps } = props;
+  const { focusOnMount, startInSelectionMode, onEditValue, onExitEdit, ...fieldProps } = props;
   return <TextEditControls value={props.value} multiline disabled={props.disabled}
+    startInSelectionMode={startInSelectionMode}
     onEditValue={onEditValue} onExitEdit={onExitEdit}>
     <textarea {...fieldProps} autoFocus={focusOnMount}
       inputMode={options.autoKeyboard ? "text" : "none"}
