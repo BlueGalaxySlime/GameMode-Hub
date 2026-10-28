@@ -255,7 +255,7 @@ test("Report fields are native focusable Steam rows with A editing, B exiting", 
 test("Flatpak checks display an accurate nonzero status and Y can update all user apps", () => {
   const flatpak = fs.readFileSync("src/hub/FlatpakManagerDialog.tsx", "utf8");
   const py = fs.readFileSync("flatpak_manager.py", "utf8");
-  assert.ok(page.includes('void checkFlatpakUpdates();'));
+  assert.ok(page.includes('useFlatpakChecks()'));
   assert.ok(page.includes('Dostępne aktualizacje: '));
   assert.ok(page.includes('Brak aktualizacji'));
   assert.ok(page.includes('Nie udało się sprawdzić aktualizacji'));
