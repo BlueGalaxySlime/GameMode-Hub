@@ -1,3 +1,11 @@
+# GameMode Hub 0.5.42 (testowy)
+
+- **Konta — lista wyboru:** zamiast stałego nagłówka Epic wprowadzono natywną listę rozwijaną w dół, sterowaną padem i przyciskiem A. W tej fazie dostępny jest tylko Epic Games; bez pozornych integracji innych sklepów.
+- **Widoczne „Zaloguj”:** przycisk otwiera rozpoznany zainstalowany launcher Epic albo opcjonalnie Heroic. Gdy dostępnych jest kilka aplikacji, można wybrać launcher z drugiej listy rozwijanej.
+- **Brak launchera:** przycisk logowania pozostaje nieaktywny, a Hub wyjaśnia, że wymagany jest launcher zainstalowany na pulpicie. Nie pokazuje fikcyjnego połączenia po wejściu na stronę Epic.
+- **Zabezpieczenia bez kompromisów:** Hub nie przechowuje haseł, kodów 2FA ani tokenów i nie podszywa się pod klienta OAuth Epic; stan sesji pozostaje niezweryfikowany. Logowanie odbywa się wyłącznie w wybranym launcherze.
+- **Testy:** regresje dla listy, przycisku logowania oraz obsługi braku launchera; nadal konieczny test fokusu oraz logowania w rzeczywistym Gaming Mode na Lenovo.
+
 # GameMode Hub 0.5.41 (testowy)
 
 - **Konta → Epic Games:** zastąpiono informacyjny ekran UniFiDeck testowym adapterem Epic. Wykrywa rozpoznane skróty Epic Games Launcher albo opcjonalnie Heroic, nie dopasowuje aplikacji jedynie po nazwie i pozwala uruchomić je świadomie przez SteamOS Gaming Mode.

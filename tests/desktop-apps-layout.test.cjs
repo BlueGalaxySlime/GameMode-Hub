@@ -141,8 +141,13 @@ test("Konta remains the fourth controller tab and now shows Epic only", () => {
   assert.deepEqual(tabs, ["Pulpit", "Pliki", "Terminal", "Konta", "Dodatki"]);
   assert.ok(hub.includes('content: <AccountsPage />'));
   const accounts = fs.readFileSync("src/hub/AccountsPage.tsx", "utf8");
-  assert.ok(accounts.includes("Konta — Epic Games (test)"));
-  assert.ok(accounts.includes("Status konta: niezweryfikowany"));
+  assert.ok(accounts.includes('DialogControlsSectionHeader>Konta</DialogControlsSectionHeader>'));
+  assert.ok(accounts.includes('<Dropdown rgOptions={ACCOUNT_OPTIONS}'));
+  assert.ok(accounts.includes('label="Wybierz konto"'));
+  assert.ok(accounts.includes("Stan sesji: niezweryfikowany"));
+  assert.ok(accounts.includes('label="Logowanie do Epic Games"'));
+  assert.ok(accounts.includes('onClick={() => { void signIn(); }}'));
+  assert.ok(accounts.includes('disabled={loading || opening || !chosenLauncher}'));
   assert.ok(accounts.includes("Bezpieczeństwo konta"));
   assert.ok(accounts.includes("<GamepadScrollArea>"));
 });
