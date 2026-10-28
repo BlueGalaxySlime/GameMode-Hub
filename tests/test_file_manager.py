@@ -68,7 +68,7 @@ class FileManagerTests(unittest.TestCase):
             file_manager.listing(str(self.external))
         with self.assertRaises(PermissionError):
             file_manager.listing(str(self.home / "jump"))
-        with self.assertRaises(PermissionError):
+        with self.assertRaises(ValueError):
             file_manager.create_folder(str(self.home), "../outside")
         with self.assertRaises(PermissionError):
             file_manager.rename_entry(str(self.home), "renamed")
