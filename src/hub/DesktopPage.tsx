@@ -9,6 +9,7 @@ import { useHubSessionState } from "./useHubSessionState";
 import { HubTextInput } from "./HubTextInput";
 import { effectiveDesktopCategory, filterDesktopApps } from "../core/desktopCatalog";
 import { DesktopRulesDialog, ResetDesktopRulesDialog } from "./DesktopRulesDialog";
+import { FlatpakManagerDialog } from "./FlatpakManagerDialog";
 import type { DesktopCategory, DesktopSort } from "../core/desktopCatalog";
 import {
   createSteamDesktopShortcut, openSteamDesktopShortcut, removeSteamDesktopShortcut
@@ -62,6 +63,7 @@ export function DesktopPage() {
   const searchControlRef = useRef<HTMLDivElement>(null);
   const categorySavingRef = useRef(false);
   const rulesModalOpenRef = useRef(false);
+  const flatpakModalOpenRef = useRef(false);
 
   async function refresh() {
     setBusy(true);
@@ -245,6 +247,20 @@ export function DesktopPage() {
     }, 0);
   }
 
+  function openFlatpakManager(selectedId?: string) {
+    if (flatpakModalOpenRef.current) return;
+    flatpakModalOpenRef.current = true;
+    window.setTimeout(() => {
+      try {
+        const dialog = showModal(<FlatpakManagerDialog selectedId={selectedId} />);
+        void dialog.ClosedPromise.finally(() => { flatpakModalOpenRef.current = false; });
+      } catch {
+        flatpakModalOpenRef.current = false;
+        setMessage("Nie udało się otworzyć menedżera Flatpak.");
+      }
+    }, 0);
+  }
+
   function openAppMenu(app: DesktopApp, parent: EventTarget) {
     const prefs = stored.apps[app.id] ?? {};
     showContextMenu(
@@ -258,6 +274,11 @@ export function DesktopPage() {
         <MenuItem onSelected={() => { void toggleFlag(app, "hidden"); }}>
           {prefs.hidden ? "Pokaż" : "Ukryj"}
         </MenuItem>
+        {app.flatpak && <MenuGroup label="Flatpak">
+          <MenuItem onSelected={() => openFlatpakManager(app.id)}>
+            Sprawdź / zaktualizuj Flatpak
+          </MenuItem>
+        </MenuGroup>}
         <MenuGroup label="Przypisanie">
           {([
             { key: "auto", label: "Automatycznie (" +
@@ -331,6 +352,9 @@ export function DesktopPage() {
             <MenuItem key={item.key} selected={sortMode === item.key}
               onSelected={() => setSortMode(item.key)}
               onClick={() => setSortMode(item.key)}>{item.label}</MenuItem>)}
+        </MenuGroup>
+        <MenuGroup label="Flatpak">
+          <MenuItem onSelected={() => openFlatpakManager()}>Sprawdź aktualizacje Flatpak</MenuItem>
         </MenuGroup>
         <MenuGroup label="Reguły widoku">
           <MenuItem onSelected={openRules}>Pokaż reguły</MenuItem>

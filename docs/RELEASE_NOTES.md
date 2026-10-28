@@ -1,3 +1,10 @@
+# GameMode Hub 0.5.30 (testowy)
+
+- **Zgłoszenia po Podziękowaniach:** nowa sekcja do przygotowania raportu z opisem błędu. Kopiowanie raportu i otwieranie GitHub Issues; GitHub nadal wymaga konta do publikacji. Bez uruchamiania pozornej anonimowej wysyłki. Dodano formularz GitHub Issue i dokument zabezpieczeń planowanej anonimowej bramki.
+- **Pulpit → Y → Flatpak:** sprawdzanie dostępnych aktualizacji aplikacji Flatpak bez roota, zarówno dla całego Pulpitu, jak i pojedynczej aplikacji. Aktualizacja pojedynczego **Flatpaka użytkownika** jest możliwa po osobnym potwierdzeniu. Systemowe instalacje można tylko sprawdzać; bez automatycznego sudo/root. Bez automatycznych instalacji w tle.
+- **Zabezpieczenia:** backend Flatpak używa wyłącznie stałych list argumentów (bez shell), sprawdza poprawność identyfikatora i obecność aplikacji w instalacji użytkownika. Zgłoszenia nie pobierają automatycznie logów ani danych wrażliwych.
+- **Bez zmian:** Transfer Wi-Fi, dotychczasowe sterowanie Y i pozostałe zakładki. Test rzeczywisty na Lenovo nadal potrzebny.
+
 # GameMode Hub 0.5.29 (testowy)
 
 - **Pulpit → Reguły widoku → Resetuj do automatycznych:** przyciski Anuluj/Resetuj korzystają z poziomego kontenera nawigacji SteamOS (lewo/prawo); domyślnie wskazane jest „Anuluj”.

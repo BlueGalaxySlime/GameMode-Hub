@@ -5,7 +5,7 @@ import {
   DialogControlsSectionHeader, Field, Navigation, SidebarNavigation, Toggle
 } from "@decky/ui";
 import { callable } from "@decky/api";
-import { FaCog, FaFolderOpen, FaHeart, FaHome, FaPlug, FaPuzzlePiece, FaSyncAlt, FaTerminal, FaUserCircle } from "react-icons/fa";
+import { FaCog, FaFolderOpen, FaHeart, FaHome, FaPlug, FaPuzzlePiece, FaSyncAlt, FaTerminal, FaUserCircle, FaBug } from "react-icons/fa";
 import { withTimeout } from "../utils/withTimeout";
 import { UpdaterPage } from "./UpdaterPage";
 import { FileManagerPage } from "./FileManagerPage";
@@ -15,6 +15,7 @@ import { HubOptionsPage, initializeHubOptions } from "./HubOptionsPage";
 import { useHubSessionState } from "./useHubSessionState";
 import { DeckyTerminalPage } from "./DeckyTerminalAdapter";
 import { CreditsPage } from "./CreditsPage";
+import { ReportsPage } from "./ReportsPage";
 import { DECKY_PLUGIN_NAME, HUB_ROUTE } from "../core/identity";
 import { CORE_MODULES } from "../core/modules";
 
@@ -238,6 +239,8 @@ export function HubPage() {
       content: <UpdaterPage /> },
     { title: "Podziękowania", route: HUB_ROUTE + "/credits", icon: <FaHeart />,
       content: <CreditsPage /> },
+    { title: "Zgłoszenia", route: HUB_ROUTE + "/reports", icon: <FaBug />,
+      content: <ReportsPage /> },
     ...selected.map(name => ({
       title: featureName(name),
       route: HUB_ROUTE + "/addon/" + encodeURIComponent(name),

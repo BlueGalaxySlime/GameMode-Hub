@@ -119,10 +119,10 @@ test("all View categories have their own selectable menu actions and visible lab
 test("all sidebar tabs form one contiguous controller-navigation list", () => {
   const pages = hub.split("  const pages = [", 2)[1].split("\n  ];", 1)[0];
   assert.ok(!pages.includes('"separator" as const'));
-  const names = [...pages.matchAll(/title: "(Pulpit|Pliki|Terminal|Konta|Dodatki|Opcje Huba|Aktualizacje|Podziękowania)"/g)]
+  const names = [...pages.matchAll(/title: "(Pulpit|Pliki|Terminal|Konta|Dodatki|Opcje Huba|Aktualizacje|Podziękowania|Zgłoszenia)"/g)]
     .map(match => match[1]);
   assert.deepEqual(names, ["Pulpit", "Pliki", "Terminal", "Konta", "Dodatki",
-    "Opcje Huba", "Aktualizacje", "Podziękowania"]);
+    "Opcje Huba", "Aktualizacje", "Podziękowania", "Zgłoszenia"]);
 });
 
 test("B is captured on Desktop also outside search edit mode", () => {
@@ -199,4 +199,21 @@ test("Reset modal uses left/right gamepad navigation and opens only once", () =>
   assert.ok(page.includes('onSelected={openResetRules}>'));
   assert.ok(!page.includes('onClick={openRules}'));
   assert.ok(!page.includes('onClick={openResetRules}'));
+});
+
+test("Flatpak actions are in Desktop Y menus; system update remains read-only", () => {
+  const flatpak = fs.readFileSync("src/hub/FlatpakManagerDialog.tsx", "utf8");
+  const backend = fs.readFileSync("flatpak_manager.py", "utf8");
+  assert.ok(page.includes('<MenuGroup label="Flatpak">'));
+  assert.ok(page.includes('openFlatpakManager(app.id)'));
+  assert.ok(page.includes('Sprawdź aktualizacje Flatpak'));
+  assert.ok(page.includes('FlatpakManagerDialog'));
+  assert.ok(flatpak.includes('item.installation === "user"'));
+  assert.ok(flatpak.includes('Potwierdź aktualizację'));
+  assert.ok(backend.includes('["--user", "update"'));
+  assert.ok(backend.includes('subprocess.run('));
+  assert.ok(backend.includes('APP_ID.fullmatch(app_id)'));
+  assert.ok(!backend.includes('shell=True'));
+  assert.ok(hub.includes('title: "Zgłoszenia"'));
+  assert.ok(hub.includes('<ReportsPage />'));
 });

@@ -1,0 +1,39 @@
+name: Zgłoszenie błędu
+description: Pomóż poprawić GameMode Hub. Konto GitHub jest wymagane.
+title: "[Błąd] "
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Przed wysłaniem sprawdź istniejące zgłoszenia.
+        Nie podawaj kodów parowania, haseł ani tokenów.
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: Opis problemu
+      description: Co nie działa? Co powinno się wydarzyć?
+      placeholder: Opis problemu
+    validations:
+      required: true
+  - type: textarea
+    id: reproduce
+    attributes:
+      label: Jak odtworzyć błąd?
+      placeholder: Kroki do odtworzenia
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: Wersja GameMode Hub
+      placeholder: np. 0.5.30
+    validations:
+      required: false
+  - type: checkboxes
+    id: privacy
+    attributes:
+      label: Prywatność
+      options:
+        - label: Usunąłem hasła, tokeny i prywatne dane z raportu.
+          required: true

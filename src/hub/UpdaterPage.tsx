@@ -9,7 +9,7 @@ import { APP_NAME, DECKY_PLUGIN_NAME } from "../core/identity";
 import { ReleaseEntry, UpdateChannel, selectReleases } from "../core/releaseCatalog";
 import { useHubSessionState } from "./useHubSessionState";
 
-const VERSION = "0.5.29";
+const VERSION = "0.5.30";
 const URL = "https://api.github.com/repos/BlueGalaxySlime/GameMode-Hub/releases?per_page=50";
 const getChannel = callable<[], UpdateChannel>("get_update_channel");
 const saveChannel = callable<[UpdateChannel], UpdateChannel>("set_update_channel");
