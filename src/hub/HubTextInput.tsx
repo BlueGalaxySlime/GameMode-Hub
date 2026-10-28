@@ -1,6 +1,6 @@
-import { useRef, useState, useSyncExternalStore } from "react";
+import { useLayoutEffect, useRef, useState, useSyncExternalStore } from "react";
 import type { CSSProperties, ChangeEventHandler, KeyboardEventHandler, ReactNode } from "react";
-import { Focusable, GamepadButton, Menu, MenuItem, TextField, showContextMenu } from "@decky/ui";
+import { DialogButton, Focusable, GamepadButton, Menu, MenuItem, TextField, showContextMenu } from "@decky/ui";
 import { getHubPreferences, subscribeHubPreferences } from "../core/hubSession";
 import { moveTextCaret, selectionWithHead } from "../core/textSelection";
 import type { TextDirection } from "../core/textSelection";
@@ -16,16 +16,19 @@ type EditControlsProps = {
 };
 
 /**
- * The focused editor owns B/Y. First B anchors a selection; subsequent B
- * leaves editing. Outside editing the surrounding SteamOS navigation is
- * untouched. Direction events do not distinguish stick from D-pad on every
- * SteamOS version, so B is always the escape route.
+ * Y opens edit actions. Unlike regular input editing, selection mode uses a
+ * dedicated Steam-focusable row: a pad direction can be handled without moving
+ * the Hub focus to a neighbouring control. B exits selection mode, never
+ * starts it. Outside that mode B is left entirely to the parent/SteamOS.
  */
 function TextEditControls({ value, disabled, onEditValue, onExitEdit, multiline, children }: EditControlsProps) {
   const containerRef = useRef<HTMLDivElement>(null);
+  const selectionRowRef = useRef<HTMLDivElement>(null);
   const anchorRef = useRef(0);
   const headRef = useRef(0);
   const selectingRef = useRef(false);
+  const lastDirectionRef = useRef<{ direction: TextDirection | null; at: number }>({ direction: null, at: 0 });
+  const lastClearRef = useRef<string | null>(null);
   const [selecting, setSelecting] = useState(false);
   const [message, setMessage] = useState("");
 
@@ -33,32 +36,19 @@ function TextEditControls({ value, disabled, onEditValue, onExitEdit, multiline,
     return containerRef.current?.querySelector<Editor>("input, textarea") ?? null;
   }
 
-  function beginOrExitSelection() {
-    const field = editor();
-    if (!field || disabled) return;
-    if (selectingRef.current) {
-      selectingRef.current = false;
-      setSelecting(false);
-      onExitEdit?.();
-      return;
-    }
-    const caret = field.selectionEnd ?? 0;
-    anchorRef.current = caret;
-    headRef.current = caret;
-    selectingRef.current = true;
-    setSelecting(true);
-    setMessage("");
-    field.focus({ preventScroll: true });
-    field.setSelectionRange(caret, caret);
+  function focusSelectionRow() {
+    selectionRowRef.current?.querySelector<HTMLElement>(
+      'button, [role="button"], [tabindex]'
+    )?.focus({ preventScroll: true });
   }
 
-  function moveSelection(direction: TextDirection) {
-    const field = editor();
-    if (!field || disabled || !selectingRef.current) return;
-    headRef.current = moveTextCaret(value, headRef.current, direction, multiline);
-    const range = selectionWithHead(anchorRef.current, headRef.current);
-    field.setSelectionRange(range.start, range.end, range.direction);
-  }
+  useLayoutEffect(() => {
+    if (!selecting) return;
+    focusSelectionRow();
+    // A native Steam context menu can restore its previous focus on dismissal.
+    const task = window.setTimeout(focusSelectionRow, 0);
+    return () => window.clearTimeout(task);
+  }, [selecting]);
 
   function restoreCaret(at: number) {
     window.setTimeout(() => {
@@ -68,6 +58,38 @@ function TextEditControls({ value, disabled, onEditValue, onExitEdit, multiline,
       field.setSelectionRange(at, at);
     }, 0);
   }
+
+  function startSelectionMode(selectAll = false) {
+    if (disabled || !value) return;
+    const field = editor();
+    const caret = Math.max(0, Math.min(value.length, field?.selectionEnd ?? value.length));
+    anchorRef.current = selectAll ? 0 : caret;
+    headRef.current = selectAll ? value.length : caret;
+    selectingRef.current = true;
+    setSelecting(true);
+    setMessage("");
+  }
+
+  function exitSelectionMode() {
+    if (!selectingRef.current) return;
+    selectingRef.current = false;
+    setSelecting(false);
+    restoreCaret(headRef.current);
+  }
+
+  function moveSelection(direction: TextDirection) {
+    if (disabled || !selectingRef.current) return;
+    const now = Date.now();
+    // Steam can emit onButtonDown AND onGamepadDirection for one D-pad press.
+    if (lastDirectionRef.current.direction === direction &&
+        now - lastDirectionRef.current.at < 25) return;
+    lastDirectionRef.current = { direction, at: now };
+    headRef.current = moveTextCaret(value, headRef.current, direction, multiline);
+    // Re-render the highlight without touching the underlying input value.
+    setSelectionRevision(revision => revision + 1);
+  }
+
+  const [, setSelectionRevision] = useState(0);
 
   function replaceRange(start: number, end: number, inserted: string) {
     if (!onEditValue || disabled) return;
@@ -81,11 +103,18 @@ function TextEditControls({ value, disabled, onEditValue, onExitEdit, multiline,
     restoreCaret(caret);
   }
 
-  function openTextMenu(parent: EventTarget) {
+  function selectionRange() {
+    if (selectingRef.current) return selectionWithHead(anchorRef.current, headRef.current);
     const field = editor();
-    if (!field || disabled) return;
-    const start = field.selectionStart ?? 0;
-    const end = field.selectionEnd ?? 0;
+    const start = field?.selectionStart ?? value.length;
+    const end = field?.selectionEnd ?? start;
+    return { start, end };
+  }
+
+  function openTextMenu(parent: EventTarget) {
+    if (disabled || !editor()) return;
+    const range = selectionRange();
+    const { start, end } = range;
     const highlighted = value.slice(start, end);
 
     async function copy(cut: boolean) {
@@ -93,7 +122,10 @@ function TextEditControls({ value, disabled, onEditValue, onExitEdit, multiline,
       try {
         await navigator.clipboard.writeText(highlighted);
         if (cut) replaceRange(start, end, "");
-        else setMessage("Skopiowano tekst.");
+        else {
+          setMessage("Skopiowano tekst.");
+          if (selectingRef.current) window.setTimeout(focusSelectionRow, 0);
+        }
       } catch {
         setMessage("Schowek SteamOS jest niedostępny. Tekst pozostaje bez zmian.");
       }
@@ -111,17 +143,26 @@ function TextEditControls({ value, disabled, onEditValue, onExitEdit, multiline,
 
     showContextMenu(
       <Menu label="Edycja tekstu">
+        <MenuItem disabled={!value} onSelected={() => startSelectionMode()}>
+          Tryb zaznaczania tekstu
+        </MenuItem>
         <MenuItem disabled={!highlighted} onSelected={() => { void copy(false); }}>Kopiuj</MenuItem>
         <MenuItem disabled={!highlighted || !onEditValue} onSelected={() => { void copy(true); }}>Wytnij</MenuItem>
         <MenuItem disabled={!onEditValue} onSelected={() => { void paste(); }}>Wklej</MenuItem>
-        <MenuItem disabled={!value} onSelected={() => {
-          field.focus({ preventScroll: true });
-          field.setSelectionRange(0, value.length);
-          anchorRef.current = 0;
-          headRef.current = value.length;
-          selectingRef.current = true;
-          setSelecting(true);
-        }}>Zaznacz wszystko</MenuItem>
+        <MenuItem disabled={!value} onSelected={() => startSelectionMode(true)}>Zaznacz wszystko</MenuItem>
+        <MenuItem disabled={!value || !onEditValue} onSelected={() => {
+          lastClearRef.current = value;
+          replaceRange(0, value.length, "");
+          setMessage("Wyczyszczono całe pole.");
+        }}>Wyczyść wszystko</MenuItem>
+        {lastClearRef.current !== null && <MenuItem onSelected={() => {
+          const previous = lastClearRef.current;
+          if (previous === null || !onEditValue) return;
+          lastClearRef.current = null;
+          onEditValue(previous);
+          restoreCaret(previous.length);
+          setMessage("Przywrócono tekst.");
+        }}>Cofnij wyczyszczenie</MenuItem>}
       </Menu>, parent, { bFitToWindow: true, bShiftToFitWindow: true, bPreferPopTop: true }
     );
   }
@@ -134,27 +175,18 @@ function TextEditControls({ value, disabled, onEditValue, onExitEdit, multiline,
     return null;
   }
 
+  const selection = selectionWithHead(anchorRef.current, headRef.current);
+  const prefix = value.slice(0, selection.start);
+  const highlighted = value.slice(selection.start, selection.end);
+  const suffix = value.slice(selection.end);
+
   return <Focusable ref={containerRef} flow-children="column"
-    onCancelActionDescription={selecting ? "Zakończ edycję" : "Zaznaczanie tekstu"}
-    onOptionsActionDescription="Wytnij / Kopiuj / Wklej"
-    onCancelButton={event => {
-      if (event.defaultPrevented || !editor()) return;
-      event.preventDefault();
-      event.stopPropagation();
-      beginOrExitSelection();
-    }}
+    onOptionsActionDescription="Edycja tekstu"
     onOptionsButton={event => {
       if (event.defaultPrevented || !editor()) return;
       event.preventDefault();
       event.stopPropagation();
       openTextMenu(event.currentTarget ?? window);
-    }}
-    onGamepadDirection={event => {
-      const direction = gamepadDirection(event.detail.button);
-      if (!direction || !selectingRef.current || event.defaultPrevented) return;
-      event.preventDefault();
-      event.stopPropagation();
-      moveSelection(direction);
     }}
     onContextMenu={event => {
       event.preventDefault();
@@ -162,10 +194,62 @@ function TextEditControls({ value, disabled, onEditValue, onExitEdit, multiline,
       openTextMenu(event.currentTarget);
     }}
     style={{ width: "100%", minWidth: 0 }}>
-    {children}
-    {selecting && <span role="status" style={{ fontSize: 11, opacity: 0.9 }}>
-      Zaznaczanie: kierunki przesuwają koniec zaznaczenia · B kończy edycję · Y otwiera menu
-    </span>}
+    <div style={{ display: selecting ? "none" : undefined }}>{children}</div>
+    {selecting && <div ref={selectionRowRef} style={{ width: "100%" }}>
+      <DialogButton preferredFocus
+        onCancelActionDescription="Wyjdź z zaznaczania"
+        onCancelButton={event => {
+          event.preventDefault();
+          event.stopPropagation();
+          exitSelectionMode();
+        }}
+        onOptionsActionDescription="Edycja tekstu"
+        onOptionsButton={event => {
+          event.preventDefault();
+          event.stopPropagation();
+          openTextMenu(event.currentTarget ?? window);
+        }}
+        onButtonDown={event => {
+          const direction = gamepadDirection(event.detail.button);
+          if (!direction || event.defaultPrevented) return;
+          event.preventDefault();
+          event.stopPropagation();
+          moveSelection(direction);
+        }}
+        onGamepadDirection={event => {
+          const direction = gamepadDirection(event.detail.button);
+          if (!direction || event.defaultPrevented) return;
+          event.preventDefault();
+          event.stopPropagation();
+          moveSelection(direction);
+        }}
+        onKeyDown={event => {
+          if (event.key === "Escape" || event.key === "Backspace") {
+            event.preventDefault();
+            event.stopPropagation();
+            exitSelectionMode();
+            return;
+          }
+          const direction = ({
+            ArrowLeft: "left", ArrowRight: "right", ArrowUp: "up", ArrowDown: "down"
+          } as Record<string, TextDirection>)[event.key];
+          if (!direction) return;
+          event.preventDefault();
+          event.stopPropagation();
+          moveSelection(direction);
+        }}
+        style={{ width: "100%", textAlign: "left", whiteSpace: "pre-wrap", overflowWrap: "anywhere" }}>
+        <span aria-label="Zaznaczany tekst">
+          {prefix}
+          {selection.start === selection.end ? <strong aria-hidden="true">│</strong> :
+            <span style={{ background: "#466fa6", color: "#fff" }}>{highlighted}</span>}
+          {suffix}
+        </span>
+      </DialogButton>
+      <div role="status" style={{ fontSize: 11, opacity: 0.9 }}>
+        Zaznaczanie: krzyżak wybiera tekst · Y: kopiuj / wytnij / wklej · B: wyjdź
+      </div>
+    </div>}
     {!!message && <span role="status" style={{ fontSize: 11, opacity: 0.9 }}>{message}</span>}
   </Focusable>;
 }
