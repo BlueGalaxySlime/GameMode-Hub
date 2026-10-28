@@ -1,4 +1,5 @@
-import { useEffect, useState } from "react";
+import { Component, useEffect, useState } from "react";
+import type { ReactNode } from "react";
 import {
   DialogBody, DialogButton, DialogControlsSection,
   DialogControlsSectionHeader, Field, Navigation, SidebarNavigation, Toggle
@@ -90,12 +91,44 @@ function AddonSelector({ installed, selected, pending, error, toggle, reload }: 
   </DialogBody>;
 }
 
+type RuntimePlugin = { name: string; content?: ReactNode };
+type RuntimeLoader = { plugins?: RuntimePlugin[] };
+
+/**
+ * Legacy Decky plugin panels are not a stable public embedding API.
+ * Only attempt to render them after an explicit button press, so a broken
+ * plugin never prevents opening the main SteamHub settings screen.
+ */
+function loadedPluginContent(name: string): ReactNode | null {
+  const loader = (window as Window & { DeckyPluginLoader?: RuntimeLoader }).DeckyPluginLoader;
+  if (!Array.isArray(loader?.plugins)) return null;
+  return loader.plugins.find(plugin => plugin.name === name)?.content ?? null;
+}
+
+class ExternalPanelBoundary extends Component<
+  { children: ReactNode },
+  { failed: boolean }
+> {
+  state = { failed: false };
+  static getDerivedStateFromError() { return { failed: true }; }
+  componentDidCatch(error: unknown) {
+    console.error("[SteamHub] External plugin panel error", error);
+  }
+  render() {
+    return this.state.failed
+      ? <Field label="Panel nie działa" description="Otwórz dodatek bezpośrednio w Decky." />
+      : this.props.children;
+  }
+}
+
 function AddonOptions({ name, addon, selected, remove }: {
   name: string;
   addon?: InstalledAddon;
   selected: boolean;
   remove: () => void;
 }) {
+  const [panelOpen, setPanelOpen] = useState(false);
+  const originalContent = loadedPluginContent(name);
   return <DialogBody>
     <DialogControlsSection>
       <DialogControlsSectionHeader>{name}</DialogControlsSectionHeader>
@@ -104,7 +137,16 @@ function AddonOptions({ name, addon, selected, remove }: {
         <Toggle value={selected} onChange={value => { if (!value) remove(); }} />
       </Field>
       <Field label="Ustawienia dodatku"
-        description="Natywne ustawienia poszczególnych dodatków będą dodawane przez niezależne adaptery. SteamHub nie modyfikuje interfejsu ani danych obcych wtyczek." />
+        description="SteamHub udostępnia pełny ekran ustawień. Docelowo natywne opcje będą dostarczane przez niezależne adaptery." />
+      {originalContent && <Field label="Panel oryginalnej wtyczki"
+        description="Możesz otworzyć istniejący panel dodatku bez kopiowania jego kodu. Jego układ może różnić się od ustawień Steam.">
+        <DialogButton onClick={() => setPanelOpen(value => !value)}>
+          {panelOpen ? "Ukryj panel" : "Pokaż panel"}
+        </DialogButton>
+      </Field>}
+      {panelOpen && originalContent && <ExternalPanelBoundary key={name}>
+        <div style={{ maxWidth: "100%", padding: "12px 0" }}>{originalContent}</div>
+      </ExternalPanelBoundary>}
       <Field label="Zarządzanie w Decky">
         <DialogButton onClick={() => Navigation.Navigate("/decky/settings/plugins")}>Otwórz listę wtyczek Decky</DialogButton>
       </Field>
