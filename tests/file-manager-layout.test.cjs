@@ -42,7 +42,7 @@ test("Y on the focused file or address opens native SteamOS context menu", () =>
   assert.ok(ui.includes("<Menu label={entry.name}"));
   assert.ok(ui.includes('clipboardAction(entry, "copy")'));
   assert.ok(ui.includes('clipboardAction(entry, "move")'));
-  assert.ok(!ui.includes("onSecondaryButton="));
+  assert.ok(ui.includes("onSecondaryButton={event => {")); // X returns to address; Y still owns context menus.
 });
 
 test("file options are in native right-hand submenus, not inline controls", () => {
