@@ -30,7 +30,7 @@ from trash_manager import trash_entry, list_trash, restore_entry
 from lan_transfer import TransferManager
 from flatpak_manager import flatpak_overview, flatpak_update_user
 
-CURRENT_VERSION = "0.5.30"
+CURRENT_VERSION = "0.5.31"
 RELEASES_API = "https://api.github.com/repos/BlueGalaxySlime/GameMode-Hub/releases/latest"
 ASSET_NAME = "GameMode-Hub.zip"
 

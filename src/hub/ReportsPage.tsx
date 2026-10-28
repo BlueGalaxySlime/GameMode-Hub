@@ -1,16 +1,15 @@
 import { useState } from "react";
-import { DialogBody, DialogButton, DialogControlsSection, DialogControlsSectionHeader,
-  Field, Navigation } from "@decky/ui";
-import { HubTextInput } from "./HubTextInput";
+import { DialogBody, DialogButton, DialogControlsSection, Focusable,
+  NavEntryPositionPreferences, Navigation } from "@decky/ui";
+import { HubTextInput, HubTextArea } from "./HubTextInput";
 import { useHubSessionState } from "./useHubSessionState";
 
 const ISSUE_URL = "https://github.com/BlueGalaxySlime/GameMode-Hub/issues";
 const MAX_TITLE = 110;
 const MAX_TEXT = 1200;
 
-/** Never collects logs, IPs, account IDs or tokens; report stays local until
- * user chooses to copy it or explicitly opens GitHub's submission page.
- * GitHub requires login to create issues. No anonymous relay is configured.
+/** No account tokens, report forwarding, or background upload.
+ * User chooses when to open GitHub; publishing requires their own login.
  */
 export function ReportsPage() {
   const [title, setTitle] = useHubSessionState("reports.title", "");
@@ -32,34 +31,55 @@ export function ReportsPage() {
     }
   }
 
-  return <DialogBody><DialogControlsSection>
-    <DialogControlsSectionHeader>Zgłoszenia błędów</DialogControlsSectionHeader>
-    <Field label="Tytuł" description="Opisz krótko, co nie działa.">
-      <HubTextInput value={title} placeholder="Np. Nie działa Y w Plikach"
-        onChange={event => setTitle(event.target.value.slice(0, MAX_TITLE))} />
-    </Field>
-    <Field label="Opis i sposób odtworzenia"
-      description="Nie wpisuj haseł, kodów parowania, tokenów ani prywatnych adresów.">
-      <HubTextInput value={detail} placeholder="Co zrobiłeś i co się stało?"
-        onChange={event => setDetail(event.target.value.slice(0, MAX_TEXT))} />
-    </Field>
-    <Field label="Prywatność" focusable highlightOnFocus
-      description="Treść jest tylko w pamięci Huba. Nic nie jest wysyłane automatycznie.
-      GitHub wymaga konta do opublikowania zgłoszenia. Anonimowy serwis zgłoszeń
-      wymaga jeszcze osobnej bramki antyspamowej." />
-    <Field label="Przygotuj zgłoszenie">
-      <DialogButton disabled={!valid} onClick={() => { void copyReport(); }}>
-        Kopiuj raport
-      </DialogButton>
-    </Field>
-    <Field label="GitHub Issues" description="Otworzy GitHub; przed publikacją potrzebne jest zalogowanie.">
-      <DialogButton disabled={!valid} onClick={() => Navigation.NavigateToExternalWeb(issueLink)}>
-        Otwórz formularz GitHub
-      </DialogButton>
-      <DialogButton onClick={() => Navigation.NavigateToExternalWeb(ISSUE_URL)}>
-        Przeglądaj istniejące zgłoszenia
-      </DialogButton>
-    </Field>
-    {!!message && <Field label="Stan" description={message} />}
-  </DialogControlsSection></DialogBody>;
+  return <DialogBody>
+    <DialogControlsSection>
+      <Focusable flow-children="column" style={{
+        display: "flex", flexDirection: "column", width: "100%",
+        minWidth: 0, gap: 10, padding: "4px 0"
+      }}>
+        <div style={{ fontSize: 12, opacity: 0.75, padding: "0 2px" }}>
+          Zgłoszenia błędów · GitHub Issues
+        </div>
+        <HubTextInput value={title} aria-label="Tytuł zgłoszenia"
+          placeholder="Tytuł błędu (np. Y nie otwiera menu)…"
+          onChange={event => setTitle(event.target.value.slice(0, MAX_TITLE))}
+          style={{ padding: "9px 12px" }} />
+        <div style={{ minWidth: 0 }}>
+          <HubTextArea value={detail} rows={5} maxLength={MAX_TEXT}
+            aria-label="Opis błędu i sposób odtworzenia"
+            placeholder="Opis błędu: co się stało, co powinno się wydarzyć i jak odtworzyć problem…"
+            onChange={event => setDetail(event.target.value.slice(0, MAX_TEXT))} />
+          <div style={{ fontSize: 11, opacity: 0.75, textAlign: "right",
+            marginTop: 3, paddingRight: 2 }}>
+            {detail.length} / {MAX_TEXT} znaków
+          </div>
+        </div>
+        <div style={{ fontSize: 11, opacity: 0.75, padding: "0 2px" }}>
+          Bez haseł, tokenów i danych prywatnych. Raport nie jest wysyłany
+          automatycznie; publikacja wymaga zalogowania na GitHubie.
+        </div>
+        <Focusable flow-children="row"
+          navEntryPreferPosition={NavEntryPositionPreferences.MAINTAIN_X}
+          style={{ display: "flex", flexDirection: "row", gap: 8,
+            flexWrap: "wrap", width: "100%" }}>
+          <DialogButton disabled={!valid} onClick={() => { void copyReport(); }}
+            style={{ flex: "1 1 130px", minWidth: 0, padding: "8px" }}>
+            Kopiuj raport
+          </DialogButton>
+          <DialogButton disabled={!valid}
+            onClick={() => Navigation.NavigateToExternalWeb(issueLink)}
+            style={{ flex: "1 1 160px", minWidth: 0, padding: "8px" }}>
+            Zgłoś na GitHub
+          </DialogButton>
+          <DialogButton onClick={() => Navigation.NavigateToExternalWeb(ISSUE_URL)}
+            style={{ flex: "1 1 160px", minWidth: 0, padding: "8px" }}>
+            Istniejące zgłoszenia
+          </DialogButton>
+        </Focusable>
+        {!!message && <div role="status" style={{ fontSize: 12, padding: "0 2px" }}>
+          {message}
+        </div>}
+      </Focusable>
+    </DialogControlsSection>
+  </DialogBody>;
 }

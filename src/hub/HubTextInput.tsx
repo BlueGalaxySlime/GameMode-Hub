@@ -36,3 +36,29 @@ export function HubTextInput(props: HubTextInputProps) {
       font: "inherit", ...props.style
     }} />;
 }
+
+/** Larger multiline counterpart with the same shared keyboard preference.
+ * Steam TextField is single-line, so use a native textarea for long reports.
+ */
+export type HubTextAreaProps = {
+  value: string;
+  onChange: ChangeEventHandler<HTMLTextAreaElement>;
+  placeholder?: string;
+  disabled?: boolean;
+  rows?: number;
+  maxLength?: number;
+  style?: CSSProperties;
+  "aria-label"?: string;
+};
+
+export function HubTextArea(props: HubTextAreaProps) {
+  const options = useSyncExternalStore(subscribeHubPreferences, getHubPreferences);
+  return <textarea {...props} inputMode={options.autoKeyboard ? "text" : "none"}
+    autoComplete="off" spellCheck={false} style={{
+      display: "block", width: "100%", minWidth: 0, boxSizing: "border-box",
+      minHeight: 116, maxHeight: 220, resize: "vertical", borderRadius: 4,
+      padding: "10px 12px", background: "#333d50", color: "inherit",
+      border: "1px solid #68748a", font: "inherit", lineHeight: 1.4,
+      ...props.style
+    }} />;
+}

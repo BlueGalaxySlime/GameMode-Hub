@@ -1,3 +1,11 @@
+# GameMode Hub 0.5.31 (testowy)
+
+- **Zgłoszenia — kompaktowy interfejs:** usunięto rozciągnięte wiersze z etykietami; dwa pola tekstowe z opisem wewnątrz (jak pasek Szukaj/Pliki). Tytuł jest jednolinijkowy.
+- **Większy opis:** wielowierszowe pole na pięć wierszy tekstu, limit 1200 znaków i licznik. Respektuje wspólne ustawienie klawiatury SteamOS/fizycznej.
+- **Mniej pustych miejsc:** krótka informacja o prywatności i poziomy pasek trzech działań: Kopiuj raport, Zgłoś na GitHub, Istniejące zgłoszenia.
+- **Bez zmian:** raport nie wysyła się automatycznie, nie odczytuje tokenów i do opublikowania wymaga konta GitHub. Transfer Wi-Fi, Flatpak, menu Y i pozostałe zakładki niezmienione.
+- **Testy:** kontrola zwartego formularza, placeholderów, pola wielowierszowego i limitu 1200 znaków.
+
 # GameMode Hub 0.5.30 (testowy)
 
 - **Zgłoszenia po Podziękowaniach:** nowa sekcja do przygotowania raportu z opisem błędu. Kopiowanie raportu i otwieranie GitHub Issues; GitHub nadal wymaga konta do publikacji. Bez uruchamiania pozornej anonimowej wysyłki. Dodano formularz GitHub Issue i dokument zabezpieczeń planowanej anonimowej bramki.

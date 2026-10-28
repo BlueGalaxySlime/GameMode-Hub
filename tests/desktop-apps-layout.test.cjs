@@ -217,3 +217,22 @@ test("Flatpak actions are in Desktop Y menus; system update remains read-only", 
   assert.ok(hub.includes('title: "Zgłoszenia"'));
   assert.ok(hub.includes('<ReportsPage />'));
 });
+
+test("Reports uses compact inline placeholders and multiline bounded description", () => {
+  const reports = fs.readFileSync("src/hub/ReportsPage.tsx", "utf8");
+  const inputs = fs.readFileSync("src/hub/HubTextInput.tsx", "utf8");
+  assert.ok(reports.includes('<HubTextInput value={title}'));
+  assert.ok(reports.includes('placeholder="Tytuł błędu'));
+  assert.ok(reports.includes('<HubTextArea value={detail} rows={5} maxLength={MAX_TEXT}'));
+  assert.ok(reports.includes('placeholder="Opis błędu:'));
+  assert.ok(reports.includes('const MAX_TEXT = 1200;'));
+  assert.ok(reports.includes('{detail.length} / {MAX_TEXT} znaków'));
+  assert.ok(reports.includes('<Focusable flow-children="row"'));
+  assert.ok(reports.includes('Zgłoś na GitHub'));
+  assert.ok(reports.includes('Istniejące zgłoszenia'));
+  assert.ok(!reports.includes('<Field '));
+  assert.ok(!reports.includes('<DialogControlsSectionHeader'));
+  assert.ok(inputs.includes('export function HubTextArea('));
+  assert.ok(inputs.includes('<textarea {...props}'));
+  assert.ok(inputs.includes('inputMode={options.autoKeyboard ? "text" : "none"}'));
+});
