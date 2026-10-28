@@ -13,6 +13,7 @@ import { HubOptionsPage, initializeHubOptions } from "./HubOptionsPage";
 import { useHubSessionState } from "./useHubSessionState";
 import { DeckyTerminalPage, TerminalOptionsPage } from "./DeckyTerminalAdapter";
 import { CreditsPage } from "./CreditsPage";
+import { FocusableInfoField } from "./FocusableInfoField";
 import { APP_NAME, DECKY_PLUGIN_NAME, HUB_ROUTE } from "../core/identity";
 import { CORE_MODULES } from "../core/modules";
 
@@ -66,9 +67,13 @@ function Overview({ selected, installed }: {
           </DialogButton>
         </Field>;
       })}
-      <Field label="Tryb" description="SteamOS Gaming Mode — otwierany z Quick Access. Integrację zapewnia niewielki adapter Decky." />
-      {!selected.length && <Field label="Brak wybranych dodatków"
+      <FocusableInfoField label="Tryb"
+        description="SteamOS Gaming Mode — otwierany z Quick Access. Integrację zapewnia niewielki adapter Decky." />
+      {!selected.length && <FocusableInfoField label="Brak wybranych dodatków"
         description="Otwórz Dodatki, aby wybrać te, które mają być widoczne w GameMode Hub." />}
+      <DialogButton onClick={() => Navigation.Navigate(HUB_ROUTE + "/addons")}>
+        Przejdź do dodatków
+      </DialogButton>
     </DialogControlsSection>
   </DialogBody>;
 }
