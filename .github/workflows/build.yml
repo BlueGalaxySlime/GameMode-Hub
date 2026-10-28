@@ -31,6 +31,8 @@ jobs:
         run: python3 -m py_compile main.py tab_manager.py
       - name: Test backend
         run: python3 -m unittest discover -s tests -v
+      - name: Test TabMaster activation detection
+        run: node --test tests/tabmaster-detection.test.cjs
       - name: Create Decky plugin ZIP
         run: python3 scripts/package.py
       - uses: actions/upload-artifact@v4
