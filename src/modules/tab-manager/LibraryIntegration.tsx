@@ -33,6 +33,24 @@ export type TabDefinition = {
 const readEnabled = callable<[], boolean>("get_tab_manager_enabled");
 const readTabs = callable<[], TabDefinition[]>("get_tab_definitions");
 const tabMasterInstalled = callable<[], boolean>("get_tabmaster_installed");
+/** Prefer Decky's active/disabled state; installation alone is not a conflict. */
+export async function detectTabMasterConflict(): Promise<boolean> {
+  const backend = (window as any).DeckyBackend;
+  try {
+    if (typeof backend?.callable === "function") {
+      const plugins = await backend.callable("loader/get_plugins")();
+      if (Array.isArray(plugins)) {
+        return plugins.some((plugin: any) =>
+          /^(tabmaster|tab master)$/i.test(String(plugin?.name ?? "")) && plugin?.disabled !== true
+        );
+      }
+    }
+  } catch (error) {
+    console.warn("[SteamHub] Unable to inspect active Decky plugins", error);
+  }
+  return tabMasterInstalled();
+}
+
 
 let active = false;
 let conflict = true; // Fail closed until backend checks the other plugin.
@@ -50,7 +68,7 @@ export async function startTabManager() {
   const request = ++generation;
   try {
     const [savedEnabled, detected, savedTabs] = await Promise.all([
-      readEnabled(), tabMasterInstalled(), readTabs()
+      readEnabled(), detectTabMasterConflict(), readTabs()
     ]);
     if (request !== generation) return;
     active = savedEnabled;
