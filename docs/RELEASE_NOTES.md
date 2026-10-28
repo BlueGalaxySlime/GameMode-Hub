@@ -1,3 +1,13 @@
+# GameMode Hub 0.5.13 (testowy)
+
+- **Pliki — ulubione:** menu Y na wspólnym pasku adresu → Ulubione → dodawanie bieżącego folderu, szybkie przechodzenie do zapisanych katalogów i usuwanie wpisów. Lista zostaje zachowana po aktualizacji.
+- **Pliki — wybór wielu:** Y na pliku lub folderze → Zaznacz kilka. A zaznacza i odznacza kolejne elementy (również katalogi). B wychodzi z trybu. Menu Y pozwala skopiować/przenieść wybrane elementy.
+- **Pliki — wklejanie:** Y na katalogu → Wklej do folderu; Y na pasku adresu → Wklej tutaj. Można kopiować całe foldery modów wraz z zawartością. Wklejanie nie nadpisuje istniejących plików; operacje są ograniczone do dozwolonych katalogów.
+- **Pliki — nawigacja:** dwa niezależne panele, jeden pasek adresu wskazujący aktywny panel, stan podziału i przewijanie.
+- **Klawiatura:** usunięte zbędne przyciski Przejdź / Anuluj z paska adresu; globalny przełącznik klawiatury ekranowej w Opcjach Huba.
+- **Sterowanie padem:** Podziękowania, Pulpit i opisy Terminala mają dostępne nawigowalne sekcje. A rozwija/zwija opis, przechodzenie między elementami padem przewija treść.
+- **Bezpieczeństwo:** terminal PTY nadal w trybie bezpiecznym; ustawienia podziału tylko w Plikach; bez pull requestów.
+
 # GameMode Hub 0.5.12
 
 - **Pliki:** opcje otwierane przyciskiem Y na pasku adresu w natywnym menu SteamOS: Nowy folder, Pokaż ukryte, Podziel ekran i Sortowanie (podmenu w prawo). Na stałym pasku pokazujemy jedynie bieżące sortowanie i widoczność ukrytych plików.
