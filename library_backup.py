@@ -40,11 +40,12 @@ def _validate(data):
     }
     if len(profiles) != len(data["profiles"]):
         raise ValueError("Powtarzające się profile.")
-    return tabs, collections, profiles
+    hidden_steam_tabs = tab_manager.validate_hidden_steam_tabs(data.get("hidden_steam_tabs", []))
+    return tabs, collections, profiles, hidden_steam_tabs
 
 
 def _summary(backup_id, data):
-    tabs, collections, profiles = _validate(data)
+    tabs, collections, profiles, hidden = _validate(data)
     return {
         "id": backup_id,
         "created_at": data.get("created_at", ""),
@@ -52,6 +53,7 @@ def _summary(backup_id, data):
         "tabs": len(tabs),
         "collections": len(collections),
         "profiles": len(profiles),
+        "hidden_steam_tabs": len(hidden),
     }
 
 
@@ -90,6 +92,7 @@ def create_backup(kind="manual"):
             "tabs": tab_manager.read_tabs(),
             "collections": collection_manager.read_collections(),
             "profiles": tab_manager._read_profiles(),
+            "hidden_steam_tabs": tab_manager.read_hidden_steam_tabs(),
         }
         _validate(snapshot)
         BACKUP_DIR.mkdir(parents=True, exist_ok=True)
@@ -106,12 +109,13 @@ def create_backup(kind="manual"):
 def restore_backup(backup_id):
     with LOCK:
         data = _read(backup_id)
-        tabs, collections, profiles = _validate(data)
+        tabs, collections, profiles, hidden = _validate(data)
         # Never overwrite existing settings without first saving a safety copy.
         safety = create_backup("before_restore")
         tab_manager.save_tabs(tabs)
         collection_manager.save_collections(collections)
         tab_manager._write_profiles(profiles)
+        tab_manager.save_hidden_steam_tabs(hidden)
         return {"ok": True, "safety_backup": safety["id"],
                 "tabs": len(tabs), "collections": len(collections),
                 "profiles": len(profiles)}
