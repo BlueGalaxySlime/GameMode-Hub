@@ -126,6 +126,17 @@ type SteamTab = {
   renderTabAddon?: () => ReactElement | null;
 };
 
+export function availableSteamCollections(): { id: string; title: string }[] {
+  if (typeof collectionStore === "undefined") return [];
+  try {
+    const entries: any[] = (collectionStore as any).userCollections ?? [];
+    return entries.filter(item => typeof item?.id === "string").map(item => ({
+      id: item.id,
+      title: String(item.displayName ?? item.name ?? item.id)
+    }));
+  } catch { return []; }
+}
+
 function sourceCollection(tab: TabDefinition): any {
   if (typeof collectionStore === "undefined") return null;
   let key: string;
