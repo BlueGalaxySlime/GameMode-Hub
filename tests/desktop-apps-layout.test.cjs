@@ -119,10 +119,10 @@ test("all View categories have their own selectable menu actions and visible lab
 test("all sidebar tabs form one contiguous controller-navigation list", () => {
   const pages = hub.split("  const pages = [", 2)[1].split("\n  ];", 1)[0];
   assert.ok(!pages.includes('"separator" as const'));
-  const names = [...pages.matchAll(/title: "(Pulpit|Pliki|Terminal|Konta|Dodatki|Opcje Huba|Aktualizacje|Podziękowania|Zgłoszenia)"/g)]
+  const names = [...pages.matchAll(/title: "(Pulpit|Pliki|Terminal|Konta|Dodatki|Opcje Huba|Aktualizacje|Pobieranie|Podziękowania|Zgłoszenia)"/g)]
     .map(match => match[1]);
   assert.deepEqual(names, ["Pulpit", "Pliki", "Terminal", "Konta", "Dodatki",
-    "Opcje Huba", "Aktualizacje", "Podziękowania", "Zgłoszenia"]);
+    "Opcje Huba", "Aktualizacje", "Pobieranie", "Podziękowania", "Zgłoszenia"]);
 });
 
 test("B is captured on Desktop also outside search edit mode", () => {

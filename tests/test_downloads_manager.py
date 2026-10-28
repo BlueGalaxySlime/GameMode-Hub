@@ -69,7 +69,10 @@ class DownloadManagerTests(unittest.TestCase):
         self.manager.cancel(b["id"])
         self.assertEqual(self.manager.list()["jobs"][0]["state"], "cancelled")
         self.task.state = "success"
-        self.wait_for("success")
+        for _ in range(60):
+            if next(job for job in self.manager.list()["jobs"] if job["id"] == a["id"])["state"] == "success":
+                break
+            time.sleep(0.02)
         self.assertEqual(self.task.started, ["org.test.One"])
 
     def test_restart_marks_active_interrupted_no_auto_retry(self):
