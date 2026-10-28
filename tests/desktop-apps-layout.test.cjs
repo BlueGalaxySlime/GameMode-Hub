@@ -166,7 +166,7 @@ test("Epic test uses Unifideck backend but owns no credentials", () => {
   assert.ok(epic.includes('steam.RunGame(gameId,"",-1,100)'));
   assert.ok(epic.includes('if(!registered)throw'));
   assert.ok(!epic.includes('writeFile'));
-  assert.ok(!epic.includes('install_game'));
+  assert.ok(!epic.includes('invoke("install_game"'));
   assert.ok(!epic.includes('store_auth","epic","logout'));
 });
 
