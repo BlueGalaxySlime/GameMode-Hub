@@ -212,3 +212,4 @@ export function UpdaterPage() {
       {lastChecked && <Field label="Ostatnie sprawdzenie" description={lastChecked} />}
     </DialogControlsSection>
   </DialogBody>;
+}
