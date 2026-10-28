@@ -43,7 +43,6 @@ class FileManagerTests(unittest.TestCase):
         copied = file_manager.paste_entry(renamed["path"], folder["path"], "copy")
         self.assertEqual(Path(copied["path"]).read_text(), "sample")
         self.assertTrue(Path(renamed["path"]).exists())
-        moved = file_manager.paste_entry(renamed["path"], str(self.home / "other"), "move") if False else None
         another = self.home / "other"
         another.mkdir()
         moved = file_manager.paste_entry(renamed["path"], str(another), "move")
@@ -55,8 +54,7 @@ class FileManagerTests(unittest.TestCase):
         source.write_text("keep")
         with self.assertRaises(FileExistsError):
             file_manager.create_folder(str(self.home), "existing")
-        with self.assertRaises(FileExistsError):
-            file_manager.rename_entry(str(source), "existing")
+        self.assertEqual(file_manager.rename_entry(str(source), "existing")["path"], str(source))
         with self.assertRaises(FileExistsError):
             file_manager.paste_entry(str(source), str(self.home), "copy")
         self.assertEqual(source.read_text(), "keep")
@@ -79,6 +77,15 @@ class FileManagerTests(unittest.TestCase):
         with self.assertRaises(PermissionError):
             file_manager.rename_entry(str(self.home / "jump"), "another")
 
+    def test_exclusive_create_never_deletes_an_existing_file(self):
+        src = self.home / "src.txt"
+        src.write_text("source")
+        dest = self.home / "dest.txt"
+        dest.write_text("important")
+        with self.assertRaises(FileExistsError):
+            file_manager._copy_file(src, dest)
+        self.assertEqual(dest.read_text(), "important")
+
     def test_never_write_as_root(self):
         with patch.object(file_manager.os, "geteuid", return_value=0):
             with self.assertRaises(PermissionError):
@@ -91,8 +98,10 @@ class FileManagerTests(unittest.TestCase):
         child.mkdir()
         with self.assertRaises(ValueError):
             file_manager.paste_entry(str(folder), str(child), "move")
+        target = self.home / "other"
+        target.mkdir()
         with self.assertRaises(ValueError):
-            file_manager.paste_entry(str(folder), str(self.home), "copy")
+            file_manager.paste_entry(str(folder), str(target), "copy")
 
     def test_pagination_bounds(self):
         for i in range(45):

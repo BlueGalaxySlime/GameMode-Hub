@@ -139,9 +139,10 @@ export function FileManagerPage() {
       {page && <Field label={"Zawartość (" + page.total + ")"}
         description="Pliki są przeglądane lokalnie. Dowiązania symboliczne pozostają nieaktywne.">
         <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
-          {page.items.map(entry =>
-            <DialogButton key={entry.path} disabled={busy || entry.symlink}
-              style={{ textAlign: "left", background: selected?.path === entry.path ? "#426b99" : undefined }}
+          {page.items.map(entry => <div key={entry.path}
+            style={{ display: "flex", gap: 6, width: "100%", alignItems: "center" }}>
+            <DialogButton disabled={busy || entry.symlink}
+              style={{ textAlign: "left", flex: 1, background: selected?.path === entry.path ? "#426b99" : undefined }}
               onClick={() => {
                 if (entry.directory) {
                   void load(entry.path, hidden);
@@ -153,7 +154,12 @@ export function FileManagerPage() {
               }}>
               {entry.directory ? "📁 " : entry.symlink ? "🔗 " : "📄 "}
               {entry.name + (entry.directory ? "/" : " · " + readableSize(entry.size))}
-            </DialogButton>)}
+            </DialogButton>
+            {entry.directory && <DialogButton disabled={busy}
+              onClick={() => { setSelected(entry); setAction(null); setName(entry.name); }}>
+              Wybierz
+            </DialogButton>}
+          </div>)}
         </div>
       </Field>}
       {page && page.total > page.limit && <Field label="Strony">
@@ -169,18 +175,18 @@ export function FileManagerPage() {
           Utwórz folder
         </DialogButton>
       </Field>}
-      {selected && <Field label={"Wybrany plik: " + selected.name} description={readableSize(selected.size)}>
+      {selected && <Field label={(selected.directory ? "Wybrany folder: " : "Wybrany plik: ") + selected.name} description={readableSize(selected.size)}>
         <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
           <DialogButton disabled={busy} onClick={() => {
             setAction("rename"); setName(selected.name);
           }}>Zmień nazwę</DialogButton>
-          <DialogButton disabled={busy} onClick={() => clipboardAction("copy")}>Kopiuj</DialogButton>
+          <DialogButton disabled={busy || selected.directory} onClick={() => clipboardAction("copy")}>Kopiuj</DialogButton>
           <DialogButton disabled={busy} onClick={() => clipboardAction("move")}>Przenieś</DialogButton>
         </div>
       </Field>}
-      {action && <Field label={action === "folder" ? "Nazwa nowego folderu" : "Nowa nazwa pliku"}
+      {action && <Field label={action === "folder" ? "Nazwa nowego folderu" : "Nowa nazwa"}
         description="Wpisz nazwę za pomocą klawiatury ekranowej SteamOS.">
-        <TextField value={name} onChange={setName} />
+        <TextField value={name} onChange={event => setName(event.target.value)} />
         <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginTop: 8 }}>
           <DialogButton disabled={busy || !name.trim()} onClick={() => void operate(action === "folder" ? "mkdir" : "rename")}>
             Zatwierdź

@@ -143,10 +143,10 @@ def rename_entry(source, name):
     _guard_write()
     source_path = _require_source(source)
     target = _child(source_path.parent, name)
-    if target.exists() or target.is_symlink():
-        raise FileExistsError("Element o tej nazwie już istnieje.")
     if target == source_path:
         return {"path": str(source_path)}
+    if target.exists() or target.is_symlink():
+        raise FileExistsError("Element o tej nazwie już istnieje.")
     source_path.rename(target)
     return {"path": str(target)}
 
@@ -189,13 +189,14 @@ def paste_entry(source, target_folder, mode):
 
 
 def _copy_file(source, destination):
-    # 'xb' prevents accidentally overwriting an existing file.
+    # 'xb' prevents accidentally overwriting an existing file. Never delete
+    # preexisting destinations when exclusive creation raises FileExistsError.
+    created = False
     try:
         with source.open("rb") as src, destination.open("xb") as dst:
+            created = True
             shutil.copyfileobj(src, dst, length=1024 * 1024)
     except Exception:
-        # Clean up partial output only when this operation created it.
-        # Source and destination have already been validated.
-        if destination.is_file():
-            destination.unlink()
+        if created:
+            destination.unlink(missing_ok=True)
         raise
