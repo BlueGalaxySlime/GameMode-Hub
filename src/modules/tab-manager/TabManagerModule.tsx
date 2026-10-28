@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { callable } from "@decky/api";
-import { DialogButton, DialogControlsSection, Field, Toggle } from "@decky/ui";
+import { DialogButton, DialogControlsSection, DialogControlsSectionHeader, Field, Toggle } from "@decky/ui";
 import { HubTextInput } from "../../hub/HubTextInput";
 import {
   type TabDefinition, type TabFilter, tabManagerEnabledChanged,
@@ -151,13 +151,12 @@ export function TabManagerModule() {
   }
 
   return <DialogControlsSection>
-    <Field label="Karty biblioteki"
-      description="Własne karty Gaming Mode. Nie zastępują kolekcji; mogą wyświetlać ich zawartość. Integracja z natywną biblioteką Steam jest eksperymentalna i domyślnie wyłączona." />
-    <Field label="Wyświetlaj karty w bibliotece Steam"
-      description="Ustawienie zapisuje się osobno od definicji kart. Przy konflikcie z TabMasterem nie zmienia interfejsu Steam.">
+    <DialogControlsSectionHeader>Karty</DialogControlsSectionHeader>
+    <Field label="Pokaż własne karty w bibliotece"
+      description="Eksperymentalna integracja z Gaming Mode. Domyślnie wyłączona.">
       <Toggle value={enabled} disabled={busy} onChange={value => { void toggle(value); }} />
     </Field>
-    {tabMasterActivity !== "inactive" && <Field label="Integracja wstrzymana"
+    {enabled && tabMasterActivity !== "inactive" && <Field label="Integracja wstrzymana"
       description={tabMasterActivity === "active"
         ? "Włączony TabMaster. Wyłącz go w Decky, aby uniknąć konfliktu w bibliotece."
         : "Nie można potwierdzić stanu TabMastera. Biblioteka Steam pozostaje nietknięta."}>
@@ -169,10 +168,6 @@ export function TabManagerModule() {
     </Field>
     <DialogButton disabled={busy || !name.trim() || tabs.length >= 64}
       onClick={() => addTab(name)}>Dodaj kartę</DialogButton>
-    <DialogButton disabled={busy || tabs.length >= 64}
-      onClick={() => addTab("Zainstalowane", "installed")}>Dodaj: Zainstalowane</DialogButton>
-    <DialogButton disabled={busy || tabs.length >= 64}
-      onClick={() => addTab("Ulubione", "favorites")}>Dodaj: Ulubione</DialogButton>
     {tabs.map((tab, index) => <div key={tab.id}
       style={{ borderBottom: "1px solid rgba(255,255,255,.15)", padding: "8px 0" }}>
       {editingId === tab.id ? <>
@@ -212,7 +207,8 @@ export function TabManagerModule() {
         <DialogButton disabled={busy} onClick={() => setDeleteId(null)}>Anuluj</DialogButton>
       </> : <DialogButton disabled={busy} onClick={() => setDeleteId(tab.id)}>Usuń kartę</DialogButton>}
     </div>)}
-    <Field label="Profile kart" description="Zapisany profil przechowuje układ i filtry kart, nie modyfikuje kolekcji." />
+    {(tabs.length > 0 || profiles.length > 0) && <>
+    <Field label="Profile kart" />
     <Field label="Nazwa profilu">
       <HubTextInput value={profileName} disabled={busy} placeholder="Nazwa układu"
         onChange={event => setProfileName(event.target.value)} onEditValue={setProfileName} />
@@ -224,6 +220,7 @@ export function TabManagerModule() {
       <DialogButton disabled={busy} onClick={() => void applyProfile(profile)}>Wczytaj</DialogButton>
       <DialogButton disabled={busy} onClick={() => void removeProfile(profile)}>Usuń profil</DialogButton>
     </Field>)}
+    </>}
     {error && <Field label="Błąd" description={error} />}
   </DialogControlsSection>;
 }
