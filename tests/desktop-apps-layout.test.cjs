@@ -115,3 +115,12 @@ test("all View categories have their own selectable menu actions and visible lab
   assert.ok(!page.includes('<DialogButton onClick={() => changeCategory("all")}'));
   assert.ok(!page.includes('aria-label="Kategorie aplikacji — lewo i prawo"'));
 });
+
+test("all sidebar tabs form one contiguous controller-navigation list", () => {
+  const pages = hub.split("  const pages = [", 2)[1].split("\n  ];", 1)[0];
+  assert.ok(!pages.includes('"separator" as const'));
+  const names = [...pages.matchAll(/title: "(Pulpit|Pliki|Terminal|Dodatki|Opcje Huba|Aktualizacje|Podziękowania)"/g)]
+    .map(match => match[1]);
+  assert.deepEqual(names, ["Pulpit", "Pliki", "Terminal", "Dodatki",
+    "Opcje Huba", "Aktualizacje", "Podziękowania"]);
+});

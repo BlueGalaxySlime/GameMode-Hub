@@ -1,3 +1,9 @@
+# GameMode Hub 0.5.21 (testowy)
+
+- **Nawigacja padem:** usunięto dwa sztuczne separatory w bocznej liście między Terminalem a Dodatkami oraz między Opcjami Huba a Aktualizacjami. Każda zakładka jest teraz sąsiadem następnej, bez dodatkowego kroku góra/dół.
+- **Kolejność bez zmian:** Pulpit, Pliki, Terminal, Dodatki, Opcje Huba, Aktualizacje, Podziękowania.
+- **Testy:** kontrola braku separatorów i nieprzerwanej kolejności kart. Test interakcji na prawdziwym SteamOS nadal potrzebny.
+
 # GameMode Hub 0.5.20 (testowy)
 
 - **Pulpit — B podczas szukania:** przeniesiono obsługę cofania do grupy SteamOS Focusable. B zamyka edycję i przywraca fokus na pasku, nie powinno zamykać całego Huba. Escape/Enter również kończą edycję bez przekazywania klawisza do routera.

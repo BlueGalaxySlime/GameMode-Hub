@@ -225,14 +225,12 @@ export function HubPage() {
     { title: "Terminal", route: HUB_ROUTE + "/terminal", icon: <FaTerminal />,
       hideTitle: true, padding: "none" as const,
       content: <DeckyTerminalPage fontSize={terminalFontSize} /> },
-    "separator" as const,
     { title: "Dodatki", route: HUB_ROUTE + "/addons", icon: <FaPuzzlePiece />,
       content: <AddonSelector installed={installed} selected={selected} pending={busy}
         error={error} toggle={toggle} reload={() => { void refresh(); }} /> },
     { title: "Opcje Huba", route: HUB_ROUTE + "/options", icon: <FaCog />,
       content: <HubOptionsPage terminalFontSize={terminalFontSize}
         setTerminalFontSize={setTerminalFontSize} /> },
-    "separator" as const,
     { title: "Aktualizacje", route: HUB_ROUTE + "/updates", icon: <FaSyncAlt />,
       content: <UpdaterPage /> },
     { title: "Podziękowania", route: HUB_ROUTE + "/credits", icon: <FaHeart />,
