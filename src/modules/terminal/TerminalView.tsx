@@ -1,16 +1,8 @@
 import { useEffect, useRef, useState } from "react";
 import { Terminal } from "@xterm/xterm";
 import { FitAddon } from "@xterm/addon-fit";
-import { DialogBody, DialogButton, DialogControlsSection, DialogControlsSectionHeader, Field } from "@decky/ui";
 import type { TerminalBridge } from "./bridge";
 import { ensureTerminalStyles } from "./terminalStyles";
-
-function encodeBytes(value: string): string {
-  const data = new TextEncoder().encode(value);
-  let binary = "";
-  for (const byte of data) binary += String.fromCharCode(byte);
-  return btoa(binary);
-}
 
 function decodeBytes(value: string): Uint8Array {
   const binary = atob(value);
@@ -171,45 +163,52 @@ export function TerminalView({ bridge }: { bridge: TerminalBridge }) {
     setCommand("");
   }
 
-  return <DialogBody>
-    <DialogControlsSection>
-      <DialogControlsSectionHeader>Terminal</DialogControlsSectionHeader>
-      <Field label="Sesja" description={status}>
-        <div style={{ display: "flex", gap: 8 }}>
-          <DialogButton disabled={pending || active} onClick={() => { void openSession(); }}>
-            {pending ? "Czekaj…" : active ? "Aktywny" : "Uruchom"}
-          </DialogButton>
-          <DialogButton disabled={!session.current} onClick={() => { void closeSession(); }}>
-            Zamknij
-          </DialogButton>
-        </div>
-      </Field>
-      <div className="steamhub-terminal" style={{ width: "100%", height: 400, padding: 10 }}>
-        <div ref={host} style={{ width: "100%", height: "100%" }} />
-      </div>
-      <Field label="Polecenie" description="Możesz też pisać bezpośrednio w terminalu na klawiaturze.">
-        <div style={{ width: "100%", display: "flex", gap: 8 }}>
-          <input aria-label="Polecenie terminala" type="text" value={command}
-            onChange={e => setCommand(e.target.value)}
-            onKeyDown={e => { if (e.key === "Enter") submitCommand(); }}
-            disabled={!active} style={{ flex: 1, minWidth: 0, borderRadius: 4, padding: 8 }} />
-          <DialogButton disabled={!active || !command.trim()} onClick={submitCommand}>Wyślij</DialogButton>
-        </div>
-      </Field>
-      <Field label="Przyciski terminala">
-        <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-          <DialogButton disabled={!active} onClick={() => send("\u0003")}>Ctrl+C</DialogButton>
-          <DialogButton disabled={!active} onClick={() => send("\t")}>Tab</DialogButton>
-          <DialogButton disabled={!active} onClick={() => send("\r")}>Enter</DialogButton>
-        </div>
-      </Field>
-      <Field label="Opcje zaawansowane">
-        <DialogButton onClick={() => setAdvanced(value => !value)}>
-          {advanced ? "Zwiń" : "Rozwiń"}
-        </DialogButton>
-      </Field>
-      {advanced && <Field label="Ochrona i przenośność"
-        description="Terminal działa jako zwykły użytkownik. Silnik PTY nie korzysta z Decky; jego adapter można zastąpić w przyszłej aplikacji Linux. Maksymalnie 3 sesje; bufor wyjścia jest ograniczony." />}
-    </DialogControlsSection>
-  </DialogBody>;
+  const buttonStyle = { padding: "8px 14px", borderRadius: 5, minHeight: 36 };
+  return <section style={{ width: "100%", display: "flex", flexDirection: "column", gap: 12 }}>
+    <h2 style={{ fontSize: "1.1rem", fontWeight: 600, margin: 0 }}>Terminal</h2>
+    <div role="status" aria-live="polite" style={{ fontSize: "0.85rem", opacity: 0.8 }}>
+      {status}
+    </div>
+    <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+      <button type="button" style={buttonStyle} disabled={pending || active}
+        onClick={() => { void openSession(); }}>
+        {pending ? "Czekaj…" : active ? "Aktywny" : "Uruchom sesję"}
+      </button>
+      <button type="button" style={buttonStyle} disabled={!session.current}
+        onClick={() => { void closeSession(); }}>Zamknij</button>
+    </div>
+    <div className="steamhub-terminal" style={{ width: "100%", height: 400, padding: 10 }}>
+      <div ref={host} style={{ width: "100%", height: "100%" }} />
+    </div>
+    <label style={{ display: "flex", flexDirection: "column", gap: 6, fontSize: "0.9rem" }}>
+      Polecenie (możesz też pisać bezpośrednio w terminalu)
+      <span style={{ display: "flex", gap: 8 }}>
+        <input aria-label="Polecenie terminala" type="text" value={command}
+          onChange={e => setCommand(e.target.value)}
+          onKeyDown={e => { if (e.key === "Enter") submitCommand(); }}
+          disabled={!active} style={{ flex: 1, minWidth: 0, borderRadius: 4, padding: 8 }} />
+        <button type="button" style={buttonStyle} disabled={!active || !command.trim()}
+          onClick={submitCommand}>Wyślij</button>
+      </span>
+    </label>
+    <div aria-label="Przyciski terminala" style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+      <button type="button" style={buttonStyle} disabled={!active}
+        onClick={() => send("\u0003")}>Ctrl+C</button>
+      <button type="button" style={buttonStyle} disabled={!active}
+        onClick={() => send("\t")}>Tab</button>
+      <button type="button" style={buttonStyle} disabled={!active}
+        onClick={() => send("\r")}>Enter</button>
+    </div>
+    <div>
+      <button type="button" style={buttonStyle} aria-expanded={advanced}
+        onClick={() => setAdvanced(value => !value)}>
+        Opcje zaawansowane {advanced ? "▲" : "▼"}
+      </button>
+      {advanced && <p style={{ fontSize: "0.85rem", lineHeight: 1.5 }}>
+        Terminal działa jako zwykły użytkownik, bez uprawnień root.
+        Silnik PTY jest niezależny od Decky i Steam. Maksymalnie trzy sesje;
+        bufor wyjścia jest ograniczony do 256 KiB.
+      </p>}
+    </div>
+  </section>;
 }
