@@ -187,7 +187,7 @@ class TransferManager:
                     self.send_header("Content-Length", str(len(body)))
                     self.send_header("Cache-Control", "no-store")
                     self.send_header("X-Content-Type-Options", "nosniff")
-                    self.send_header("Referrer-Policy", "no-referrer")
+                    self.send_header("Referrer-Policy", "same-origin")
                     self.send_header("X-Frame-Options", "DENY")
                     self.send_header("Content-Security-Policy", "default-src 'none'; style-src 'unsafe-inline'; script-src 'unsafe-inline'; connect-src 'self'; form-action 'self'; base-uri 'none'; frame-ancestors 'none'")
                     if extra:
@@ -213,15 +213,12 @@ class TransferManager:
                     """Distinguish browser header failures without loosening LAN/PIN checks.
 
                     Some browsers classify a same-host form submission as
-                    'same-site' rather than 'same-origin'. Accept that only
-                    with a matching Origin or Referer; never accept foreign
-                    origins or unauthenticated cross-site fetches.
+                    'same-site' or send Origin: null under strict privacy
+                    policies. A null Origin requires a same-origin Referer.
+                    Never accept foreign origins or cross-site fetches.
                     """
                     expected_host = manager.address[0] + ":" + str(manager.address[1])
                     expected_origin = "http://" + expected_host
-                    origin = self.headers.get("Origin")
-                    if origin is not None and origin != expected_origin:
-                        return "ORIGIN"
                     referer = self.headers.get("Referer")
                     referer_matches = False
                     if referer is not None:
@@ -229,6 +226,14 @@ class TransferManager:
                         referer_matches = parsed.scheme == "http" and parsed.netloc == expected_host
                         if not referer_matches:
                             return "REFERER"
+                    origin = self.headers.get("Origin")
+                    if origin is not None and origin != expected_origin:
+                        # With a privacy-restricted Origin, only a same-origin
+                        # Referer can establish that this is our own form.
+                        # Reject an explicit foreign Origin even with a
+                        # matching Referer; never grant access based on PIN alone.
+                        if origin != "null" or not referer_matches:
+                            return "ORIGIN"
                     fetch_site = self.headers.get("Sec-Fetch-Site")
                     if fetch_site is not None:
                         site = fetch_site.lower()

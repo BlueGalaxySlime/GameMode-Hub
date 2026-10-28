@@ -127,11 +127,35 @@ class TransferTests(unittest.TestCase):
             self.assertEqual(response.status, 200)
             self.assertIn("Połączono!".encode(), response.read())
 
+    def test_same_origin_referer_allows_private_origin_null(self):
+        """Browser privacy can turn a local form POST Origin into 'null'.
+
+        This is only safe with an independently matching local Referer.
+        The response policy permits Referer on this same origin only.
+        """
+        state = self.manager.start()
+        url = state["url"]
+        with urlopen(url, timeout=5) as response:
+            self.assertEqual(response.headers.get("Referrer-Policy"), "same-origin")
+        data = urlencode({"pin": state["pin"]}).encode()
+        for fetch_site in ("same-origin", "same-site"):
+            with self.subTest(fetch_site=fetch_site):
+                browser = build_opener(HTTPCookieProcessor(CookieJar()))
+                with browser.open(Request(url + "pair", data=data, headers={
+                    "Origin": "null", "Referer": url,
+                    "Sec-Fetch-Site": fetch_site,
+                }), timeout=5) as response:
+                    self.assertEqual(response.status, 200)
+                    self.assertIn("Połączono!".encode(), response.read())
+
     def test_paring_rejection_identifies_reason_without_disclosing_headers(self):
         state = self.manager.start()
         data = urlencode({"pin": state["pin"]}).encode()
         cases = [
             ({"Origin": "null"}, b"ORIGIN"),
+            ({"Origin": "null", "Referer": state["url"],
+              "Sec-Fetch-Site": "cross-site"}, b"METADANE"),
+            ({"Origin": "http://evil.example", "Referer": state["url"]}, b"ORIGIN"),
             ({"Referer": "http://evil.example/"}, b"REFERER"),
             ({"Sec-Fetch-Site": "cross-site"}, b"METADANE"),
             ({"Sec-Fetch-Site": "same-site"}, b"METADANE"),

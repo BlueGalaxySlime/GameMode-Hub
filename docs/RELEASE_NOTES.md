@@ -1,3 +1,10 @@
+# GameMode Hub 0.5.27 (testowy)
+
+- **Transfer Mac → Lenovo — poprawka ORIGIN:** zmieniono politykę Referer z `no-referrer` na `same-origin`. Formularz parowania może teraz przekazać Referer w obrębie tej samej lokalnej strony, bez wysyłania go do obcych witryn.
+- **Origin: null:** Safari i Firefox mogą użyć tej wartości przy rygorystycznych ustawieniach prywatności. Serwer dopuszcza ją wyłącznie, gdy Referer dokładnie odpowiada lokalnemu adresowi transferu; odrzuca obce Origin, obce Referer oraz żądania `cross-site`.
+- **Zabezpieczenia bez zmian:** prywatny adres IPv4, zgodny Host, wymagany 8-cyfrowy PIN, ograniczenia prób, sesja, limit rozmiaru plików, bez nadpisywania plików i bez roota. HTTP tylko w zaufanej sieci.
+- **Testy regresji:** sprawdzono scenariusze `Origin: null` dla `same-origin` i `same-site`, a także odrzucenie obcych żądań. Działanie w rzeczywistych Safari/Firefox wymaga jeszcze potwierdzenia na urządzeniach.
+
 # GameMode Hub 0.5.26 (testowy)
 
 - **Transfer Wi-Fi — diagnostyka odmowy po wpisaniu PIN:** zamiast identycznego komunikatu dla wszystkich blokad serwer podaje kod: SIEC, ADRES, ORIGIN, REFERER lub METADANE. Kody nie ujawniają adresów urządzeń, nagłówków, PIN-ów ani ciasteczek; pozwalają ustalić, co dokładnie zablokowało parowanie na Macu.
