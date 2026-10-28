@@ -29,7 +29,7 @@ from desktop_apps import (list_desktop_apps, get_desktop_state, set_desktop_sett
 from trash_manager import trash_entry, list_trash, restore_entry
 from lan_transfer import TransferManager
 
-CURRENT_VERSION = "0.5.28"
+CURRENT_VERSION = "0.5.29"
 RELEASES_API = "https://api.github.com/repos/BlueGalaxySlime/GameMode-Hub/releases/latest"
 ASSET_NAME = "GameMode-Hub.zip"
 

@@ -1,4 +1,4 @@
-import { DialogButton, ModalRoot } from "@decky/ui";
+import { DialogButton, Focusable, ModalRoot, NavEntryPositionPreferences } from "@decky/ui";
 
 export function DesktopRulesDialog({ automaticFlatpak, overridden, closeModal }: {
   automaticFlatpak: number; overridden: number; closeModal?: () => void;
@@ -37,12 +37,16 @@ export function ResetDesktopRulesDialog({ onConfirm, closeModal }: {
         Ręczne przypisania Flatpak/Systemowe zostaną zastąpione automatycznym
         wykrywaniem. Ulubione, ukryte aplikacje, skróty i sortowanie pozostaną bez zmian.
       </div>
-      <div style={{ display: "flex", gap: 8 }}>
-        <DialogButton onClick={() => closeModal?.()}>Anuluj</DialogButton>
-        <DialogButton onClick={() => { closeModal?.(); onConfirm(); }}>
+      <Focusable flow-children="row"
+        navEntryPreferPosition={NavEntryPositionPreferences.MAINTAIN_X}
+        style={{ display: "flex", flexDirection: "row", gap: 8, width: "100%" }}>
+        <DialogButton preferredFocus style={{ flex: "1 1 0", minWidth: 0 }}
+          onClick={() => closeModal?.()}>Anuluj</DialogButton>
+        <DialogButton style={{ flex: "1 1 0", minWidth: 0 }}
+          onClick={() => { closeModal?.(); onConfirm(); }}>
           Resetuj do automatycznych
         </DialogButton>
-      </div>
+      </Focusable>
     </div>
   </ModalRoot>;
 }

@@ -1,3 +1,9 @@
+# GameMode Hub 0.5.29 (testowy)
+
+- **Pulpit → Reguły widoku → Resetuj do automatycznych:** przyciski Anuluj/Resetuj korzystają z poziomego kontenera nawigacji SteamOS (lewo/prawo); domyślnie wskazane jest „Anuluj”.
+- **Jedno okno:** menu wywołuje otwarcie tylko przez onSelected, a blokada zapobiega utworzeniu drugiego modala przed zamknięciem pierwszego. Ta sama ochrona dotyczy „Pokaż reguły”.
+- **Testy:** dodane kontrole poziomego sterowania i pojedynczego okna. Zmiany nie obejmują menu Plików ani transferu Wi-Fi. Fizyczne sterowanie na Lenovo wymaga sprawdzenia.
+
 # GameMode Hub 0.5.28 (testowy)
 
 - **Pliki — obsługa Y:** awaryjne przechwytywanie Y wewnątrz zakładki Pliki, gdy zaznaczony wiersz nie obsługuje zdarzenia. Pozostawiono natywne menu kontekstowe ze wszystkimi akcjami, w tym Transfer Wi-Fi, Kosz, Ulubione, sortowanie, zaznaczanie, kopiowanie i przenoszenie.

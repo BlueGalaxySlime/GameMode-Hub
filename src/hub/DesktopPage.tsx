@@ -61,6 +61,7 @@ export function DesktopPage() {
   const scrollRef = useRef<HTMLDivElement>(null);
   const searchControlRef = useRef<HTMLDivElement>(null);
   const categorySavingRef = useRef(false);
+  const rulesModalOpenRef = useRef(false);
 
   async function refresh() {
     setBusy(true);
@@ -209,18 +210,39 @@ export function DesktopPage() {
   }
 
   function openResetRules() {
-    window.setTimeout(() => showModal(
-      <ResetDesktopRulesDialog onConfirm={() => { void resetCategoryOverrides(); }} />
-    ), 0);
+    // Guard on selection, not after the native Steam menu finishes closing.
+    if (rulesModalOpenRef.current) return;
+    rulesModalOpenRef.current = true;
+    window.setTimeout(() => {
+      try {
+        const dialog = showModal(
+          <ResetDesktopRulesDialog onConfirm={() => { void resetCategoryOverrides(); }} />
+        );
+        void dialog.ClosedPromise.finally(() => { rulesModalOpenRef.current = false; });
+      } catch {
+        rulesModalOpenRef.current = false;
+        setMessage("Nie udało się otworzyć potwierdzenia resetu.");
+      }
+    }, 0);
   }
 
   function openRules() {
+    if (rulesModalOpenRef.current) return;
+    rulesModalOpenRef.current = true;
     const countFlatpak = apps.filter(app => app.flatpak).length;
     const countOverrides = apps.filter(app =>
       stored.apps[app.id]?.category && stored.apps[app.id].category !== "auto").length;
-    window.setTimeout(() => showModal(
-      <DesktopRulesDialog automaticFlatpak={countFlatpak} overridden={countOverrides} />
-    ), 0);
+    window.setTimeout(() => {
+      try {
+        const dialog = showModal(
+          <DesktopRulesDialog automaticFlatpak={countFlatpak} overridden={countOverrides} />
+        );
+        void dialog.ClosedPromise.finally(() => { rulesModalOpenRef.current = false; });
+      } catch {
+        rulesModalOpenRef.current = false;
+        setMessage("Nie udało się otworzyć reguł widoku.");
+      }
+    }, 0);
   }
 
   function openAppMenu(app: DesktopApp, parent: EventTarget) {
@@ -311,9 +333,9 @@ export function DesktopPage() {
               onClick={() => setSortMode(item.key)}>{item.label}</MenuItem>)}
         </MenuGroup>
         <MenuGroup label="Reguły widoku">
-          <MenuItem onSelected={openRules} onClick={openRules}>Pokaż reguły</MenuItem>
+          <MenuItem onSelected={openRules}>Pokaż reguły</MenuItem>
           <MenuItem disabled={busy || !!working || !hasManualOverrides}
-            onSelected={openResetRules} onClick={openResetRules}>
+            onSelected={openResetRules}>
             Resetuj do automatycznych
           </MenuItem>
         </MenuGroup>

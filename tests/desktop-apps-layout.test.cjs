@@ -186,3 +186,17 @@ test("Desktop Rules View offers confirmation before reset to auto", () => {
   assert.ok(backend.includes('async def desktop_reset_categories('));
   assert.ok(data.includes('def reset_desktop_categories():'));
 });
+
+test("Reset modal uses left/right gamepad navigation and opens only once", () => {
+  const rules = fs.readFileSync("src/hub/DesktopRulesDialog.tsx", "utf8");
+  assert.ok(rules.includes('<Focusable flow-children="row"'));
+  assert.ok(rules.includes('navEntryPreferPosition={NavEntryPositionPreferences.MAINTAIN_X}'));
+  assert.ok(rules.includes('<DialogButton preferredFocus'));
+  assert.ok(page.includes('const rulesModalOpenRef = useRef(false)'));
+  assert.ok(page.includes('if (rulesModalOpenRef.current) return;'));
+  assert.ok(page.includes('dialog.ClosedPromise.finally('));
+  assert.ok(page.includes('<MenuItem onSelected={openRules}>'));
+  assert.ok(page.includes('onSelected={openResetRules}>'));
+  assert.ok(!page.includes('onClick={openRules}'));
+  assert.ok(!page.includes('onClick={openResetRules}'));
+});
