@@ -45,11 +45,6 @@ export function HubOptionsPage() {
         <Toggle value={options.saveSession} disabled={saving}
           onChange={value => { void update("saveSession", value); }} />
       </Field>
-      <Field label="Podział drzewa plików"
-        description="Podział dotyczy tylko listy plików: katalogi po lewej, pliki po prawej. Obie kolumny przewijają się osobno, a górne opcje pozostają na miejscu.">
-        <Toggle value={options.splitFileTree} disabled={saving}
-          onChange={value => { void update("splitFileTree", value); }} />
-      </Field>
       {error && <Field label="Błąd" description={error} />}
     </DialogControlsSection>
   </DialogBody>;
