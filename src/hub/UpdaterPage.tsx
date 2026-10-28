@@ -37,7 +37,7 @@ async function checkBrowser(): Promise<UpdateResult> {
       ? asset.browser_download_url : null;
     const sha256 = typeof asset?.digest === "string" && /^sha256:[a-fA-F0-9]{64}$/.test(asset.digest)
       ? asset.digest.slice(7) : null;
-    const parse = (v: string) => /^v?(\\d+)\\.(\\d+)\\.(\\d+)$/.exec(v)?.slice(1).map(Number);
+    const parse = (v: string) => /^v?(\d+)\.(\d+)\.(\d+)$/.exec(v)?.slice(1).map(Number);
     const a = parse(latest), b = parse(VERSION);
     const newer = !!a && !!b && (a[0] > b[0] || (a[0] === b[0] &&
       (a[1] > b[1] || (a[1] === b[1] && a[2] > b[2]))));
