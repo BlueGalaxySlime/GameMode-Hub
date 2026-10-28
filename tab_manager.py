@@ -149,3 +149,41 @@ def delete_tab_profile(name):
     del profiles[name]
     _write_profiles(profiles)
     return sorted(profiles)
+
+# The Steam-provided tabs are never deleted. Keep only a list of hidden Steam tab
+# IDs, independent from user-created Hub tabs and all native Steam data.
+HIDDEN_STEAM_TABS_FILE = SETTINGS_FILE.with_name("hidden_steam_tabs.json")
+MAX_HIDDEN_STEAM_TABS = 64
+
+
+def validate_hidden_steam_tabs(value):
+    import re
+    if not isinstance(value, list) or len(value) > MAX_HIDDEN_STEAM_TABS:
+        raise ValueError("Nieprawidłowa lista ukrytych kart Steam.")
+    ids = []
+    for tab_id in value:
+        if not isinstance(tab_id, str) or not re.fullmatch(r"[A-Za-z0-9_.:-]{1,96}", tab_id):
+            raise ValueError("Nieprawidłowy identyfikator karty Steam.")
+        if tab_id.startswith(("GameModeHub:", "SteamHub:", "steamhub:")):
+            raise ValueError("Własne karty zapisuje się oddzielnie.")
+        if tab_id not in ids:
+            ids.append(tab_id)
+    return ids
+
+
+def read_hidden_steam_tabs():
+    try:
+        content = json.loads(HIDDEN_STEAM_TABS_FILE.read_text(encoding="utf-8"))
+    except FileNotFoundError:
+        return []
+    return validate_hidden_steam_tabs(content)
+
+
+def save_hidden_steam_tabs(value):
+    clean = validate_hidden_steam_tabs(value)
+    HIDDEN_STEAM_TABS_FILE.parent.mkdir(parents=True, exist_ok=True)
+    temporary = HIDDEN_STEAM_TABS_FILE.with_suffix(".tmp")
+    temporary.write_text(json.dumps(clean, ensure_ascii=False), encoding="utf-8")
+    temporary.replace(HIDDEN_STEAM_TABS_FILE)
+    return clean
+
