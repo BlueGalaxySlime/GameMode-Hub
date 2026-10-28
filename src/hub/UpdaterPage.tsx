@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { callable } from "@decky/api";
 import {
   DialogBody, DialogButton, DialogControlsSection,
-  DialogControlsSectionHeader, Field
+  DialogControlsSectionHeader, Field, Menu, MenuItem, showContextMenu
 } from "@decky/ui";
 import { RequestTimeoutError, withTimeout } from "../utils/withTimeout";
 import { APP_NAME, DECKY_PLUGIN_NAME } from "../core/identity";
@@ -130,6 +130,41 @@ export function UpdaterPage() {
     else setMessage("Wybrano aktualizację do wersji " + entry.version + ".");
   }
 
+  // Native Steam overlay: options appear above the update screen, rather
+  // than growing the page vertically and making the D-pad scroll past them.
+  function openChannelMenu(parent: EventTarget) {
+    if (busy.current || checking) return;
+    showContextMenu(
+      <Menu label="Kanał aktualizacji" cancelText="Wstecz">
+        <MenuItem selected={channel === "test"}
+          onSelected={() => { void chooseChannel("test"); }}>Testowy</MenuItem>
+        <MenuItem selected={channel === "stable"}
+          onSelected={() => { void chooseChannel("stable"); }}>Stabilny</MenuItem>
+      </Menu>,
+      parent,
+      { bFitToWindow: true, bShiftToFitWindow: true, bPreferPopTop: true }
+    );
+  }
+
+  function openVersionsMenu(parent: EventTarget) {
+    if (busy.current || checking || entries.length === 0) return;
+    showContextMenu(
+      <Menu label="Wybierz wersję" cancelText="Wstecz">
+        {entries.map(entry =>
+          <MenuItem key={entry.version}
+            selected={selected?.version === entry.version}
+            onSelected={() => selectVersion(entry)}>
+            {entry.version +
+              (entry.action === "downgrade" ? " — Downgrade" :
+                entry.action === "upgrade" ? " — Aktualizacja" : " — Zainstalowana") +
+              (entry.legacy ? " (archiwalna)" : "")}
+          </MenuItem>)}
+      </Menu>,
+      parent,
+      { bFitToWindow: true, bShiftToFitWindow: true, bPreferPopTop: true }
+    );
+  }
+
   async function install() {
     const target = selected;
     if (busy.current || !target || target.action === "installed") return;
@@ -174,13 +209,11 @@ export function UpdaterPage() {
     <DialogControlsSection>
       <DialogControlsSectionHeader>Aktualizacje {APP_NAME}</DialogControlsSectionHeader>
       <Field label="Zainstalowana wersja" description={VERSION} />
-      <Field label="Kanał aktualizacji" description="Stabilny — dopiero po zatwierdzeniu na urządzeniu. Testowy — wersje rozwojowe.">
-        <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
-          <DialogButton disabled={checking} style={{ background: channel === "test" ? "#426b99" : undefined }}
-            onClick={() => { void chooseChannel("test"); }}>Testowy</DialogButton>
-          <DialogButton disabled={checking} style={{ background: channel === "stable" ? "#426b99" : undefined }}
-            onClick={() => { void chooseChannel("stable"); }}>Stabilny</DialogButton>
-        </div>
+      <Field label="Kanał aktualizacji" description="Stabilny — po zatwierdzeniu na urządzeniu. Testowy — wersje rozwojowe.">
+        <DialogButton disabled={checking} onOKActionDescription="Wybierz kanał"
+          onClick={event => openChannelMenu(event.currentTarget ?? window)}>
+          {channel === "test" ? "Testowy" : "Stabilny"} ▾
+        </DialogButton>
       </Field>
       <Field label="Dostępne wersje" description="Sprawdzane tylko na żądanie. Maksymalnie 50 ostatnich wydań GitHub.">
         <DialogButton disabled={checking} onClick={() => { void check(); }}>
@@ -192,17 +225,14 @@ export function UpdaterPage() {
           ? "Nie ma jeszcze zatwierdzonego wydania Stabilnego."
           : "Nie znaleziono wersji Testowych ze sprawdzalnym plikiem ZIP."} />}
       {entries.length > 0 && <Field label="Wybierz wersję"
-        description="Wersje z sumą SHA-256. Starsze zostaną oznaczone jako cofnięcie (downgrade).">
-        <div style={{ display: "flex", flexDirection: "column", gap: 6, width: "100%" }}>
-          {entries.map(entry =>
-            <DialogButton key={entry.version} disabled={checking}
-              style={{ background: selected === entry ? "#426b99" : undefined }}
-              onClick={() => selectVersion(entry)}>
-              {entry.version + (entry.action === "downgrade" ? " — Downgrade" :
-                entry.action === "upgrade" ? " — Aktualizacja" : " — Zainstalowana") +
-                (entry.legacy ? " (archiwalna)" : "")}
-            </DialogButton>)}
-        </div>
+        description="Lista otworzy się nad stroną. Starsze wersje są oznaczone jako downgrade.">
+        <DialogButton disabled={checking} onOKActionDescription="Wybierz wersję"
+          onClick={event => openVersionsMenu(event.currentTarget ?? window)}>
+          {selected
+            ? selected.version + (selected.action === "downgrade" ? " — Downgrade" :
+                selected.action === "installed" ? " — Zainstalowana" : " — Aktualizacja")
+            : "Wybierz z " + entries.length + " dostępnych wersji"} ▾
+        </DialogButton>
       </Field>}
       {selected && selected.action !== "installed" &&
         <Field label={"Wybrana wersja: " + selected.version}
