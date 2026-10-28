@@ -10,6 +10,11 @@ const updater = fs.readFileSync("src/hub/UpdaterPage.tsx", "utf8");
 const hubOptions = fs.readFileSync("src/hub/HubOptionsPage.tsx", "utf8");
 const hubTextInput = fs.readFileSync("src/hub/HubTextInput.tsx", "utf8");
 const terminalInput = fs.readFileSync("src/modules/terminal/TerminalView.tsx", "utf8");
+const creditsPage = fs.readFileSync("src/hub/CreditsPage.tsx", "utf8");
+const infoField = fs.readFileSync("src/hub/FocusableInfoField.tsx", "utf8");
+const infoScroll = fs.readFileSync("src/hub/GamepadScrollArea.tsx", "utf8");
+const hubPage = fs.readFileSync("src/hub/HubPage.tsx", "utf8");
+const terminalPage = fs.readFileSync("src/hub/DeckyTerminalAdapter.tsx", "utf8");
 const compiled = ts.transpileModule(fs.readFileSync("src/core/filePath.ts", "utf8"), {
   compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2020 }
 }).outputText;
@@ -161,4 +166,36 @@ test("tag navigation is horizontal, the address sits directly above a full-width
   assert.ok(ui.includes('width: splitTree ? "50%" : "100%"'));
   assert.ok(ui.includes('width: "100%", minWidth: 0, height: "min(54vh, 540px)"'));
   assert.equal(ui.split('onOKActionDescription="Edytuj ścieżkę"').length - 1, 1);
+});
+
+test("plain text information is never collapsed in credits, desktop, or terminal", () => {
+  assert.ok(creditsPage.includes("focusable highlightOnFocus"));
+  assert.ok(creditsPage.includes("<GamepadScrollArea>"));
+  assert.ok(creditsPage.includes("credit.authors +"));
+  assert.ok(!creditsPage.includes("setExpanded"));
+  assert.ok(!creditsPage.includes("Rozwiń opis"));
+  assert.ok(infoField.includes('import { Field } from "@decky/ui"'));
+  assert.ok(infoField.includes("focusable highlightOnFocus"));
+  assert.ok(!infoField.includes("useState"));
+  assert.ok(!infoField.includes("DialogButton"));
+  assert.ok(hubPage.includes("<GamepadScrollArea>"));
+  assert.ok(terminalPage.includes("<GamepadScrollArea>"));
+});
+
+test("gamepad focus scrolls through full plain text instead of opening submenus", () => {
+  assert.ok(infoScroll.includes('<Focusable flow-children="column"'));
+  assert.ok(infoScroll.includes("onFocusCapture={event =>"));
+  assert.ok(infoScroll.includes('target.scrollIntoView({ block: "nearest"'));
+  assert.ok(infoScroll.includes('overflowY: "auto"'));
+  assert.ok(infoScroll.includes('maxHeight: "min(66vh, 620px)"'));
+});
+
+test("removing a favourite deletes only its bookmark, never the underlying folder", () => {
+  assert.ok(ui.includes('Dodaj zakładkę bieżącego folderu'));
+  assert.ok(ui.includes('Otwórz zakładkę: ★ '));
+  assert.ok(ui.includes('Usuń zakładkę (bez usuwania plików): '));
+  assert.ok(ui.includes('changeFavorites(favorites.filter(p => p !== path))'));
+  assert.ok(!ui.includes('Usuń zapisany folder'));
+  assert.ok(!ui.includes('unlink('));
+  assert.ok(!ui.includes('rmdir('));
 });
