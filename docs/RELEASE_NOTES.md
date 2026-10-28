@@ -1,3 +1,10 @@
+# GameMode Hub 0.5.4 — zwykłe numery wersji
+
+- Kanały Testowy i Stabilny pozostają w aktualizatorze, ale nowe wydania mają **wyłącznie numer**, np. `v0.5.4`, bez nazw i dopisków w tagu.
+- O kanale decyduje flaga wydania `prerelease` na GitHubie. Bieżące wydanie jest testowe, a Stabilny pozostaje pusty.
+- Starsze wydania, w tym historyczne `v0.5.3-test.1`, zostają zachowane jako możliwe wersje do cofnięcia.
+- Zachowano wybór wersji, potwierdzenie downgrade'u, weryfikację SHA-256 i działanie w SteamOS Quick Access przez Decky.
+
 # GameMode Hub 0.5.3-test.1 — kanały aktualizacji i wybór wersji
 
 - Pierwsze wydanie **Testowe** (oznaczone prerelease). Kanał **Stabilny** pozostaje pusty do czasu weryfikacji na urządzeniu.

@@ -1,4 +1,5 @@
-/** Release selection is platform-independent; installation belongs to a Decky adapter. */
+/** Versions use numeric tags. GitHub prerelease metadata selects the channel.
+ *  Old -test.N tags stay readable only to support rollback. */
 export type UpdateChannel = "test" | "stable";
 export type InstallAction = "upgrade" | "downgrade" | "installed";
 export type ReleaseEntry = {
@@ -52,7 +53,7 @@ export function selectReleases(payload: unknown, channel: UpdateChannel, current
     if (channel === "stable") {
       if (candidate.prerelease || v[3] !== 1 || !minimum(v, [0, 6, 0])) continue;
     } else {
-      const modernTest = candidate.prerelease === true && v[3] === 0 && minimum(v, [0, 5, 3]);
+      const modernTest = candidate.prerelease === true && minimum(v, [0, 5, 3]);
       const rollback = tag === "v0.5.2" && !candidate.prerelease;
       if (!modernTest && !rollback) continue;
     }

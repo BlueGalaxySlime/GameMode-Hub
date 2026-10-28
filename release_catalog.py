@@ -1,7 +1,8 @@
 """Explicit test/stable GitHub release channels and safe downgrade catalog.
 
-No automatic update or shell execution. Retain the legacy 0.5.2 release
-as a TEST rollback choice, because it is the first GameMode Hub identity.
+Numeric version tags are used in both channels: GitHub's prerelease flag alone
+marks a release as testing. Previous suffixed tags remain valid for downgrade.
+No automatic update or shell execution. Retain v0.5.2 as a rollback target.
 """
 import re
 
@@ -10,7 +11,7 @@ RELEASES_API = "https://api.github.com/repos/BlueGalaxySlime/GameMode-Hub/releas
 DOWNLOAD_PREFIX = "https://github.com/BlueGalaxySlime/GameMode-Hub/releases/download/"
 CHANNELS = ("test", "stable")
 _STABLE_MIN = (0, 6, 0)
-_TEST_MIN = (0, 5, 3)
+_TEST_MIN = (0, 5, 3)  # 0.5.3-test.1 remains a historical rollback
 _TAG = re.compile(r"^v?(\d+)\.(\d+)\.(\d+)(?:-test\.(\d+))?$")
 
 
@@ -48,7 +49,7 @@ def catalog(releases, channel, installed):
         if channel == "stable":
             if release.get("prerelease") or parsed[3] != 1 or numeric < _STABLE_MIN:
                 continue
-        elif not ((release.get("prerelease") is True and parsed[3] == 0 and numeric >= _TEST_MIN)
+        elif not ((release.get("prerelease") is True and numeric >= _TEST_MIN)
                    or (tag == "v0.5.2" and not release.get("prerelease"))):
             continue
         assets = release.get("assets")

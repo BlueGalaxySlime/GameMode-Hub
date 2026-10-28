@@ -1,14 +1,15 @@
 # GameMode Hub — kanały i wybór wersji
 
 ## Testowy (domyślny)
-- Wydania oznaczone `vX.Y.Z-test.N` oraz `prerelease` na GitHub Releases.
+- Wydania mają wyłącznie numer `vX.Y.Z`, bez nazw i dopisków takich jak `-test`. O kanale decyduje status **prerelease** w GitHub Releases.
+- Starsze, już opublikowane tagi z dopiskiem `-test.N` pozostają w historii, aby zachować możliwość powrotu.
 - Awaryjnie dostępna także archiwalna wersja `v0.5.2` (pierwsza z tożsamością GameMode Hub), aby można było się cofnąć.
 - Zmiany są eksperymentalne, nawet gdy testy CI przejdą pomyślnie.
 
 ## Stabilny (na razie pusty)
 - Dopiero przyszłe wydania `v0.6.0` lub nowsze, bez oznaczenia `prerelease`, które przeszły osobną weryfikację na urządzeniu.
 - Poprzednie wydania `v0.5.0` i `v0.5.2` nigdy nie były zweryfikowane jako stabilne i nie są pokazywane w kanale Stabilnym.
-- GitHub Actions **nigdy nie publikuje automatycznie wydania Stabilnego**.
+- GitHub Actions publikuje aktualne numery wersji tylko z flagą `--prerelease`; **nigdy nie publikuje automatycznie wydania Stabilnego**.
 
 ## Działanie aktualizatora
 1. Ustaw kanał. Wybór jest zapisywany w `~/.config/gamemodehub/update_channel.json`.

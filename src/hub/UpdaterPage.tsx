@@ -8,7 +8,7 @@ import { RequestTimeoutError, withTimeout } from "../utils/withTimeout";
 import { APP_NAME, DECKY_PLUGIN_NAME } from "../core/identity";
 import { ReleaseEntry, UpdateChannel, selectReleases } from "../core/releaseCatalog";
 
-const VERSION = "0.5.3-test.1";
+const VERSION = "0.5.4";
 const URL = "https://api.github.com/repos/BlueGalaxySlime/GameMode-Hub/releases?per_page=50";
 const getChannel = callable<[], UpdateChannel>("get_update_channel");
 const saveChannel = callable<[UpdateChannel], UpdateChannel>("set_update_channel");
@@ -162,7 +162,7 @@ export function UpdaterPage() {
   return <DialogBody>
     <DialogControlsSection>
       <DialogControlsSectionHeader>Aktualizacje {APP_NAME}</DialogControlsSectionHeader>
-      <Field label="Zainstalowana wersja" description={VERSION + " — wydanie testowe"} />
+      <Field label="Zainstalowana wersja" description={VERSION} />
       <Field label="Kanał aktualizacji" description="Stabilny — dopiero po zatwierdzeniu na urządzeniu. Testowy — wersje rozwojowe.">
         <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
           <DialogButton disabled={checking} style={{ background: channel === "test" ? "#426b99" : undefined }}
