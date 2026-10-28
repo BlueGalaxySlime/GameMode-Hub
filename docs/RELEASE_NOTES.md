@@ -1,3 +1,12 @@
+# GameMode Hub 0.5.49 (testowy)
+
+- **Karty bezpośrednio z biblioteki.** Na zaznaczonej karcie w Gaming Mode przycisk ☰ otwiera natywne menu SteamOS: Dodaj kartę, Szybkie karty, Profile, Kolejność, Ukryj/Pokaż. Nie ma już dodatkowej karty „+” ani formularza edycji w Optymalizacji.
+- **Karty Steam są chronione.** Hub nigdy nie usuwa i nie zmienia nazw kart dostarczonych przez Steam. Można je tymczasowo ukryć. Opcja zmiany nazwy systemowej tworzy zamiast tego własną kartę Huba z tą samą zawartością i ukrywa oryginał; ponowne pokazanie karty Steam pozostaje możliwe.
+- **Tylko własne karty Huba można edytować i usuwać.** Usunięcie karty Huba nie usuwa żadnej kolekcji ani gry.
+- **Optymalizacja → Karty:** zamiast przełącznika są przyciski Zarządzaj (przejście do biblioteki) i Wyświetlaj (ukrywanie/pokazywanie kart Steam i Huba). Menu jest natywne, używa kolorów aktualnego motywu SteamOS, bez wymuszonej zieleni.
+- **Kopia zapasowa:** zapisuje teraz również listę ukrytych kart systemowych, aby po przywróceniu odtworzyć widoczność. Starsze kopie bez tego pola nadal można odczytać.
+- **Eksperymentalna integracja Gaming Mode:** TabMaster musi być wyłączony; test na fizycznym Lenovo nadal wymagany.
+
 # GameMode Hub 0.5.48 (testowy)
 
 - **Optymalizacja bez pasków podzakładek.** Jeden widok jak w Opcjach Huba: Gaming Mode, Karty, Kolekcje i Kopia zapasowa jako zwykłe sekcje. Usunięto puste zakładki Obraz/Konsola i zbędne opisy.
