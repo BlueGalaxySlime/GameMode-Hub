@@ -14,7 +14,7 @@ ASSET_NAME = "SteamHub.zip"
 
 
 def _version(value):
-    match = re.fullmatch(r"v?(\d+)\.(\d+)\.(\d+)", value or "")
+    match = re.fullmatch(r"v?(\d+)\.(\d+)\.(\d+)(?:-([0-9A-Za-z.-]+))?", value or "")
     return (*map(int, match.groups()[:3]), 0 if match.group(4) else 1) if match else None
 
 
