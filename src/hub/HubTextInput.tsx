@@ -5,6 +5,51 @@ import { getHubPreferences, subscribeHubPreferences } from "../core/hubSession";
 import { moveTextCaret, selectionWithHead } from "../core/textSelection";
 import type { TextDirection } from "../core/textSelection";
 
+/** Open native text actions while the row is focused but the Steam keyboard is closed. */
+export function openHubTextMenu(args: {
+  parent: EventTarget;
+  value: string;
+  onEditValue?: (next: string) => void;
+  onStartSelection: (all?: boolean) => void;
+  onClear?: () => void;
+  onUndoClear?: () => void;
+  canUndoClear?: boolean;
+}) {
+  const { parent, value, onEditValue, onStartSelection, onClear, onUndoClear, canUndoClear } = args;
+  async function copyAll(cut: boolean) {
+    if (!value) return;
+    try {
+      await navigator.clipboard.writeText(value);
+      if (cut) onEditValue?.("");
+    } catch {
+      // No mutations when SteamOS denies clipboard access.
+    }
+  }
+  async function paste() {
+    try {
+      const contents = await navigator.clipboard.readText();
+      if (contents && onEditValue) onEditValue(value + contents);
+    } catch {
+      // Clipboard may be inaccessible in Gaming Mode.
+    }
+  }
+  showContextMenu(
+    <Menu label="Edycja tekstu">
+      <MenuItem disabled={!value} onSelected={() => onStartSelection(false)}>
+        Tryb zaznaczania tekstu
+      </MenuItem>
+      <MenuItem disabled={!value} onSelected={() => onStartSelection(true)}>Zaznacz wszystko</MenuItem>
+      <MenuItem disabled={!value} onSelected={() => { void copyAll(false); }}>Kopiuj</MenuItem>
+      <MenuItem disabled={!value || !onEditValue} onSelected={() => { void copyAll(true); }}>Wytnij</MenuItem>
+      <MenuItem disabled={!onEditValue} onSelected={() => { void paste(); }}>Wklej</MenuItem>
+      <MenuItem disabled={!value || !onEditValue} onSelected={() => {
+        if (onClear) onClear(); else onEditValue?.("");
+      }}>Wyczyść wszystko</MenuItem>
+      {canUndoClear && onUndoClear && <MenuItem onSelected={onUndoClear}>Cofnij wyczyszczenie</MenuItem>}
+    </Menu>, parent, { bFitToWindow: true, bShiftToFitWindow: true, bPreferPopTop: true }
+  );
+}
+
 type Editor = HTMLInputElement | HTMLTextAreaElement;
 type EditControlsProps = {
   value: string;
@@ -195,8 +240,8 @@ function TextEditControls({ value, disabled, onEditValue, onExitEdit, multiline,
       if (selectingRef.current) exitSelectionMode();
       else onExitEdit?.();
     }}
-    onOptionsActionDescription="Edycja tekstu"
-    onOptionsButton={event => {
+    onMenuActionDescription="Edycja tekstu"
+    onMenuButton={event => {
       if (event.defaultPrevented || (!editor() && !selectingRef.current)) return;
       event.preventDefault();
       event.stopPropagation();
@@ -217,8 +262,8 @@ function TextEditControls({ value, disabled, onEditValue, onExitEdit, multiline,
           event.stopPropagation();
           exitSelectionMode();
         }}
-        onOptionsActionDescription="Edycja tekstu"
-        onOptionsButton={event => {
+        onMenuActionDescription="Edycja tekstu"
+        onMenuButton={event => {
           event.preventDefault();
           event.stopPropagation();
           openTextMenu(event.currentTarget ?? window);
@@ -261,7 +306,7 @@ function TextEditControls({ value, disabled, onEditValue, onExitEdit, multiline,
         </span>
       </DialogButton>
       <div role="status" style={{ fontSize: 11, opacity: 0.9 }}>
-        Zaznaczanie: krzyżak wybiera tekst · Y: kopiuj / wytnij / wklej · B: wyjdź
+        Zaznaczanie: krzyżak wybiera tekst · ☰: kopiuj / wytnij / wklej · B: wyjdź
       </div>
     </div>}
     {!!message && <span role="status" style={{ fontSize: 11, opacity: 0.9 }}>{message}</span>}
