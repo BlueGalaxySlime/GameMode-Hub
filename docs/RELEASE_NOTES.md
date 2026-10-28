@@ -1,3 +1,11 @@
+# GameMode Hub 0.5.14 (testowy)
+
+- **Pliki — fokus:** po otwarciu katalogu lub przejściu poziom wyżej interfejs przenosi fokus do nowego drzewa zamiast oddawać go zakładkom bocznym. Podczas wczytywania przyciski listy pozostają nawigowalne, co zapobiega utracie fokusu.
+- **Pliki — układ:** na górze pokazane są informacje o widoku, sortowaniu, ukrytych elementach i podziale; poniżej poziomy pasek tagów katalogów (lewo/prawo), potem wspólny pasek adresu z menu Y, a bezpośrednio pod nim drzewo plików.
+- **Pliki — bez podziału:** lista nadal wykorzystuje 100% dostępnej szerokości. Przy podziale oba panele zachowują osobne katalogi.
+- **Sterowanie:** tagi lokalizacji są pojedynczą, poziomą grupą fokusowania; także tag aktualnie otwartego katalogu pozostaje nawigowalny.
+- **Bez zmian w bezpieczeństwie:** uruchamianie terminala pozostaje w trybie bezpiecznym; ulubione i schowek z wydania 0.5.13 zostają zachowane.
+
 # GameMode Hub 0.5.13 (testowy)
 
 - **Pliki — ulubione:** menu Y na wspólnym pasku adresu → Ulubione → dodawanie bieżącego folderu, szybkie przechodzenie do zapisanych katalogów i usuwanie wpisów. Lista zostaje zachowana po aktualizacji.
