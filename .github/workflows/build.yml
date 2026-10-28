@@ -32,9 +32,11 @@ jobs:
       - name: Build Decky frontend
         run: npm run build
       - name: Check Python syntax
-        run: python3 -m py_compile main.py hub_settings.py terminal_core/*.py
+        run: python3 -m py_compile main.py hub_settings.py release_catalog.py terminal_core/*.py
       - name: Test backend
         run: python3 -m unittest discover -s tests -v
+      - name: Verify channel classification and downgrade safeguards
+        run: node --test tests/release-catalog.test.cjs
       - name: Test TabMaster activation detection
         run: node --test tests/tabmaster-detection.test.cjs
       - name: Test update checker timeouts
@@ -83,6 +85,7 @@ jobs:
             echo "Release $VERSION already exists; refusing to overwrite."
             exit 0
           fi
+          [[ "$VERSION" =~ ^v[0-9]+\\.[0-9]+\\.[0-9]+-test\\.[0-9]+$ ]] || { echo "Only test channel releases may be published automatically"; exit 1; }
           sha256sum release/GameMode-Hub.zip > SHA256SUMS.txt
-          gh release create "$VERSION" release/GameMode-Hub.zip SHA256SUMS.txt --target "$GITHUB_SHA" \
+          gh release create "$VERSION" release/GameMode-Hub.zip SHA256SUMS.txt --prerelease --target "$GITHUB_SHA" \
             --title "GameMode Hub $VERSION" --notes-file docs/RELEASE_NOTES.md

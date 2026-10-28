@@ -14,6 +14,7 @@ class PackageTests(unittest.TestCase):
             data=json.loads(z.read("GameMode Hub/plugin.json"))
             self.assertEqual(data["name"],"GameMode Hub")
             self.assertIn("GameMode Hub/main.py",names)
+            self.assertIn("GameMode Hub/release_catalog.py",names)
             self.assertTrue(any(name.startswith("GameMode Hub/dist/") and name.endswith(".js") for name in names))
             self.assertFalse(any(name.startswith("GameMode Hub/terminal_core/") for name in names))
             self.assertFalse(any(name.startswith("GameMode Hub/desktop/") for name in names))

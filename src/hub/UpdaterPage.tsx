@@ -1,90 +1,107 @@
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { callable } from "@decky/api";
 import {
   DialogBody, DialogButton, DialogControlsSection,
   DialogControlsSectionHeader, Field
 } from "@decky/ui";
 import { RequestTimeoutError, withTimeout } from "../utils/withTimeout";
-import { APP_NAME, DECKY_PLUGIN_NAME, RELEASE_ASSET } from "../core/identity";
+import { APP_NAME, DECKY_PLUGIN_NAME } from "../core/identity";
+import { ReleaseEntry, UpdateChannel, selectReleases } from "../core/releaseCatalog";
 
-const VERSION = "0.5.2";
-type UpdateResult = {
-  current: string;
-  latest: string | null;
-  url: string | null;
-  sha256: string | null;
-  available: boolean;
-  status: "ok" | "no_releases" | "error";
-  error?: string | null;
-};
+const VERSION = "0.5.3-test.1";
+const URL = "https://api.github.com/repos/BlueGalaxySlime/GameMode-Hub/releases?per_page=50";
+const getChannel = callable<[], UpdateChannel>("get_update_channel");
+const saveChannel = callable<[UpdateChannel], UpdateChannel>("set_update_channel");
+const backendList = callable<[UpdateChannel], ReleaseEntry[]>("list_releases");
+
 type DeckyInstaller = {
   callable: (method: string) => (...args: unknown[]) => Promise<unknown>;
 };
-const checkUpdates = callable<[], UpdateResult>("check_updates");
 
-async function checkBrowser(): Promise<UpdateResult> {
+async function fetchVersions(channel: UpdateChannel): Promise<ReleaseEntry[]> {
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), 7000);
   try {
-    const response = await fetch("https://api.github.com/repos/BlueGalaxySlime/GameMode-Hub/releases/latest",
-      { signal: controller.signal, cache: "no-store", headers: { Accept: "application/vnd.github+json" } });
+    const response = await fetch(URL, {
+      signal: controller.signal,
+      cache: "no-store",
+      headers: { Accept: "application/vnd.github+json" }
+    });
     if (!response.ok) throw new Error("GitHub HTTP " + response.status);
-    const data = await response.json();
-    const latest = String(data.tag_name ?? "").replace(/^v/, "");
-    const asset = Array.isArray(data.assets)
-      ? data.assets.find((a: { name?: string }) => a.name === RELEASE_ASSET) : undefined;
-    const url = typeof asset?.browser_download_url === "string" &&
-      asset.browser_download_url.startsWith("https://github.com/BlueGalaxySlime/GameMode-Hub/releases/download/")
-      ? asset.browser_download_url : null;
-    const sha256 = typeof asset?.digest === "string" && /^sha256:[a-fA-F0-9]{64}$/.test(asset.digest)
-      ? asset.digest.slice(7) : null;
-    const parse = (v: string) => /^v?(\d+)\.(\d+)\.(\d+)$/.exec(v)?.slice(1).map(Number);
-    const a = parse(latest), b = parse(VERSION);
-    const newer = !!a && !!b && (a[0] > b[0] || (a[0] === b[0] &&
-      (a[1] > b[1] || (a[1] === b[1] && a[2] > b[2]))));
-    return { current: VERSION, latest, url, sha256, available: !!(newer && url && sha256), status: "ok" };
-  } finally { clearTimeout(timer); }
+    return selectReleases(await response.json(), channel, VERSION);
+  } finally {
+    clearTimeout(timer);
+  }
 }
 
-
 export function UpdaterPage() {
-  const [message, setMessage] = useState("Aktualizacje są sprawdzane tylko po wybraniu przycisku.");
-  const [candidate, setCandidate] = useState<UpdateResult | null>(null);
+  const [channel, setChannel] = useState<UpdateChannel>("test");
+  const [entries, setEntries] = useState<ReleaseEntry[]>([]);
+  const [selected, setSelected] = useState<ReleaseEntry | null>(null);
+  const [confirmDowngrade, setConfirmDowngrade] = useState(false);
+  const [message, setMessage] = useState("Wybierz kanał i sprawdź dostępne wersje.");
   const [checking, setChecking] = useState(false);
+  const [checked, setChecked] = useState(false);
   const [lastChecked, setLastChecked] = useState<string | null>(null);
   const busy = useRef(false);
+
+  useEffect(() => {
+    let mounted = true;
+    // Read a single local preference. Failure leaves the default test channel.
+    withTimeout(getChannel(), 2000).then(value => {
+      if (mounted && (value === "test" || value === "stable")) setChannel(value);
+    }).catch(() => {});
+    return () => { mounted = false; };
+  }, []);
+
+  async function chooseChannel(next: UpdateChannel) {
+    if (busy.current || next === channel) return;
+    setChannel(next);
+    setEntries([]);
+    setSelected(null);
+    setChecked(false);
+    setConfirmDowngrade(false);
+    setMessage(next === "stable"
+      ? "Kanał Stabilny jest na razie pusty. Sprawdź, czy pojawiły się zatwierdzone wydania."
+      : "Kanał Testowy udostępnia wersje próbne oraz 0.5.2 do awaryjnego powrotu.");
+    try {
+      await withTimeout(saveChannel(next), 3000);
+    } catch {
+      setMessage("Kanał wybrano, ale nie udało się zapisać ustawienia. Sprawdź backend Decky.");
+    }
+  }
 
   async function check() {
     if (busy.current) return;
     busy.current = true;
     setChecking(true);
-    setCandidate(null);
-    setMessage("Sprawdzanie aktualizacji…");
+    setEntries([]);
+    setSelected(null);
+    setChecked(false);
+    setConfirmDowngrade(false);
+    setMessage("Sprawdzanie dostępnych wersji…");
     try {
-      let result: UpdateResult;
+      let result: ReleaseEntry[];
       try {
-        result = await checkBrowser();
+        result = await fetchVersions(channel);
       } catch (browserError) {
         try {
-          result = await withTimeout(checkUpdates(), 8000);
+          result = await withTimeout(backendList(channel), 11000);
         } catch (backendError) {
-          throw new Error("Brak połączenia z GitHub przez Steam i Decky: " +
-            String(browserError) + "; " + String(backendError));
+          throw new Error("Nie udało się pobrać listy wersji przez Steam ani Decky: " +
+            String(browserError) + " / " + String(backendError));
         }
       }
-      if (result.status === "error") setMessage(result.error ?? "Nie udało się sprawdzić aktualizacji.");
-      else if (result.status === "no_releases") setMessage(result.error ?? "Brak wydań na GitHubie.");
-      else if (result.available) {
-        setCandidate(result);
-        setMessage("Dostępna wersja " + result.latest + ".");
-      } else {
-        setMessage(result.latest && result.latest !== VERSION
-          ? "Wydanie " + result.latest + " nie jest nowsze lub nie ma poprawnej sumy SHA-256."
-          : APP_NAME + " " + VERSION + " jest aktualny.");
-      }
+      setEntries(result);
+      setChecked(true);
+      setMessage(result.length
+        ? "Wybierz wersję z listy. Starsze wersje wymagają dodatkowego potwierdzenia."
+        : channel === "stable"
+          ? "Kanał Stabilny jest pusty — nie opublikowano jeszcze zatwierdzonego wydania."
+          : "Brak poprawnych wydań Testowych z sumą SHA-256.");
     } catch (error) {
       setMessage(error instanceof RequestTimeoutError
-        ? "Serwer nie odpowiedział w wyznaczonym czasie. Możesz spróbować ponownie."
+        ? "Przekroczono limit czasu odpowiedzi. Sprawdź połączenie i spróbuj ponownie."
         : "Błąd sprawdzania: " + (error instanceof Error ? error.message : String(error)));
     } finally {
       setLastChecked(new Date().toLocaleString("pl-PL"));
@@ -93,27 +110,49 @@ export function UpdaterPage() {
     }
   }
 
+  function selectVersion(entry: ReleaseEntry) {
+    if (busy.current) return;
+    setSelected(entry);
+    setConfirmDowngrade(false);
+    if (entry.action === "installed") setMessage("Ta wersja jest już zainstalowana.");
+    else if (entry.action === "downgrade") setMessage("Wybrano starszą wersję " + entry.version + ". Ustawienia mogą nie być zgodne po cofnięciu.");
+    else setMessage("Wybrano aktualizację do wersji " + entry.version + ".");
+  }
+
   async function install() {
-    if (busy.current || !candidate?.available || !candidate.url || !candidate.latest || !candidate.sha256) return;
+    const target = selected;
+    if (busy.current || !target || target.action === "installed") return;
+    if (!entries.includes(target)) return;
+    if (target.action === "downgrade" && !confirmDowngrade) {
+      setConfirmDowngrade(true);
+      setMessage("Potwierdź cofnięcie do " + target.version +
+        ". Starsza wersja może nie odczytać obecnych ustawień. Ustawienia nie są automatycznie cofane.");
+      return;
+    }
     const decky = (window as Window & { DeckyBackend?: DeckyInstaller }).DeckyBackend;
     if (typeof decky?.callable !== "function") {
-      setMessage("Instalator Decky jest niedostępny. Użyj Decky → Developer → Install Plugin from URL.");
+      setMessage("Instalator Decky niedostępny. Pobierz ręcznie wskazaną wersję ZIP z GitHub Releases.");
       return;
     }
     busy.current = true;
     setChecking(true);
-    setMessage("Przekazywanie aktualizacji do Decky Loader…");
+    setMessage("Otwieranie potwierdzenia instalacji w Decky…");
     try {
+      // Decky Loader: UPDATE=2, DOWNGRADE=3 (the latter is not UPDATE).
+      const installType = target.action === "downgrade" ? 3 : 2;
       await withTimeout(
-        decky.callable("utilities/install_plugin")(candidate.url, DECKY_PLUGIN_NAME, candidate.latest, candidate.sha256, 2),
+        decky.callable("utilities/install_plugin")(
+          target.url, DECKY_PLUGIN_NAME, target.version, target.sha256, installType
+        ),
         30000
       );
-      setCandidate(null);
-      setMessage("Żądanie instalacji zostało przyjęte przez Decky Loader. Potwierdź instalację, jeśli Decky wyświetli okno.");
+      setConfirmDowngrade(false);
+      setMessage("Wysłano żądanie do Decky. Zatwierdź instalację w jego oknie. " +
+        "Nie ponawiaj, zanim sprawdzisz numer zainstalowanej wersji.");
     } catch (error) {
       setMessage(error instanceof RequestTimeoutError
-        ? "Decky nie potwierdził instalacji w ciągu 30 sekund. Sprawdź wersję w Decky przed ponowieniem, aby nie uruchomić dwóch instalacji."
-        : "Instalacja nie powiodła się: " + (error instanceof Error ? error.message : String(error)));
+        ? "Decky nie potwierdził żądania w 30 sekund. Sprawdź wersję przed kolejną próbą."
+        : "Decky odmówił instalacji: " + String(error));
     } finally {
       busy.current = false;
       setChecking(false);
@@ -123,17 +162,53 @@ export function UpdaterPage() {
   return <DialogBody>
     <DialogControlsSection>
       <DialogControlsSectionHeader>Aktualizacje {APP_NAME}</DialogControlsSectionHeader>
-      <Field label="Zainstalowana wersja" description={APP_NAME + " " + VERSION} />
-      <Field label="Sprawdź aktualizacje" description="Sprawdzanie odbywa się ręcznie w GitHub Releases.">
+      <Field label="Zainstalowana wersja" description={VERSION + " — wydanie testowe"} />
+      <Field label="Kanał aktualizacji" description="Stabilny — dopiero po zatwierdzeniu na urządzeniu. Testowy — wersje rozwojowe.">
+        <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
+          <DialogButton disabled={checking} style={{ background: channel === "test" ? "#426b99" : undefined }}
+            onClick={() => { void chooseChannel("test"); }}>Testowy</DialogButton>
+          <DialogButton disabled={checking} style={{ background: channel === "stable" ? "#426b99" : undefined }}
+            onClick={() => { void chooseChannel("stable"); }}>Stabilny</DialogButton>
+        </div>
+      </Field>
+      <Field label="Dostępne wersje" description="Sprawdzane tylko na żądanie. Maksymalnie 50 ostatnich wydań GitHub.">
         <DialogButton disabled={checking} onClick={() => { void check(); }}>
-          {checking ? "Czekaj…" : "Sprawdź"}
+          {checking ? "Trwa operacja…" : "Sprawdź wersje"}
         </DialogButton>
       </Field>
-      {candidate?.available && <Field label={"Wersja " + candidate.latest}>
-        <DialogButton disabled={checking} onClick={() => { void install(); }}>Aktualizuj</DialogButton>
+      {checked && entries.length === 0 &&
+        <Field label="Brak wersji" description={channel === "stable"
+          ? "Nie ma jeszcze zatwierdzonego wydania Stabilnego."
+          : "Nie znaleziono wersji Testowych ze sprawdzalnym plikiem ZIP."} />}
+      {entries.length > 0 && <Field label="Wybierz wersję"
+        description="Wersje z sumą SHA-256. Starsze zostaną oznaczone jako cofnięcie (downgrade).">
+        <div style={{ display: "flex", flexDirection: "column", gap: 6, width: "100%" }}>
+          {entries.map(entry =>
+            <DialogButton key={entry.version} disabled={checking}
+              style={{ background: selected === entry ? "#426b99" : undefined }}
+              onClick={() => selectVersion(entry)}>
+              {entry.version + (entry.action === "downgrade" ? " — Downgrade" :
+                entry.action === "upgrade" ? " — Aktualizacja" : " — Zainstalowana") +
+                (entry.legacy ? " (archiwalna)" : "")}
+            </DialogButton>)}
+        </div>
       </Field>}
+      {selected && selected.action !== "installed" &&
+        <Field label={"Wybrana wersja: " + selected.version}
+          description={selected.action === "downgrade"
+            ? "Cofnięcie wersji nie przywraca ustawień. Wymagane potwierdzenie."
+            : "Instalacja aktualizacji zostanie potwierdzona również w Decky."}>
+          <DialogButton disabled={checking} onClick={() => { void install(); }}>
+            {selected.action === "downgrade"
+              ? (confirmDowngrade ? "Potwierdź downgrade" : "Cofnij do tej wersji")
+              : "Aktualizuj do tej wersji"}
+          </DialogButton>
+        </Field>}
+      {confirmDowngrade && selected?.action === "downgrade" &&
+        <Field label="Anuluj cofanie" description="Możesz zrezygnować bez wysyłania żądania do Decky.">
+          <DialogButton disabled={checking} onClick={() => setConfirmDowngrade(false)}>Anuluj</DialogButton>
+        </Field>}
       <Field label="Stan aktualizacji" description={message} />
       {lastChecked && <Field label="Ostatnie sprawdzenie" description={lastChecked} />}
     </DialogControlsSection>
   </DialogBody>;
-}

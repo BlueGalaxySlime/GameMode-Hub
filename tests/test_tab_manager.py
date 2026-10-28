@@ -30,21 +30,24 @@ class TabManagerTests(unittest.TestCase):
         self.assertLess(main._version("v0.2.3"), main._version("v0.3.0-preview.1"))
 
 
-    def test_stable_tag_detected_by_update_checker(self):
-        response = {
-            "tag_name": "v0.3.0",
+    def test_test_channel_detected_by_update_checker(self):
+        response = [{
+            "tag_name": "v0.5.3-test.2",
+            "draft": False,
+            "prerelease": True,
             "assets": [{
                 "name": "GameMode-Hub.zip",
                 "digest": "sha256:" + "a" * 64,
-                "browser_download_url": "https://github.com/BlueGalaxySlime/GameMode-Hub/releases/download/v0.3.0/GameMode-Hub.zip",
+                "browser_download_url": "https://github.com/BlueGalaxySlime/GameMode-Hub/releases/download/v0.5.3-test.2/GameMode-Hub.zip",
             }],
-        }
-        with (patch.object(main, "CURRENT_VERSION", "0.2.3"),
+        }]
+        with (patch.object(main, "CURRENT_VERSION", "0.5.3-test.1"),
               patch.object(main, "_ssl_context", return_value=None),
+              patch.object(main, "get_update_channel", return_value="test"),
               patch.object(main.urllib.request, "urlopen", return_value=io.BytesIO(json.dumps(response).encode()))):
             result = main._fetch_latest_release()
         self.assertTrue(result["available"])
-        self.assertEqual(result["latest"], "0.3.0")
+        self.assertEqual(result["latest"], "0.5.3-test.2")
         self.assertEqual(result["sha256"], "a" * 64)
 
     def test_update_checker_returns_error_on_python_timeout(self):

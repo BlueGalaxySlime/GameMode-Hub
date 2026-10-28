@@ -7,6 +7,7 @@ const identity=fs.readFileSync("src/core/identity.ts","utf8");
 const index=fs.readFileSync("src/index.tsx","utf8");
 const backend=fs.readFileSync("main.py","utf8");
 const updater=fs.readFileSync("src/hub/UpdaterPage.tsx","utf8");
+const catalog=fs.readFileSync("src/core/releaseCatalog.ts","utf8");
 const workflow=fs.readFileSync(".github/workflows/build.yml","utf8");
 test("Decky manifest and frontend share the exact plugin identity",()=>{
   assert.equal(plugin.name,"GameMode Hub");
@@ -16,7 +17,8 @@ test("Decky manifest and frontend share the exact plugin identity",()=>{
 test("new lightweight release points to the renamed repo and ZIP",()=>{
   assert.match(backend,/ASSET_NAME = "GameMode-Hub.zip"/);
   assert.match(backend,/BlueGalaxySlime\/GameMode-Hub/);
-  assert.match(updater,/RELEASE_ASSET/);
+  assert.match(catalog,/GameMode-Hub\\.zip/);
+  assert.match(updater,/compareVersions|selectReleases/);
   assert.match(workflow,/release\/GameMode-Hub.zip/);
   assert.doesNotMatch(workflow,/npm run package --prefix desktop|needs: \[build, desktop\]/);
 });

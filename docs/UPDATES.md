@@ -1,22 +1,23 @@
-# SteamHub updates (experimental 0.2.0)
+# GameMode Hub — kanały i wybór wersji
 
-The Gaming Mode panel has two explicit actions: **Sprawdź aktualizacje** and **Aktualizuj**. It never updates in the background.
+## Testowy (domyślny)
+- Wydania oznaczone `vX.Y.Z-test.N` oraz `prerelease` na GitHub Releases.
+- Awaryjnie dostępna także archiwalna wersja `v0.5.2` (pierwsza z tożsamością GameMode Hub), aby można było się cofnąć.
+- Zmiany są eksperymentalne, nawet gdy testy CI przejdą pomyślnie.
 
-The check reads the latest *published* GitHub Release from BlueGalaxySlime/SteamOS-Hub. The update button is enabled only for a newer semantic-version tag with an asset named `SteamHub.zip` and a SHA-256 digest provided by the GitHub Releases API.
+## Stabilny (na razie pusty)
+- Dopiero przyszłe wydania `v0.6.0` lub nowsze, bez oznaczenia `prerelease`, które przeszły osobną weryfikację na urządzeniu.
+- Poprzednie wydania `v0.5.0` i `v0.5.2` nigdy nie były zweryfikowane jako stabilne i nie są pokazywane w kanale Stabilnym.
+- GitHub Actions **nigdy nie publikuje automatycznie wydania Stabilnego**.
 
-The update action calls Decky Loader's internal `utilities/install_plugin` endpoint with the release URL, plugin name `SteamHub`, version, hash and update operation (2). Decky Loader performs the privileged install; SteamHub's Python backend remains unprivileged. This internal endpoint is **not a stable public API**. If unavailable, the plugin reports a manual Decky URL-install fallback rather than attempting to modify the plugin directory.
+## Działanie aktualizatora
+1. Ustaw kanał. Wybór jest zapisywany w `~/.config/gamemodehub/update_channel.json`.
+2. Kliknij **Sprawdź wersje**. Jedno zapytanie do GitHub `releases?per_page=50` (najnowsze 50); bez monitorowania w tle.
+3. Wybierz jedną z dostępnych wersji; aktualizator rozpoznaje `Aktualizacja` lub `Downgrade` na podstawie porównania semver.
+4. Dla downgrade'u wymagane jest dodatkowe potwierdzenie w panelu. Kliknięcie końcowe pokazuje też standardowe okno zatwierdzenia Decky Loader.
+5. Kontrolujemy zgodność nazwy ZIP, ścisły adres repozytorium/tagu oraz sumę SHA-256 z API GitHub. Decky wykonuje instalację i weryfikuje sumę.
+6. Operacja `UPDATE=2` lub `DOWNGRADE=3` korzysta z wewnętrznego interfejsu Decky `utilities/install_plugin`, który może się zmienić po aktualizacji Decky.
 
-## Publishing a version
+Jeśli interfejs Decky odmówi instalacji starszej wersji, pobierz ręcznie `GameMode-Hub.zip` z konkretnego wydania na GitHub i skorzystaj z instalacji deweloperskiej ZIP. Nigdy nie uruchamiamy własnych uprzywilejowanych skryptów instalacyjnych.
 
-1. Review and merge the feature branch to `main` after CI succeeds.
-2. Create and push a `v0.2.0` tag pointing at the reviewed version.
-3. The tagged GitHub Actions workflow builds and publishes a GitHub Release with `SteamHub.zip`.
-4. Confirm the published release has a SHA-256 asset digest and verify installation on Lenovo Legion Go S.
-
-**Do not tag or publish untested changes automatically.** GitHub Actions preview artifacts are not GitHub Releases and cannot be used by the in-plugin update check.
-
-## Compatibility and migration
-
-Earlier preview ZIPs installed the plugin as `SteamOS-Hub`, whereas version 0.2.0 uses `SteamHub` as its Decky identity and ZIP root folder. This is a **plugin identity migration**, not an in-place upgrade. The older preview may require one manual uninstall and a one-time installation of SteamHub before the update button can be used.
-
-The update flow is implemented but **not yet validated on physical hardware**. Decky Loader's internal installer may change. No custom root updater, downloaded script execution, or unattended update is used.
+**Uwaga:** cofnięcie kodu nie cofa automatycznie danych ustawień ani konfiguracji modułów.

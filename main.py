@@ -16,9 +16,10 @@ _PLUGIN_ROOT = str(Path(__file__).resolve().parent)
 if _PLUGIN_ROOT not in sys.path:
     sys.path.insert(0, _PLUGIN_ROOT)
 
-from hub_settings import get_selected_addons, set_selected_addons
+from hub_settings import get_selected_addons, set_selected_addons, get_update_channel, set_update_channel
+from release_catalog import RELEASES_API as RELEASE_CATALOG_API, catalog, validate_channel
 
-CURRENT_VERSION = "0.5.2"
+CURRENT_VERSION = "0.5.3-test.1"
 RELEASES_API = "https://api.github.com/repos/BlueGalaxySlime/GameMode-Hub/releases/latest"
 ASSET_NAME = "GameMode-Hub.zip"
 
@@ -55,32 +56,34 @@ def _ssl_context():
     )
 
 
-def _fetch_latest_release():
+def _fetch_releases(channel):
+    """One bounded request per explicit click in the update panel."""
+    validate_channel(channel)
     request = urllib.request.Request(
-        RELEASES_API,
+        RELEASE_CATALOG_API,
         headers={
             "Accept": "application/vnd.github+json",
-            "User-Agent": "GameModeHub/0.5.2",
+            "User-Agent": "GameModeHub/" + CURRENT_VERSION,
             "X-GitHub-Api-Version": "2022-11-28",
         },
     )
-    # One network request per manual click. Never retry automatically.
-    with urllib.request.urlopen(request, timeout=6, context=_ssl_context()) as response:
+    with urllib.request.urlopen(request, timeout=7, context=_ssl_context()) as response:
         data = json.load(response)
+    return catalog(data, channel, CURRENT_VERSION)
 
-    latest = str(data.get("tag_name", ""))
-    asset = next((a for a in data.get("assets", []) if a.get("name") == ASSET_NAME), None)
-    digest = str(asset.get("digest") or "") if asset else ""
-    sha256 = digest[7:] if re.fullmatch(r"sha256:[0-9a-fA-F]{64}", digest) else None
-    url = asset.get("browser_download_url") if asset else None
-    if url and not url.startswith("https://github.com/BlueGalaxySlime/GameMode-Hub/releases/download/"):
-        url = None
-    parsed_latest = _version(latest)
-    newer = parsed_latest is not None and parsed_latest > _version(CURRENT_VERSION)
+
+def _fetch_latest_release():
+    """Backward-compatible check result, matching the selected update channel."""
+    releases = _fetch_releases(get_update_channel())
+    newest = next((entry for entry in releases if entry["action"] == "upgrade"), None)
     return {
-        "current": CURRENT_VERSION, "latest": latest.lstrip("v"), "url": url,
-        "sha256": sha256, "available": bool(newer and url and sha256),
-        "status": "ok", "error": None,
+        "current": CURRENT_VERSION,
+        "latest": newest["version"] if newest else None,
+        "url": newest["url"] if newest else None,
+        "sha256": newest["sha256"] if newest else None,
+        "available": newest is not None,
+        "status": "ok" if releases else "no_releases",
+        "error": None if releases else "Brak wydan w wybranym kanale.",
     }
 
 
@@ -89,12 +92,6 @@ class Plugin:
         # Load PTY engine only when actually needed. An engine import error
         # must never prevent Decky from loading SteamHub's updater/settings.
         self._terminal = None
-
-    def _engine(self):
-        if self._terminal is None:
-            from terminal_core import TerminalService
-            self._terminal = TerminalService()
-        return self._terminal
 
     async def terminal_ping(self):
         # Lightweight handshake works even when the Linux PTY engine is broken.
@@ -107,27 +104,41 @@ class Plugin:
             "Terminal GameMode Hub tymczasowo wylaczony: ryzyko restartu Gaming Mode."
         )
 
+    # Fail closed on every legacy PTY method as well as start(). We no longer
+    # package terminal_core in the Decky ZIP, so none may lazy-import it.
     async def terminal_read(self, session_id):
-        return await asyncio.to_thread(self._engine().read, session_id)
+        raise RuntimeError("Terminal wylaczony w trybie bezpiecznym.")
 
     async def terminal_write(self, session_id, data):
-        return await asyncio.to_thread(self._engine().write, session_id, data)
+        raise RuntimeError("Terminal wylaczony w trybie bezpiecznym.")
 
     async def terminal_resize(self, session_id, cols, rows):
-        return await asyncio.to_thread(self._engine().resize, session_id, cols, rows)
+        raise RuntimeError("Terminal wylaczony w trybie bezpiecznym.")
 
     async def terminal_close(self, session_id):
-        return await asyncio.to_thread(self._engine().close, session_id)
+        raise RuntimeError("Terminal wylaczony w trybie bezpiecznym.")
 
     async def _unload(self):
-        if self._terminal is not None:
-            await asyncio.to_thread(self._terminal.close_all)
+        pass
 
     async def get_selected_addons(self):
         return await asyncio.to_thread(get_selected_addons)
 
     async def set_selected_addons(self, names):
         return await asyncio.to_thread(set_selected_addons, names)
+
+    async def get_update_channel(self):
+        return await asyncio.to_thread(get_update_channel)
+
+    async def set_update_channel(self, channel):
+        validate_channel(channel)
+        return await asyncio.to_thread(set_update_channel, channel)
+
+    async def list_releases(self, channel):
+        validate_channel(channel)
+        return await asyncio.wait_for(
+            asyncio.to_thread(_fetch_releases, channel), timeout=10
+        )
 
     async def _main(self):
         pass

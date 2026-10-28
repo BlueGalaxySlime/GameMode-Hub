@@ -9,6 +9,8 @@
 3. W Gaming Mode otwórz Decky Loader → ustawienia deweloperskie i zainstaluj wtyczkę z ZIP. Szczegóły: [instrukcja](docs/INSTALL.md).
 4. Naciśnij przycisk **⋯**, otwórz **GameMode Hub**, wybierz **Otwórz GameMode Hub**. Zostaniesz w interfejsie SteamOS.
 
+**Kanały aktualizacji:** Testowy (bieżące wydania i możliwość downgrade’u) oraz Stabilny (pusty, dopóki nie zweryfikujemy wydania na urządzeniu). Wersję wybierzesz w zakładce Aktualizacje.
+
 **Wymagany jest Decky Loader tylko jako adapter do Quick Access.** Valve nie udostępnia stabilnego publicznego interfejsu wtyczek do Quick Access. Nie modyfikujemy plików Steam ani nie wstrzykujemy własnych procesów do klienta Steam poza adapterem Decky.
 
 ## Architektura

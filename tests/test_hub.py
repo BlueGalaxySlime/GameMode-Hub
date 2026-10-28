@@ -35,6 +35,14 @@ class HubSelectionTests(unittest.TestCase):
         self.assertEqual(json.loads(hub_settings.SELECTION_FILE.read_text()), ["TabMaster"])
         self.assertEqual(list(hub_settings.SELECTION_FILE.parent.iterdir()), [hub_settings.SELECTION_FILE])
 
+    def test_update_channel_persists_with_default_test_and_rejects_invalid(self):
+        with patch.object(hub_settings, "UPDATE_CHANNEL_FILE", Path(self.root.name) / "channel.json"):
+            self.assertEqual(hub_settings.get_update_channel(), "test")
+            self.assertEqual(hub_settings.set_update_channel("stable"), "stable")
+            self.assertEqual(hub_settings.get_update_channel(), "stable")
+            with self.assertRaises(ValueError):
+                hub_settings.set_update_channel("nightly")
+
     def test_reject_invalid_input(self):
         for invalid in ("a", {}, [8], [""], ["x" * 101]):
             with self.subTest(invalid=invalid), self.assertRaises(ValueError):

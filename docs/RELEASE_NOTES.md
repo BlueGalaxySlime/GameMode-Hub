@@ -1,3 +1,15 @@
+# GameMode Hub 0.5.3-test.1 — kanały aktualizacji i wybór wersji
+
+- Pierwsze wydanie **Testowe** (oznaczone prerelease). Kanał **Stabilny** pozostaje pusty do czasu weryfikacji na urządzeniu.
+- Aktualizator pozwala wybrać kanał i konkretną wersję oraz wykonać aktualizację lub **downgrade** po potwierdzeniu.
+- Testowy uwzględnia wydania `-test.N` oraz historyczne `v0.5.2` jako awaryjny punkt powrotu (ten sam identyfikator wtyczki). Starsze wydania SteamHub nie są oferowane.
+- Używamy oficjalnego okna instalacji Decky: operacja 2 dla aktualizacji i **3 dla downgrade**, zgodnie z typami instalatora Decky.
+- Każda wersja musi mieć dokładny adres pliku `GameMode-Hub.zip` i SHA-256 podany przez GitHub.
+- Nie ma automatycznych aktualizacji ani automatycznych downgrade’ów. Pobieranie listy wersji odbywa się tylko po naciśnięciu przycisku.
+- Terminal nadal pozostaje wyłączony. Wszystkie przestarzałe metody PTY backendu odmawiają uruchomienia lub importowania silnika.
+- Pakiet dla Quick Access pozostaje lekki i bez Electrona.
+- Zmiana wersji przez wewnętrzny instalator Decky wymaga jeszcze sprawdzenia na Legion Go S.
+
 # GameMode Hub 0.5.2 — Gaming Mode Quick Access
 
 - **Nowa tożsamość wtyczki: GameMode Hub.** Wcześniejsza SteamHub powinna zostać usunięta przed instalacją; to świadoma migracja z zerwaniem zgodności tożsamości.
