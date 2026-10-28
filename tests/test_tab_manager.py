@@ -17,8 +17,11 @@ class TabManagerTests(unittest.TestCase):
         self.tabs = patch.object(tab_manager, "TABS_FILE", base / "tabs.json")
         self.settings.start()
         self.tabs.start()
+        self.profiles = patch.object(tab_manager, "PROFILES_FILE", base / "profiles.json")
+        self.profiles.start()
         self.addCleanup(self.settings.stop)
         self.addCleanup(self.tabs.stop)
+        self.addCleanup(self.profiles.stop)
 
     def test_default_disabled(self):
         self.assertFalse(tab_manager._read_tab_manager_enabled())
@@ -53,6 +56,21 @@ class TabManagerTests(unittest.TestCase):
     def test_reject_incomplete_collection_filter(self):
         with self.assertRaises(ValueError):
             tab_manager.save_tabs([{"id": "x", "title": "A", "filter": "collection"}])
+
+    def test_profile_roundtrip_without_losing_tabs(self):
+        original = [{"id": "fav", "title": "Ulubione", "filter": "favorites"}]
+        tab_manager.save_tabs(original)
+        self.assertEqual(tab_manager.save_tab_profile("Mój profil"), ["Mój profil"])
+        tab_manager.save_tabs([])
+        restored = tab_manager.load_tab_profile("Mój profil")
+        self.assertEqual(restored[0]["filter"], "favorites")
+        self.assertEqual(tab_manager.read_tabs(), restored)
+        self.assertEqual(tab_manager.delete_tab_profile("Mój profil"), [])
+        self.assertEqual(tab_manager.read_tabs(), restored)
+
+    def test_invalid_profile_name(self):
+        with self.assertRaises(ValueError):
+            tab_manager.save_tab_profile("  ")
 
     def test_reject_duplicate_ids(self):
         with self.assertRaises(ValueError):
