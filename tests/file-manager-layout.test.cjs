@@ -76,8 +76,9 @@ test("controller navigation has explicit horizontal and vertical groups", () => 
 test("split file browser uses two independent complete lists and one address bar", () => {
   const address = ui.indexOf('onOKActionDescription="Edytuj ścieżkę"');
   const status = ui.indexOf('aria-label="Stan przeglądarki plików"');
+  const tags = ui.indexOf('aria-label="Tagi lokalizacji — lewo i prawo"');
   const browser = ui.indexOf("Two complete file panels, one shared white address bar");
-  assert.ok(address >= 0 && status > address && browser > status);
+  assert.ok(status >= 0 && tags > status && address > tags && browser > address);
   assert.equal(ui.split('onOKActionDescription="Edytuj ścieżkę"').length - 1, 1);
   assert.ok(ui.includes("const splitTree = options.splitFileTree"));
   assert.ok(ui.includes('const [rightPage, setRightPage]'));
@@ -139,4 +140,25 @@ test("favourites and multi-selection live in Steam menus; B cancels selection", 
   assert.ok(ui.includes('pasteMany(clipboard.paths'));
   assert.ok(ui.includes('Wklej do folderu'));
   assert.ok(ui.includes('exitMultiSelect()'));
+});
+
+test("directory changes retain focus inside the file tree instead of jumping to tabs", () => {
+  assert.ok(ui.includes('const pendingDirectoryFocus = useRef<"left" | "right" | null>(null)'));
+  assert.ok(ui.includes("useLayoutEffect(() => {"));
+  assert.ok(ui.includes('target.focus({ preventScroll: true })'));
+  assert.ok(ui.includes('navigateDirectory(entry.path, pane)'));
+  assert.ok(ui.includes('navigateDirectory(parent, pane)'));
+  assert.ok(ui.includes('data-file-entry'));
+  assert.ok(ui.includes('data-parent-row'));
+  assert.ok(ui.includes('disabled={entry.symlink || locked.current}'));
+});
+
+test("tag navigation is horizontal, the address sits directly above a full-width single tree", () => {
+  assert.ok(ui.includes('aria-label="Tagi lokalizacji — lewo i prawo"'));
+  assert.ok(ui.includes('flow-children="row"'));
+  assert.ok(ui.includes('flexDirection: "row", flexWrap: "nowrap"'));
+  assert.ok(ui.includes('overflowX: "auto", overflowY: "hidden"'));
+  assert.ok(ui.includes('width: splitTree ? "50%" : "100%"'));
+  assert.ok(ui.includes('width: "100%", minWidth: 0, height: "min(54vh, 540px)"'));
+  assert.equal(ui.split('onOKActionDescription="Edytuj ścieżkę"').length - 1, 1);
 });
