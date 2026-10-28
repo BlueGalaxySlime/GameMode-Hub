@@ -266,7 +266,7 @@ export function FileManagerPage() {
         </div>}
 
         {/* Same compact toolbar as SteamOS settings. Native controller dropdown. */}
-        <Focusable flow-children="right"
+        <Focusable flow-children="row"
           navEntryPreferPosition={NavEntryPositionPreferences.MAINTAIN_X}
           style={{ display: "flex", flexWrap: "nowrap", alignItems: "center",
             gap: 5, width: "100%", minWidth: 0, overflowX: "auto",
@@ -326,13 +326,13 @@ export function FileManagerPage() {
 
         {/* The options toolbar stays above this fixed-height browser area.
             D-pad up/down traverses a pane; left/right changes panes. */}
-        {page && <Focusable flow-children={splitTree ? "right" : "down"}
+        {page && <Focusable flow-children={splitTree ? "row" : "column"}
           navEntryPreferPosition={NavEntryPositionPreferences.MAINTAIN_Y}
           style={{ display: "flex", flexDirection: splitTree ? "row" : "column",
             alignItems: "stretch", gap: splitTree ? 8 : 0,
             width: "100%", minWidth: 0, height: "min(54vh, 540px)",
             minHeight: 160, overflow: "hidden" }}>
-          {splitTree && <Focusable flow-children="down"
+          {splitTree && <Focusable flow-children="column"
             navEntryPreferPosition={NavEntryPositionPreferences.MAINTAIN_Y}
             style={{ width: "34%", minWidth: 125, flex: "0 0 34%",
               height: "100%", overflow: "hidden",
@@ -345,7 +345,7 @@ export function FileManagerPage() {
                 onOpen={parent => { void load(parent, hidden); }} />
             {page.items.filter(entry => entry.directory).map(entry =>
               selected?.path === entry.path && action === "rename"
-                ? <Focusable key={entry.path} flow-children="right"
+                ? <Focusable key={entry.path} flow-children="row"
                     navEntryPreferPosition={NavEntryPositionPreferences.MAINTAIN_X}
                     style={{ display: "flex", gap: 3, alignItems: "center" }}>
                     <div style={{ flex: "1 1 0", minWidth: 0 }}>
@@ -378,7 +378,7 @@ export function FileManagerPage() {
                   </DialogButton>)}
             </div>
           </Focusable>}
-          <Focusable flow-children="down"
+          <Focusable flow-children="column"
             navEntryPreferPosition={NavEntryPositionPreferences.MAINTAIN_Y}
             style={{ display: "flex", flex: "1 1 0", minWidth: 0,
               height: "100%", overflow: "hidden" }}>
@@ -392,7 +392,7 @@ export function FileManagerPage() {
               .map(entry =>
               <div key={entry.path} style={{ width: "100%", minWidth: 0 }}>
                 {selected?.path === entry.path && action === "rename" ? (
-                  <Focusable flow-children="right"
+                  <Focusable flow-children="row"
                     navEntryPreferPosition={NavEntryPositionPreferences.MAINTAIN_X}
                     style={{ display: "flex", alignItems: "center", gap: 5, minWidth: 0 }}>
                     <div style={{ flex: "1 1 0", minWidth: 0 }}>
