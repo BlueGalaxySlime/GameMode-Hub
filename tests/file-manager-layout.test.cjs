@@ -20,7 +20,7 @@ test("Y on the focused file or address opens native SteamOS context menu", () =>
   assert.ok(ui.includes('onOptionsActionDescription="Opcje plików"'));
   assert.ok(ui.includes("openBrowserMenu(event.currentTarget ?? window)"));
   assert.ok(ui.includes('onOptionsActionDescription="Opcje"'));
-  assert.ok(ui.includes("onOptionsButton={event => openFileMenu(entry, event.currentTarget ?? window)}"));
+  assert.ok(ui.includes("onOptionsButton={event => openFileMenu(entry, event.currentTarget ?? window, pane)}"));
   assert.ok(ui.includes("<Menu label={entry.name}"));
   assert.ok(ui.includes('clipboardAction(entry, "copy")'));
   assert.ok(ui.includes('clipboardAction(entry, "move")'));
@@ -50,6 +50,10 @@ test("path can be edited with A, while status strip is read only", () => {
   assert.ok(ui.includes("onClick={() => setEditingPath(true)}"));
   assert.ok(ui.includes('aria-label="Edytuj ścieżkę katalogu"'));
   assert.ok(ui.includes('event.key === "Enter"'));
+  assert.ok(ui.includes('event.key === "Escape"'));
+  assert.ok(ui.includes('<HubTextInput value={pathDraft}'));
+  assert.ok(!ui.includes('>Przejdź</DialogButton>'));
+  assert.ok(ui.includes('onCancelActionDescription={editingPath ? "Zamknij edycję"'));
   assert.ok(ui.includes('aria-label="Stan przeglądarki plików"'));
   assert.ok(ui.includes("Sortowanie: {sortOptions.find("));
   assert.ok(ui.includes('Ukryte: {hidden ? "widoczne" : "niewidoczne"}'));
@@ -67,19 +71,23 @@ test("controller navigation has explicit horizontal and vertical groups", () => 
   assert.ok(ui.includes('flow-children={splitTree ? "row" : "column"}'));
 });
 
-test("split affects the file browser only, with separate scrolling panes", () => {
+test("split file browser uses two independent complete lists and one address bar", () => {
   const address = ui.indexOf('onOKActionDescription="Edytuj ścieżkę"');
   const status = ui.indexOf('aria-label="Stan przeglądarki plików"');
-  const browser = ui.indexOf("The options toolbar stays above this fixed-height browser area");
+  const browser = ui.indexOf("Two complete file panels, one shared white address bar");
   assert.ok(address >= 0 && status > address && browser > status);
+  assert.equal(ui.split('onOKActionDescription="Edytuj ścieżkę"').length - 1, 1);
   assert.ok(ui.includes("const splitTree = options.splitFileTree"));
+  assert.ok(ui.includes('const [rightPage, setRightPage]'));
   assert.ok(ui.includes('flexDirection: splitTree ? "row" : "column"'));
-  assert.ok(ui.includes("page.items.filter(entry => entry.directory)"));
-  assert.ok(ui.includes("page.items.filter(entry => !entry.directory)"));
+  assert.ok(ui.includes('folder.items.map(entry =>'));
+  assert.ok(ui.includes('onMouseEnter={() => activatePane(pane)}'));
+  assert.ok(ui.includes('onGamepadFocus={() => activatePane(pane)}'));
+  assert.ok(ui.includes('Podział: {splitTree ? "WŁ." : "WYŁ."}'));
   assert.ok(ui.includes('height: "min(54vh, 540px)"'));
-  assert.ok(ui.includes('onScroll={event => writeHubSession("files.treeScrollTop"'));
-  assert.ok(ui.includes('onScroll={event => writeHubSession("files.listScrollTop"'));
-  assert.ok(ui.includes("<ParentDirectoryRow parent={page.parent}"));
+  assert.ok(ui.includes('pane === "left" ? "files.treeScrollTop" : "files.listScrollTop"'));
+  assert.ok(ui.includes("<ParentDirectoryRow parent={folder.parent}"));
+  assert.ok(!ui.includes("page.items.filter(entry => !entry.directory)"));
 });
 
 test("file view session survives changing Hub tabs", () => {
@@ -87,7 +95,7 @@ test("file view session survives changing Hub tabs", () => {
     "files.sortMode", "files.selected", "files.clipboard", "files.action", "files.name"]) {
     assert.ok(ui.includes(key), key);
   }
-  assert.ok(ui.includes("if (!page) void load(null, hidden, 0, sortBy, descending);"));
+  assert.ok(ui.includes('if (!page) void load(null, hidden, 0, sortBy, descending, "left");'));
 });
 
 test("split option appears only in Files, not universal Hub options", () => {
@@ -95,6 +103,8 @@ test("split option appears only in Files, not universal Hub options", () => {
   assert.ok(!hubOptions.includes('label="Podział drzewa plików"'));
   assert.ok(!hubOptions.includes("splitFileTree"));
   assert.ok(hubOptions.includes('label="Zachowuj stan kart"'));
+  assert.ok(hubOptions.includes('label="Automatycznie pokazuj klawiaturę"'));
+  assert.ok(hubOptions.includes('update("autoKeyboard", value)'));
 });
 
 test("updater opens native channel/version menus without inline version list", () => {
