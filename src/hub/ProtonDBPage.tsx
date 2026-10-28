@@ -8,7 +8,7 @@ import { withTimeout } from "../utils/withTimeout";
 import { HubTextInput } from "./HubTextInput";
 import { useHubSessionState } from "./useHubSessionState";
 
-type Client = "auto" | "steam" | "heroic" | "lutris" | "bottles";
+type Client = "auto" | "steam" | "gog" | "epic" | "heroic" | "lutris" | "bottles";
 type BadgeResult = {
   app_id: string; tier: string; reports: number; checked_at: number;
   cached: boolean; url: string;
@@ -17,6 +17,8 @@ const getBadge = callable<[string, boolean], BadgeResult>("protondb_get_badge");
 const CLIENTS: { id: Client; label: string }[] = [
   { id: "auto", label: "Auto (aktualnie SteamOS)" },
   { id: "steam", label: "Steam" },
+  { id: "gog", label: "GOG" },
+  { id: "epic", label: "Epic" },
   { id: "heroic", label: "Heroic" },
   { id: "lutris", label: "Lutris" },
   { id: "bottles", label: "Bottles" }
@@ -31,7 +33,8 @@ const TIERS: Record<string, string> = {
  * Cross-client data adapter: clients all map to a Steam AppID.
  * Heroic/Lutris/Bottles cannot currently be matched to a Steam game without
  * their own provider adapters, so manual AppID remains explicitly required.
- * No intrusive Steam detail/library patches before device testing.
+ * Optional unified game-page patch is a separate opt-in module.
+ * This lookup page itself never modifies Steam pages.
  */
 export function ProtonDBPage() {
   const [client, setClient] = useHubSessionState<Client>("protondb.client", "auto");
@@ -78,8 +81,8 @@ export function ProtonDBPage() {
       </DialogButton>
       <div style={{ fontSize: 12, opacity: 0.8 }}>
         {client === "auto" || client === "steam"
-          ? "Auto rozpoznaje środowisko SteamOS. Podaj Steam AppID gry."
-          : "Ten klient wymaga obecnie ręcznego Steam AppID; automatyczne mapowanie gier będzie osobnym adapterem."}
+          ? "SteamOS jest aktywnym środowiskiem. Podaj Steam AppID gry, którą chcesz sprawdzić."
+          : "Dla tego launchera podaj Steam AppID odpowiadającej gry. Samo wybranie klienta nie wykrywa gry."}
       </div>
       <HubTextInput value={appId} aria-label="Steam AppID"
         placeholder="Steam AppID (np. 620)"

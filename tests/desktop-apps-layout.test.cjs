@@ -391,7 +391,7 @@ test("ProtonDB is independent and retrieves badges only on explicit user action"
   const badges = fs.readFileSync("protondb_badges.py", "utf8");
   assert.ok(hub.includes('title: "UI"'));
   assert.ok(fs.readFileSync("src/hub/UiPage.tsx", "utf8").includes('<ProtonDBPage />'));
-  assert.ok(page.includes('Client = "auto" | "steam" | "heroic" | "lutris" | "bottles"'));
+  assert.ok(page.includes('Client = "auto" | "steam" | "gog" | "epic" | "heroic" | "lutris" | "bottles"'));
   assert.ok(page.includes('Pokaż odznakę'));
   assert.ok(page.includes('getBadge(appId, force)'));
   assert.ok(page.includes('Navigation.NavigateToExternalWeb(result.url)'));
