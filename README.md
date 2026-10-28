@@ -14,6 +14,9 @@ Na stronie wydania rozwiń **Assets** i pobierz **`SteamHub.zip`**.
 
 ## Aktualny stan
 
+Terminal wyświetla natywne kontrolki SteamOS (Decky UI), ale jego silnik Linux PTY i widok pozostają niezależne od Decky. W menu jest sekcja **Podziękowania** z autorami wykorzystanego kodu oraz zewnętrznych integracji. Szczegóły w `THIRD_PARTY_NOTICES.md`.
+
+
 SteamHub otwiera **pełnoekranowy panel** w stylu Ustawień SteamOS. W Quick Access jest tylko przycisk **Otwórz SteamHub**. W pełnym oknie możesz wybrać zainstalowane dodatki Decky, zobaczyć ich stan i zarządzać wyborem. Aktualizacje znajdują się w osobnej zakładce panelu. Oryginalny panel wybranego dodatku można wyświetlić na żądanie wewnątrz SteamHub, jeśli wtyczka udostępnia go w Decky. Docelowy wygląd opcji poszczególnych dodatków będzie dopracowywany przez niezależne adaptery — bez kopiowania ich kodu.
 
 ## Instalacja

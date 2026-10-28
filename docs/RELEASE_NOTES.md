@@ -1,3 +1,11 @@
+# SteamHub 0.4.6
+
+- Natywne formatowanie terminala: wiersze ustawień, przyciski i pole tekstowe Decky UI w stylu SteamOS.
+- Wygląd specyficzny dla SteamOS został przeniesiony do adaptera; silnik Linux PTY i widok terminala nadal nie zależą od Decky.
+- Nowa pozycja **Podziękowania** w lewym menu — autorzy, wykorzystana praca, licencje i źródła.
+- Osobno pokazane integracje zewnętrzne, których kod nie został skopiowany.
+- Pełne informacje prawne w `THIRD_PARTY_NOTICES.md`.
+
 # SteamHub 0.4.5
 
 ## Niezależny terminal Linux

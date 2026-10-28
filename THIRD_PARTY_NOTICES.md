@@ -59,3 +59,14 @@ AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
 LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
+
+
+## External integrations and platform (no plugin implementation copied)
+
+- Decky Loader / @decky/ui: SteamDeckHomebrew and contributors — native
+  SteamOS UI and backend APIs. https://github.com/SteamDeckHomebrew/decky-loader
+  (Decky Loader repository: GPL-2.0). APIs are imported rather than copied.
+- Decky Manager: Ciphay — external file manager integration, not copied.
+  https://github.com/Ciphay/Decky-File-Manager (BSD-3-Clause).
+- SteamHub's PTY engine is independently implemented and does not copy
+  the Decky Terminal plugin implementation.

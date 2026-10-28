@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import type { ReactNode } from "react";
 import { Terminal } from "@xterm/xterm";
 import { FitAddon } from "@xterm/addon-fit";
 import type { TerminalBridge } from "./bridge";
@@ -9,8 +10,28 @@ function decodeBytes(value: string): Uint8Array {
   return Uint8Array.from(binary, char => char.charCodeAt(0));
 }
 
-/** The view depends on a transport contract, not on Decky or Steam. */
-export function TerminalView({ bridge }: { bridge: TerminalBridge }) {
+/** Presentation contract, independent of Decky or Steam. */
+export interface TerminalLayoutState {
+  status: string;
+  active: boolean;
+  pending: boolean;
+  hasSession: boolean;
+  command: string;
+  advanced: boolean;
+  terminalElement: ReactNode;
+  start(): void;
+  close(): void;
+  setCommand(value: string): void;
+  submit(): void;
+  send(value: string): void;
+  toggleAdvanced(): void;
+}
+
+/** A Linux desktop frontend can provide its own presentation renderer. */
+export function TerminalView({ bridge, render }: {
+  bridge: TerminalBridge;
+  render?: (state: TerminalLayoutState) => ReactNode;
+}) {
   const host = useRef<HTMLDivElement>(null);
   const term = useRef<Terminal | null>(null);
   const fit = useRef<FitAddon | null>(null);
@@ -163,6 +184,21 @@ export function TerminalView({ bridge }: { bridge: TerminalBridge }) {
     setCommand("");
   }
 
+  // Native SteamOS controls are provided by the Decky adapter, not hardcoded here.
+  const state: TerminalLayoutState = {
+    status, active, pending, hasSession: session.current !== null,
+    command, advanced,
+    terminalElement: <div className="steamhub-terminal"
+      style={{ width: "100%", height: 400, padding: 10 }}>
+      <div ref={host} style={{ width: "100%", height: "100%" }} />
+    </div>,
+    start: () => { void openSession(); },
+    close: () => { void closeSession(); },
+    setCommand, submit: submitCommand, send,
+    toggleAdvanced: () => setAdvanced(value => !value)
+  };
+  if (render) return <>{render(state)}</>;
+  // Browser fallback for a future standalone Linux UI.
   const buttonStyle = { padding: "8px 14px", borderRadius: 5, minHeight: 36 };
   return <section style={{ width: "100%", display: "flex", flexDirection: "column", gap: 12 }}>
     <h2 style={{ fontSize: "1.1rem", fontWeight: 600, margin: 0 }}>Terminal</h2>

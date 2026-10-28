@@ -5,10 +5,11 @@ import {
   DialogControlsSectionHeader, Field, Navigation, SidebarNavigation, Toggle
 } from "@decky/ui";
 import { callable } from "@decky/api";
-import { FaFolderOpen, FaHome, FaPlug, FaPuzzlePiece, FaSyncAlt, FaTerminal } from "react-icons/fa";
+import { FaFolderOpen, FaHeart, FaHome, FaPlug, FaPuzzlePiece, FaSyncAlt, FaTerminal } from "react-icons/fa";
 import { withTimeout } from "../utils/withTimeout";
 import { UpdaterPage } from "./UpdaterPage";
 import { DeckyTerminalPage } from "./DeckyTerminalAdapter";
+import { CreditsPage } from "./CreditsPage";
 
 type InstalledAddon = {
   name: string;
@@ -240,6 +241,8 @@ export function HubPage() {
       content: <DeckyTerminalPage /> },
     { title: "Aktualizacje", route: "/steamhub/updates", icon: <FaSyncAlt />,
       content: <UpdaterPage /> },
+    { title: "Podziękowania", route: "/steamhub/credits", icon: <FaHeart />,
+      content: <CreditsPage /> },
     ...selected.map(name => ({
       title: featureName(name),
       route: "/steamhub/addon/" + encodeURIComponent(name),

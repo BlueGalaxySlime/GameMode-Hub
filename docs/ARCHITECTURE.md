@@ -40,3 +40,12 @@ SteamOS-Hub aims to offer a single setup experience for SteamOS gaming mode tool
 - Future desktop/Linux application: implement a local authenticated transport
   against the same `TerminalBridge`; the engine and UI stay unchanged.
 - Never expose the PTY API on a public network socket without authentication.
+
+
+## Platform UI and attribution
+
+- `TerminalView` exposes a platform-neutral presentation interface.
+- `DeckyTerminalAdapter` provides native SteamOS `Field`, `DialogButton`
+  and `TextField` components; a future Linux app may provide its own.
+- `CreditsPage` explicitly separates adapted code from independent integrations.
+  Legally required notices are kept in `THIRD_PARTY_NOTICES.md`.
