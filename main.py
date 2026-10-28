@@ -184,6 +184,12 @@ class Plugin:
     async def set_tab_manager_enabled(self, enabled):
         return await asyncio.to_thread(tab_manager._write_tab_manager_enabled, enabled)
 
+    async def get_hidden_steam_tabs(self):
+        return await asyncio.to_thread(tab_manager.read_hidden_steam_tabs)
+
+    async def save_hidden_steam_tabs(self, ids):
+        return await asyncio.to_thread(tab_manager.save_hidden_steam_tabs, ids)
+
     async def get_tab_definitions(self):
         return await asyncio.to_thread(tab_manager.read_tabs)
 
