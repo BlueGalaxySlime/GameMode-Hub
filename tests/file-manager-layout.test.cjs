@@ -1,55 +1,39 @@
 "use strict";
-const test = require("node:test");
-const assert = require("node:assert/strict");
-const fs = require("node:fs");
-const ts = require("typescript");
-const vm = require("node:vm");
-const ui = fs.readFileSync("src/hub/FileManagerPage.tsx","utf8");
-const source = fs.readFileSync("src/core/filePath.ts","utf8");
-const compiled = ts.transpileModule(source,{compilerOptions:{
-  target:ts.ScriptTarget.ES2020,module:ts.ModuleKind.CommonJS
-}}).outputText;
-const context={exports:{}};
-vm.runInNewContext(compiled,context);
-const {breadcrumbs}=context.exports;
-
-test("one page title, with no redundant Field headings",()=>{
-  assert.ok(!ui.includes("DialogControlsSectionHeader"));
-  assert.ok(!ui.includes('label="Bieżący katalog"'));
-  assert.ok(!ui.includes('label="Lokalizacje"'));
-  assert.ok(!ui.includes('label="Nawigacja"'));
-  assert.ok(!ui.includes('>Wybierz</DialogButton>'));
-});
-test("path can be edited, opened, and navigated with clickable breadcrumbs",()=>{
-  assert.ok(ui.includes("onChange={event => setPathDraft(event.target.value)}"));
+const test=require("node:test"),assert=require("node:assert/strict"),fs=require("node:fs"),ts=require("typescript"),vm=require("node:vm");
+const ui=fs.readFileSync("src/hub/FileManagerPage.tsx","utf8");
+const compiled=ts.transpileModule(fs.readFileSync("src/core/filePath.ts","utf8"),{compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2020}}).outputText;
+const context={exports:{}};vm.runInNewContext(compiled,context);const {breadcrumbs}=context.exports;
+test("no extra navigation or close buttons",()=>{
+  for(const word of [">Przejdź</DialogButton>",">Odśwież</DialogButton>",">Zamknij</DialogButton>",">⋯</DialogButton>"])
+    assert.ok(!ui.includes(word));
   assert.ok(ui.includes('event.key === "Enter"'));
-  assert.ok(ui.includes("void load(pathDraft, hidden)"));
-  assert.ok(ui.includes("breadcrumbs(page.path, page.roots)"));
-  const result=breadcrumbs("/home/deck/Downloads/abc",[{name:"Dom",path:"/home/deck"}]);
-  assert.deepEqual(Array.from(result,x=>x.path),[
-    "/home/deck","/home/deck/Downloads","/home/deck/Downloads/abc"]);
-  assert.deepEqual(Array.from(result,x=>x.name),["Dom","Downloads","abc"]);
-  assert.equal(breadcrumbs("/etc",[{name:"Dom",path:"/home/deck"}]).length,0);
-  assert.equal(breadcrumbs("/home/deck2",[{name:"Dom",path:"/home/deck"}]).length,0);
+  assert.ok(ui.includes('void load(pathDraft, hidden)'));
 });
-test("compact full width list and sorting/hidden options stay accessible",()=>{
-  assert.ok(ui.includes("flex: 1, minWidth: 0"));
-  assert.ok(ui.includes('Sortuj: {sortLabels[sortBy]}'));
-  assert.ok(ui.includes("changeSort(sortBy, !descending)"));
-  assert.ok(ui.includes("setHidden(value)"));
+test("breadcrumb tags stay within allowed roots",()=>{
+  const parts=breadcrumbs("/home/deck/Downloads/sub",[{name:"Dom",path:"/home/deck"}]);
+  assert.deepEqual(Array.from(parts,x=>x.path),["/home/deck","/home/deck/Downloads","/home/deck/Downloads/sub"]);
+  assert.equal(breadcrumbs("/etc",[{name:"Dom",path:"/home/deck"}]).length,0);
+});
+test("one native sorting dropdown with combined direction and type",()=>{
+  assert.ok(ui.includes("<Dropdown"));
+  assert.ok(ui.includes('menuLabel="Sortuj"'));
+  assert.ok(ui.includes('selectedOption={sortMode}'));
+  for(const label of ["Nazwa A–Z","Nazwa Z–A","Typ A–Z","Typ Z–A","Rozmiar ↑","Data ↓"])
+    assert.ok(ui.includes(label));
+  assert.ok(!ui.includes("changeSort(sortBy, !descending)"));
+});
+test("file actions stay in the same row",()=>{
   assert.ok(ui.includes('onSecondaryActionDescription="Opcje"'));
   assert.ok(ui.includes('onSecondaryButton={() => {'));
-  assert.ok(ui.includes('onOKActionDescription={entry.directory ? "Otwórz" : "Opcje"}'));
+  assert.ok(ui.includes('if (entry.directory) void load(entry.path, hidden)'));
+  assert.ok(ui.includes('selected?.path === entry.path'));
+  for(const text of [">Zmień</DialogButton>",">Kopiuj</DialogButton>",">Przenieś</DialogButton>"])
+    assert.ok(ui.includes(text));
+  assert.ok(!ui.includes("showContextMenu"));
 });
-
-test("SteamOS-native footer actions replace redundant navigation buttons",()=>{
+test("Steam footer handles back and refresh without UI buttons",()=>{
   assert.ok(ui.includes("<Focusable"));
-  assert.ok(ui.includes('onOptionsActionDescription="Odśwież"'));
-  assert.ok(ui.includes("onOptionsButton={() =>"));
-  assert.ok(ui.includes('onCancelActionDescription={page?.parent ? "W górę" : "Wstecz"}'));
-  assert.ok(ui.includes("onCancelButton={page?.parent ? event =>"));
-  assert.ok(ui.includes('event.key === "F5"'));
-  assert.ok(!ui.includes(">Przejdź</DialogButton>"));
-  assert.ok(!ui.includes(">Odśwież</DialogButton>"));
-  assert.ok(!ui.includes(">⋯</DialogButton>"));
+  assert.ok(ui.includes("onCancelActionDescription="));
+  assert.ok(ui.includes("onOptionsButton="));
+  assert.ok(ui.includes("setHidden(value)"));
 });

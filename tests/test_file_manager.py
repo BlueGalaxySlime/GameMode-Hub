@@ -116,6 +116,14 @@ class FileManagerTests(unittest.TestCase):
         (self.home / "folder").mkdir()
         self.assertEqual(file_manager.listing(sort_by="size")["items"][0]["name"], "folder")
 
+    def test_type_sorting(self):
+        for name in ("photo.png", "notes.txt", "archive.zip", "another.txt"):
+            (self.home / name).write_text("x")
+        self.assertEqual([x["name"] for x in file_manager.listing(sort_by="type")["items"]],
+                         ["photo.png", "another.txt", "notes.txt", "archive.zip"])
+        self.assertEqual([x["name"] for x in file_manager.listing(sort_by="type", descending=True)["items"]],
+                         ["archive.zip", "notes.txt", "another.txt", "photo.png"])
+
     def test_date_sorting(self):
         files = [self.home / "old.txt", self.home / "new.txt"]
         for path in files:
@@ -126,7 +134,7 @@ class FileManagerTests(unittest.TestCase):
                          ["new.txt", "old.txt"])
 
     def test_reject_invalid_sort(self):
-        for setting in ("", "../", "type", None, 4):
+        for setting in ("", "../", "bogus", None, 4):
             with self.subTest(setting=setting), self.assertRaises(ValueError):
                 file_manager.listing(sort_by=setting)
         for descending in ("true", 1, None):

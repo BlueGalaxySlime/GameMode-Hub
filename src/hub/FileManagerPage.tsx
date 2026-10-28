@@ -1,10 +1,10 @@
 import { useEffect, useRef, useState } from "react";
 import { callable } from "@decky/api";
-import { DialogBody, DialogButton, DialogControlsSection, Focusable, TextField, Toggle } from "@decky/ui";
+import { DialogBody, DialogButton, DialogControlsSection, Dropdown, Focusable, TextField, Toggle } from "@decky/ui";
 import { withTimeout } from "../utils/withTimeout";
 import { breadcrumbs } from "../core/filePath";
 
-type SortBy = "name" | "size" | "date";
+type SortBy = "name" | "type" | "size" | "date";
 type Entry = {
   name: string; path: string; directory: boolean; symlink: boolean;
   size: number | null; modified: number;
@@ -23,8 +23,16 @@ const makeFolder = callable<[string, string], { path: string }>("files_mkdir");
 const renameFile = callable<[string, string], { path: string }>("files_rename");
 const pasteFile = callable<[string, string, "copy" | "move"], { path: string }>("files_paste");
 
-const sortLabels: Record<SortBy, string> = { name: "Nazwa", size: "Rozmiar", date: "Data" };
-const sortOrder: SortBy[] = ["name", "size", "date"];
+const sortOptions = [
+  { data:"name-asc", label:"Nazwa A–Z", by:"name", descending:false },
+  { data:"name-desc", label:"Nazwa Z–A", by:"name", descending:true },
+  { data:"type-asc", label:"Typ A–Z", by:"type", descending:false },
+  { data:"type-desc", label:"Typ Z–A", by:"type", descending:true },
+  { data:"size-asc", label:"Rozmiar ↑", by:"size", descending:false },
+  { data:"size-desc", label:"Rozmiar ↓", by:"size", descending:true },
+  { data:"date-asc", label:"Data ↑", by:"date", descending:false },
+  { data:"date-desc", label:"Data ↓", by:"date", descending:true }
+] as const;
 
 function readableSize(size: number | null) {
   if (size === null) return "";
@@ -40,6 +48,7 @@ export function FileManagerPage() {
   const [hidden, setHidden] = useState(false);
   const [sortBy, setSortBy] = useState<SortBy>("name");
   const [descending, setDescending] = useState(false);
+  const [sortMode, setSortMode] = useState("name-asc");
   const [selected, setSelected] = useState<Entry | null>(null);
   const [clipboard, setClipboard] = useState<Clipboard | null>(null);
   const [name, setName] = useState("");
@@ -126,10 +135,11 @@ export function FileManagerPage() {
     setMessage("Wybierz folder docelowy i użyj Wklej.");
   }
 
-  function changeSort(next: SortBy, reverse: boolean) {
-    setSortBy(next);
-    setDescending(reverse);
-    void load(page?.path ?? null, hidden, 0, next, reverse);
+  function changeSort(option: typeof sortOptions[number]) {
+    setSortMode(option.data);
+    setSortBy(option.by);
+    setDescending(option.descending);
+    void load(page?.path ?? null, hidden, 0, option.by, option.descending);
   }
 
   // SteamOS owns the black footer. Expose controller hints through the
@@ -152,25 +162,16 @@ export function FileManagerPage() {
             void load(page?.path ?? null, hidden, page?.offset ?? 0);
           }
         }}>
-        {/* Single editable address bar: keyboard Enter and controller button. */}
-        <div style={{ display: "flex", alignItems: "stretch", gap: 6, minWidth: 0 }}>
-          <div style={{ flex: 1, minWidth: 0 }}>
-            <TextField value={pathDraft} placeholder="/home/deck/…"
-              aria-label="Ścieżka folderu"
-              onChange={event => setPathDraft(event.target.value)}
-              onKeyDown={event => {
-                if (event.key === "Enter") {
-                  event.preventDefault();
-                  void load(pathDraft, hidden);
-                }
-              }} />
-          </div>
-          <DialogButton disabled={busy || !pathDraft.trim()}
-            aria-label="Otwórz wpisaną ścieżkę"
-            onOKActionDescription="Otwórz"
-            style={{ minWidth: 0, padding: "6px 10px" }}
-            onClick={() => void load(pathDraft, hidden)}>↵</DialogButton>
-        </div>
+        {/* Address is optionally editable by Steam keyboard; folders open with A. */}
+        <TextField value={pathDraft} placeholder="/home/deck/…"
+          aria-label="Ścieżka katalogu"
+          onChange={event => setPathDraft(event.target.value)}
+          onKeyDown={event => {
+            if (event.key === "Enter") {
+              event.preventDefault();
+              void load(pathDraft, hidden);
+            }
+          }} />
 
         {/* Each breadcrumb is a focusable controller target, within allowed roots. */}
         {!!page && <div style={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: 4, minWidth: 0 }}>
@@ -186,35 +187,40 @@ export function FileManagerPage() {
             </div>)}
         </div>}
 
-        {/* A single compact toolbar: root navigation is handled by breadcrumbs. */}
-        <div style={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: 6 }}>
+        {/* Same compact toolbar as SteamOS settings. Native controller dropdown. */}
+        <div style={{ display: "flex", flexWrap: "wrap", alignItems: "center",
+          gap: 5, width: "100%", minWidth: 0 }}>
           {page?.roots.filter(root => !breadcrumbs(page.path, page.roots)
             .some(part => part.path === root.path)).map(root =>
-            <DialogButton key={root.path} disabled={busy}
-              style={{ minWidth: 0, padding: "6px 9px" }}
-              onClick={() => void load(root.path, hidden)}>{root.name}</DialogButton>)}
-          <DialogButton disabled={busy || !page} style={{ minWidth: 0, padding: "6px 9px" }}
-            onClick={() => { setAction("folder"); setName(""); setSelected(null); setMessage(""); }}>
-            + Folder
-          </DialogButton>
-          <label style={{ display: "inline-flex", gap: 6, alignItems: "center",
-            padding: "0 3px", fontSize: 12 }}>
+            <div key={root.path} style={{ flex: "0 0 auto", width: "auto" }}>
+              <DialogButton disabled={busy}
+                style={{ width: "auto", minWidth: 0, padding: "5px 8px" }}
+                onClick={() => void load(root.path, hidden)}>{root.name}</DialogButton>
+            </div>)}
+          <div style={{ flex: "0 0 auto", width: "auto" }}>
+            <DialogButton disabled={busy || !page}
+              style={{ width: "auto", minWidth: 0, padding: "5px 8px" }}
+              onClick={() => { setAction("folder"); setName(""); setSelected(null); setMessage(""); }}>
+              + Folder
+            </DialogButton>
+          </div>
+          <label style={{ display: "inline-flex", flex: "0 0 auto",
+            gap: 4, alignItems: "center", fontSize: 12 }}>
             Ukryte
             <Toggle value={hidden} disabled={busy} onChange={value => {
               setHidden(value);
               void load(page?.path ?? null, value);
             }} />
           </label>
-          <DialogButton disabled={busy} style={{ minWidth: 0, padding: "6px 9px" }}
-            onClick={() => {
-              const next = sortOrder[(sortOrder.indexOf(sortBy) + 1) % sortOrder.length];
-              changeSort(next, descending);
-            }}>Sortuj: {sortLabels[sortBy]}</DialogButton>
-          <DialogButton disabled={busy} aria-label="Zmień kierunek sortowania"
-            style={{ minWidth: 0, padding: "6px 9px" }}
-            onClick={() => changeSort(sortBy, !descending)}>
-            {descending ? "↓" : "↑"}
-          </DialogButton>
+          <div style={{ flex: "0 0 154px", width: 154, minWidth: 0 }}>
+            <Dropdown menuLabel="Sortuj" disabled={busy}
+              rgOptions={sortOptions.map(option => ({ data: option.data, label: option.label }))}
+              selectedOption={sortMode}
+              onChange={value => {
+                const option = sortOptions.find(item => item.data === value.data);
+                if (option) changeSort(option);
+              }} />
+          </div>
         </div>
 
         {action === "folder" && <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
@@ -238,74 +244,81 @@ export function FileManagerPage() {
           </DialogButton>
         </div>}
 
-        {/* Each filename is one full-width primary button; operations are inline. */}
-        {page && <div style={{ display: "flex", flexDirection: "column", gap: 4, width: "100%", minWidth: 0 }}>
+        {/* A opens folder / selects file, X toggles inline operations.
+            No submenu, no "Zamknij" and no extra screen height. */}
+        {page && <div style={{ display: "flex", flexDirection: "column", gap: 3, width: "100%", minWidth: 0 }}>
           {page.items.map(entry => <div key={entry.path} style={{ width: "100%", minWidth: 0 }}>
-            <div style={{ display: "flex", alignItems: "stretch", gap: 5, width: "100%", minWidth: 0 }}>
-              <DialogButton disabled={busy || entry.symlink}
-                onOKActionDescription={entry.directory ? "Otwórz" : "Opcje"}
-                onSecondaryActionDescription="Opcje"
-                onSecondaryButton={() => {
-                  setSelected(entry);
-                  setAction(null);
-                  setName(entry.name);
-                  setMessage("");
-                }}
-                onOptionsActionDescription="Odśwież"
-                onOptionsButton={() => {
-                  void load(page.path, hidden, page.offset);
-                }}
-                style={{ textAlign: "left", flex: 1, minWidth: 0, padding: "8px 11px",
-                  background: selected?.path === entry.path ? "#426b99" : undefined }}
-                onClick={() => {
-                  if (entry.directory) {
-                    void load(entry.path, hidden);
-                  } else {
-                    setSelected(entry);
-                    setAction(null);
-                    setName(entry.name);
-                    setMessage("");
-                  }
-                }}>
-                <span style={{ display: "flex", gap: 8, alignItems: "center", width: "100%", minWidth: 0 }}>
-                  <span aria-hidden="true">{entry.directory ? "📁" : entry.symlink ? "🔗" : "📄"}</span>
-                  <span style={{ textAlign: "left", flex: 1, minWidth: 0, overflow: "hidden",
-                    textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{entry.name}</span>
-                  {!entry.directory && !entry.symlink &&
-                    <span style={{ fontSize: 12, opacity: 0.65, flexShrink: 0 }}>
-                      {readableSize(entry.size)}
-                    </span>}
-                </span>
-              </DialogButton>
-            </div>
-            {selected?.path === entry.path && !entry.symlink &&
-              <div style={{ display: "flex", flexDirection: "column", gap: 6, padding: "6px 3px 8px 12px" }}>
-                <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
-                  <DialogButton disabled={busy} onClick={() => {
-                    setAction("rename"); setName(entry.name);
-                  }}>Zmień nazwę</DialogButton>
-                  {!entry.directory && <DialogButton disabled={busy}
-                    onClick={() => clipboardAction("copy")}>Kopiuj</DialogButton>}
-                  <DialogButton disabled={busy}
-                    onClick={() => clipboardAction("move")}>Przenieś</DialogButton>
-                  <DialogButton disabled={busy} onClick={() => {
-                    setSelected(null); setAction(null);
-                  }}>Zamknij</DialogButton>
-                </div>
-                {action === "rename" && <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-                  <TextField value={name} placeholder="Nowa nazwa"
-                    onChange={event => setName(event.target.value)} />
-                  <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
-                    <DialogButton disabled={busy || !name.trim()}
-                      onClick={() => { void operate("rename"); }}>Zapisz</DialogButton>
-                    <DialogButton disabled={busy} onClick={() => setAction(null)}>Anuluj</DialogButton>
+            <div style={{ display: "flex", alignItems: "center", gap: 4, width: "100%", minWidth: 0 }}>
+              <div style={{ flex: "1 1 0", minWidth: 0 }}>
+                <DialogButton disabled={busy || entry.symlink}
+                  onOKActionDescription={entry.directory ? "Otwórz" : "Opcje"}
+                  onSecondaryActionDescription="Opcje"
+                  onSecondaryButton={() => {
+                    setSelected(current => current?.path === entry.path ? null : entry);
+                    setAction(null); setName(entry.name); setMessage("");
+                  }}
+                  onOptionsActionDescription="Odśwież"
+                  onOptionsButton={() => { void load(page.path, hidden, page.offset); }}
+                  style={{ textAlign: "left", width: "100%", minWidth: 0, padding: "6px 8px",
+                    background: selected?.path === entry.path ? "#426b99" : undefined }}
+                  onClick={() => {
+                    if (entry.directory) void load(entry.path, hidden);
+                    else {
+                      setSelected(current => current?.path === entry.path ? null : entry);
+                      setAction(null); setName(entry.name); setMessage("");
+                    }
+                  }}>
+                  <span style={{ display: "flex", alignItems: "center", gap: 6, width: "100%", minWidth: 0 }}>
+                    <span aria-hidden="true">{entry.directory ? "📁" : entry.symlink ? "🔗" : "📄"}</span>
+                    <span style={{ flex: 1, minWidth: 0, textAlign: "left",
+                      overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{entry.name}</span>
+                    {!entry.directory && !entry.symlink && selected?.path !== entry.path &&
+                      <span style={{ fontSize: 11, opacity: 0.7, flexShrink: 0 }}>
+                        {readableSize(entry.size)}
+                      </span>}
+                  </span>
+                </DialogButton>
+              </div>
+              {selected?.path === entry.path && !entry.symlink && action !== "rename" &&
+                <div style={{ display: "flex", gap: 3, flex: "0 0 auto", alignItems: "center" }}>
+                  <div style={{ flex: "0 0 auto" }}>
+                    <DialogButton disabled={busy}
+                      style={{ minWidth: 0, width: "auto", padding: "5px 7px" }}
+                      onClick={() => { setAction("rename"); setName(entry.name); }}>Zmień</DialogButton>
+                  </div>
+                  {!entry.directory && <div style={{ flex: "0 0 auto" }}>
+                    <DialogButton disabled={busy}
+                      style={{ minWidth: 0, width: "auto", padding: "5px 7px" }}
+                      onClick={() => clipboardAction("copy")}>Kopiuj</DialogButton>
+                  </div>}
+                  <div style={{ flex: "0 0 auto" }}>
+                    <DialogButton disabled={busy}
+                      style={{ minWidth: 0, width: "auto", padding: "5px 7px" }}
+                      onClick={() => clipboardAction("move")}>Przenieś</DialogButton>
                   </div>
                 </div>}
-              </div>}
+              {selected?.path === entry.path && action === "rename" &&
+                <div style={{ display: "flex", flex: "2 1 0", gap: 3, alignItems: "center", minWidth: 0 }}>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <TextField value={name} aria-label="Nowa nazwa"
+                      onChange={event => setName(event.target.value)}
+                      onKeyDown={event => {
+                        if (event.key === "Enter" && name.trim()) {
+                          event.preventDefault(); void operate("rename");
+                        }
+                        if (event.key === "Escape") setAction(null);
+                      }} />
+                  </div>
+                  <div style={{ flex: "0 0 auto" }}>
+                    <DialogButton disabled={busy || !name.trim()}
+                      style={{ minWidth: 0, width: "auto", padding: "5px 7px" }}
+                      onClick={() => void operate("rename")}>✓</DialogButton>
+                  </div>
+                </div>}
+            </div>
           </div>)}
-          {page.items.length === 0 && !busy && <div style={{ opacity: 0.7, fontSize: 14, padding: 7 }}>
-            Pusty folder
-          </div>}
+          {page.items.length === 0 && !busy &&
+            <div style={{ opacity: 0.7, padding: 6 }}>Pusty folder</div>}
         </div>}
 
         {page && page.total > page.limit &&

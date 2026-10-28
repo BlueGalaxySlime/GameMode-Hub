@@ -1,3 +1,12 @@
+# GameMode Hub 0.5.9
+
+- Pliki: A otwiera katalog lub zaznacza plik. X pokazuje działania w tym samym wierszu, bez osobnego menu.
+- Zmień / Kopiuj / Przenieś mieszczą się obok nazwy zamiast w nowej sekcji. Usunięto zbędny „Zamknij”.
+- Sortowanie przez natywną rozwijaną listę SteamOS: Nazwa A–Z/Z–A, Typ A–Z/Z–A, Rozmiar ↑/↓ i Data ↑/↓. Bez osobnego przycisku strzałki.
+- Edytowalna ścieżka obsługuje Enter, ale nie ma przycisku „Przejdź”. Foldery otwierają się przez wybór.
+- Odświeżanie pozostaje pod kontrolerem / F5, bez tekstowego przycisku.
+- Nadal dostępne: klikalna ścieżka, ukryte pliki, kopiowanie i przenoszenie bez nadpisywania. Terminal bez zmian.
+
 # GameMode Hub 0.5.8
 
 - Systemowy czarny pasek SteamOS pozostaje własnością Steam. Podpowiedzi A (Otwórz/Opcje), X (Opcje), B (W górę/Wstecz) i Y (Odśwież) są deklarowane poprzez natywne właściwości fokusu Decky UI, a nie przez własny pasek.

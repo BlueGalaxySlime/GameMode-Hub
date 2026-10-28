@@ -86,7 +86,7 @@ def listing(path=None, hidden=False, offset=0, sort_by="name", descending=False)
         raise ValueError("Nieprawidłowe ustawienie ukrytych plików.")
     if isinstance(offset, bool) or not isinstance(offset, int) or offset < 0:
         raise ValueError("Nieprawidłowa strona.")
-    if sort_by not in ("name", "size", "date") or not isinstance(descending, bool):
+    if sort_by not in ("name", "type", "size", "date") or not isinstance(descending, bool):
         raise ValueError("Nieprawidłowe sortowanie.")
     results = []
     with os.scandir(folder) as entries:
@@ -118,6 +118,8 @@ def listing(path=None, hidden=False, offset=0, sort_by="name", descending=False)
     def key(item):
         if sort_by == "name":
             return item["name"].casefold()
+        if sort_by == "type":
+            return (Path(item["name"]).suffix.casefold(), item["name"].casefold())
         if sort_by == "size":
             return (item["size"] or 0, item["name"].casefold())
         return (item["modified"], item["name"].casefold())
