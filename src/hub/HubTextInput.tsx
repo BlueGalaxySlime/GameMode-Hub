@@ -18,14 +18,17 @@ export type HubTextInputProps = {
   disabled?: boolean;
   style?: CSSProperties;
   "aria-label"?: string;
+  focusOnMount?: boolean;
 };
 
 export function HubTextInput(props: HubTextInputProps) {
   const options = useSyncExternalStore(subscribeHubPreferences, getHubPreferences);
+  const { focusOnMount, ...fieldProps } = props;
   if (options.autoKeyboard) {
-    return <TextField {...props} />;
+    return <TextField {...fieldProps} focusOnMount={focusOnMount} />;
   }
-  return <input {...props} type="text" inputMode="none" autoComplete="off"
+  return <input {...fieldProps} type="text" inputMode="none" autoComplete="off"
+    autoFocus={focusOnMount}
     spellCheck={false} style={{
       display: "block", width: "100%", minWidth: 0, boxSizing: "border-box",
       borderRadius: 4, padding: "8px 10px",
