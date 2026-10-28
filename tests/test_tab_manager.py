@@ -6,6 +6,7 @@ from pathlib import Path
 from unittest.mock import patch
 
 import tab_manager
+import main
 
 
 class TabManagerTests(unittest.TestCase):
@@ -22,6 +23,10 @@ class TabManagerTests(unittest.TestCase):
         self.addCleanup(self.settings.stop)
         self.addCleanup(self.tabs.stop)
         self.addCleanup(self.profiles.stop)
+
+    def test_preview_version_upgrades_to_stable(self):
+        self.assertLess(main._version("v0.3.0-preview.1"), main._version("v0.3.0"))
+        self.assertLess(main._version("v0.2.3"), main._version("v0.3.0-preview.1"))
 
     def test_default_disabled(self):
         self.assertFalse(tab_manager._read_tab_manager_enabled())
