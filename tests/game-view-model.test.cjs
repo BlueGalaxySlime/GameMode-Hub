@@ -51,3 +51,49 @@ test("UI patch is opt-in, additive and removable without replacing Play",()=>{
   assert.ok(entry.includes('stopGameUi()'));
   assert.ok(!patch.includes('replacePatch('));
 });
+
+test("All launchers have four keyboard/gamepad navigable, provider-specific tabs",()=>{
+  const code=fs.readFileSync("src/game-view/gameTabs.ts","utf8");
+  const js=ts.transpileModule(code,{compilerOptions:{
+    module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2020
+  }}).outputText;
+  const ctx={exports:{}};
+  vm.runInNewContext(js,ctx);
+  const {gameTabsFor,gameCommunityActions}=ctx.exports;
+  const gog=gameTabsFor("gog"),steam=gameTabsFor("steam"),epic=gameTabsFor("epic");
+  assert.deepEqual(Array.from(gog,t=>t.id),["activity","library","community","details"]);
+  assert.equal(gog[1].label,"Moja gra");
+  assert.equal(gog[2].label,"Forum GOG");
+  assert.equal(epic[2].label,"Pomoc");
+  assert.equal(steam[2].label,"Społeczność");
+  assert.equal(gameCommunityActions("gog",null)[0].url,"https://www.gog.com/forum");
+  assert.equal(gameCommunityActions("gog","620").at(-1).url,
+    "https://steamcommunity.com/app/620/");
+  assert.equal(gameCommunityActions("gog","3221225472").length,1);
+});
+test("Recognize Unifideck GOG/Epic shortcut launch syntax",()=>{
+  const gog=normalizeGame({appid:3221225472,display_name:"A Plague Tale"},
+    {strLaunchOptions:"mangohud %command% gog:1207658924"});
+  assert.equal(gog.source,"gog");
+  assert.equal(detectSource(true,"%command% epic:example"),"epic");
+  assert.equal(detectSource(true,"nile %command% amazon:game"),"amazon");
+  assert.equal(detectSource(true,""),"external");
+});
+test("Shared tabs are opt-in, avoid duplicate Steam tabs and do not replace Unifideck",()=>{
+  const patch=fs.readFileSync("src/game-view/gamePagePatch.tsx","utf8");
+  const strip=fs.readFileSync("src/game-view/UnifiedGameStrip.tsx","utf8");
+  const page=fs.readFileSync("src/hub/UiPage.tsx","utf8");
+  assert.ok(patch.includes('if (!Number.isInteger(appId) || appId < 0x80000000) return rendered'));
+  assert.ok(patch.includes('unifideck-game-info-'));
+  assert.ok(strip.includes('gameTabsFor(source)'));
+  assert.ok(strip.includes('setTab(item.id)'));
+  assert.ok(strip.includes('NavEntryPositionPreferences.MAINTAIN_X'));
+  assert.ok(strip.includes('tab==="activity"'));
+  assert.ok(strip.includes('tab==="library"'));
+  assert.ok(strip.includes('tab==="community"'));
+  assert.ok(strip.includes('tab==="details"'));
+  assert.ok(strip.includes('if (!game || !game.shortcut) return null'));
+  assert.ok(!patch.includes('replacePatch('));
+  assert.ok(!strip.includes('uninstall_game'));
+  assert.ok(page.includes('Wspólne zakładki gry'));
+});

@@ -1,3 +1,13 @@
+# GameMode Hub 0.5.40 (testowy)
+
+- **Jednolity model zakładek:** zamiast pojedynczego paska informacji, włączone opcjonalnie UI → Gaming Mode pokazuje dla skrótów nie-Steam cztery zakładki wzorowane na SteamOS: aktywność, własna biblioteka, społeczność/pomoc i szczegóły. Ich etykiety i dostępne działania różnią się zależnie od GOG, Epic i innych źródeł.
+- **Steam bez duplikacji:** natywny Steam zachowuje własne, działające zakładki Aktywność / Twoje rzeczy / Społeczność / Informacje o grze. Hub nie wstawia drugiego zestawu.
+- **GOG i Unifideck:** zgodne skróty Unifideck (np. `gog:1207658924` i `epic:<id>`) są rozpoznawane; na karcie GOG powstają zakładki „Aktywność”, „Moja gra”, „Forum GOG”, „O grze”. Hub korzysta ze statystyk dostępnych ze SteamOS; forum GOG i pomoc Epic otwierają rzeczywiste serwisy, a nie fikcyjne podstrony konkretnej gry.
+- **Nie przejmujemy zewnętrznych funkcji:** instalacja, osiągnięcia i synchronizacja chmury w Unifideck działają na jego własnym panelu i nie są kopiowane ani podmieniane. To pierwszy etap wspólnego UI, nie pełne przepisanie interfejsu Unifideck i nie zamiana natywnych ekranów Steam.
+- **Pamięć i wydajność:** ProtonDB odczytywany tylko po wejściu na zakładkę szczegółów i przy poprawnie przypisanym Steam AppID; pamięć podręczna z poprzednich wersji bez zmian. Brak cyklicznego skanowania.
+- **Gamepad i bezpieczeństwo:** przyciski i fokus SteamOS, lewo/prawo między zakładkami, brak nowych uprawnień. Bezpieczne wstrzykiwanie do strony gry za panelem Unifideck tam, gdzie strukturę uda się rozpoznać; nie ukrywamy jego widoku. Domyślnie wyłączone.
+- **Testy:** model dla GOG/Epic, wykrywanie Unifideck, obsługa tabów i brak duplikacji na Steam. Wymaga testów na fizycznym Lenovo przed przejmowaniem głębszych funkcji sklepu.
+
 # GameMode Hub 0.5.39 (testowy)
 
 - **UI zamiast głównej zakładki ProtonDB:** nowa sekcja **UI → Gaming Mode / Obraz / Konsola**. ProtonDB jest opcjonalnym źródłem informacji w Gaming Mode, a ręczne wyszukiwanie pozostaje dostępne po rozwinięciu. Obraz/Konsola to miejsca na przyszłe moduły; nie wykonują zadań.

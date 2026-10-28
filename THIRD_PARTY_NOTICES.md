@@ -167,3 +167,13 @@ The MIT license and copyright notice must be preserved in substantial copies
 of software. GameMode Hub implements its own game model and visuals; this is
 an attribution for the documented integration technique, not a claim of
 endorsement or any partnership.
+
+## Unifideck (reference for integration; GPL-3.0-or-later)
+
+GameMode Hub's opt-in non-Steam tab layout was informed by how Unifideck
+integrates GOG/Epic game pages and preserves its own installation and
+achievement handlers: https://github.com/mubaraknumann/unifideck
+
+Unifideck is copyright its respective authors and licensed under GPL-3.0-or-later.
+No Unifideck source code or assets are distributed within GameMode Hub. Its
+play, achievements and cloud-save handlers are not overridden by this feature.

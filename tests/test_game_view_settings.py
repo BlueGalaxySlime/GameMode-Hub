@@ -56,3 +56,11 @@ class UnifiedUiTests(unittest.TestCase):
             settings.set_mapping("3221225472", "gog", "3221225472")
         with self.assertRaises(ValueError):
             settings.set_mapping("3221225472", "gog", "abc")
+
+    def test_more_sources_without_credentials(self):
+        shortcut = "3221225472"
+        for source in ("amazon", "ubisoft", "battlenet", "itch", "xcloud"):
+            with self.subTest(source=source):
+                self.assertEqual(settings.set_mapping(shortcut, source)["client"], source)
+        data = json.loads(self.path.read_text(encoding="utf-8"))
+        self.assertNotIn("token", str(data).lower())
