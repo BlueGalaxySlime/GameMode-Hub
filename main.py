@@ -16,7 +16,10 @@ _PLUGIN_ROOT = str(Path(__file__).resolve().parent)
 if _PLUGIN_ROOT not in sys.path:
     sys.path.insert(0, _PLUGIN_ROOT)
 
-from hub_settings import get_selected_addons, set_selected_addons, get_update_channel, set_update_channel
+from hub_settings import (
+    get_selected_addons, set_selected_addons, get_update_channel, set_update_channel,
+    get_hub_preferences, set_hub_preferences,
+)
 from release_catalog import RELEASES_API as RELEASE_CATALOG_API, catalog, validate_channel
 from file_manager import listing as list_files, create_folder, rename_entry, paste_entry
 
@@ -127,6 +130,12 @@ class Plugin:
 
     async def set_selected_addons(self, names):
         return await asyncio.to_thread(set_selected_addons, names)
+
+    async def get_hub_preferences(self):
+        return await asyncio.to_thread(get_hub_preferences)
+
+    async def set_hub_preferences(self, options):
+        return await asyncio.to_thread(set_hub_preferences, options)
 
     async def get_update_channel(self):
         return await asyncio.to_thread(get_update_channel)
