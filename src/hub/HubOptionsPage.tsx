@@ -41,12 +41,12 @@ export function HubOptionsPage() {
   return <DialogBody>
     <DialogControlsSection>
       <Field label="Zachowuj stan kart"
-        description="Zapamiętaj otwarte katalogi, sortowanie, zaznaczenia, schowek i ustawienia paneli przy zmianie zakładki. Dane sesji pozostają w pamięci, nie na dysku.">
+        description="Zapamiętaj otwarte katalogi, sortowanie, zaznaczenia, schowek i pozycję przewijania przy zmianie zakładki. Dane sesji pozostają w pamięci, nie na dysku.">
         <Toggle value={options.saveSession} disabled={saving}
           onChange={value => { void update("saveSession", value); }} />
       </Field>
       <Field label="Podział drzewa plików"
-        description="Tylko w obszarze przeglądania plików: po lewej katalogi, po prawej lista. Pozostałe elementy Huba pozostają pełnej szerokości.">
+        description="Podział dotyczy tylko listy plików: katalogi po lewej, pliki po prawej. Obie kolumny przewijają się osobno, a górne opcje pozostają na miejscu.">
         <Toggle value={options.splitFileTree} disabled={saving}
           onChange={value => { void update("splitFileTree", value); }} />
       </Field>
