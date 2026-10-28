@@ -116,6 +116,33 @@ class TransferTests(unittest.TestCase):
                 self.open("pair", data=data, headers=headers)
             self.assertEqual(error.exception.code, 403)
 
+    def test_pair_with_same_site_metadata_and_matching_referer(self):
+        state = self.manager.start()
+        url = state["url"]
+        browser = build_opener(HTTPCookieProcessor(CookieJar()))
+        data = urlencode({"pin": state["pin"]}).encode()
+        with browser.open(Request(url + "pair", data=data, headers={
+            "Referer": url, "Sec-Fetch-Site": "same-site"
+        }), timeout=5) as response:
+            self.assertEqual(response.status, 200)
+            self.assertIn("Połączono!".encode(), response.read())
+
+    def test_paring_rejection_identifies_reason_without_disclosing_headers(self):
+        state = self.manager.start()
+        data = urlencode({"pin": state["pin"]}).encode()
+        cases = [
+            ({"Origin": "null"}, b"ORIGIN"),
+            ({"Referer": "http://evil.example/"}, b"REFERER"),
+            ({"Sec-Fetch-Site": "cross-site"}, b"METADANE"),
+            ({"Sec-Fetch-Site": "same-site"}, b"METADANE"),
+            ({"Host": "other.example"}, b"ADRES"),
+        ]
+        for headers, expected in cases:
+            with self.subTest(headers=headers), self.assertRaises(HTTPError) as caught:
+                self.open("pair", data=data, headers=headers)
+            self.assertEqual(caught.exception.code, 403)
+            self.assertIn(expected, caught.exception.read())
+
     def test_upload_download_and_exclusive_file_creation(self):
         browser, url = self.paired()
         data = b"hello from Mac"

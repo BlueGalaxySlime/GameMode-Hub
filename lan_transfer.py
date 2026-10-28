@@ -196,36 +196,49 @@ class TransferManager:
                     self.end_headers()
                     self.wfile.write(body)
 
-                def _trusted(self):
-                    # Bind to LAN IP, reject hosts used in DNS rebinding attacks
-                    # and any connection from an Internet-routable address.
+                def _trusted_denial(self):
+                    # Never log or echo IPs, PINs, cookies or request headers.
                     peer = ipaddress.ip_address(self.client_address[0])
-                    host = self.headers.get("Host", "")
-                    return (peer.is_private and host == manager.address[0] + ":" + str(manager.address[1]))
+                    if not peer.is_private:
+                        return "SIEC"
+                    expected_host = manager.address[0] + ":" + str(manager.address[1])
+                    if self.headers.get("Host", "") != expected_host:
+                        return "ADRES"
+                    return None
 
-                def _allowed_post(self):
-                    """Accept Safari's same-origin POSTs even if Origin is omitted.
+                def _trusted(self):
+                    return self._trusted_denial() is None
 
-                    Some browser versions omit Origin on normal navigation
-                    forms or same-origin uploads. Reject any explicitly
-                    foreign Origin, Referer, or Fetch Metadata; missing
-                    headers alone are not proof of a cross-origin request.
-                    _trusted() separately enforces exact IP:port Host and
-                    LAN peer, and mutations still require a PIN/cookie.
+                def _post_denial(self):
+                    """Distinguish browser header failures without loosening LAN/PIN checks.
+
+                    Some browsers classify a same-host form submission as
+                    'same-site' rather than 'same-origin'. Accept that only
+                    with a matching Origin or Referer; never accept foreign
+                    origins or unauthenticated cross-site fetches.
                     """
-                    expected = "http://" + manager.address[0] + ":" + str(manager.address[1])
+                    expected_host = manager.address[0] + ":" + str(manager.address[1])
+                    expected_origin = "http://" + expected_host
                     origin = self.headers.get("Origin")
-                    if origin is not None and origin != expected:
-                        return False
+                    if origin is not None and origin != expected_origin:
+                        return "ORIGIN"
                     referer = self.headers.get("Referer")
+                    referer_matches = False
                     if referer is not None:
                         parsed = urlsplit(referer)
-                        if parsed.scheme != "http" or parsed.netloc != manager.address[0] + ":" + str(manager.address[1]):
-                            return False
+                        referer_matches = parsed.scheme == "http" and parsed.netloc == expected_host
+                        if not referer_matches:
+                            return "REFERER"
                     fetch_site = self.headers.get("Sec-Fetch-Site")
-                    if fetch_site is not None and fetch_site.lower() not in ("same-origin", "none"):
-                        return False
-                    return True
+                    if fetch_site is not None:
+                        site = fetch_site.lower()
+                        if site in ("same-origin", "none"):
+                            pass
+                        elif site == "same-site" and (origin == expected_origin or referer_matches):
+                            pass
+                        else:
+                            return "METADANE"
+                    return None
 
                 def _paired(self):
                     value = SimpleCookie()
@@ -281,8 +294,9 @@ class TransferManager:
                             os.close(fd)
 
                 def do_POST(self):
-                    if not self._trusted() or not self._allowed_post():
-                        self._reply(403, "Odmowa dostępu.")
+                    denial = self._trusted_denial() or self._post_denial()
+                    if denial:
+                        self._reply(403, "Odmowa dostępu (kod: " + denial + ").")
                         return
                     route = urlsplit(self.path).path
                     if route == "/pair":

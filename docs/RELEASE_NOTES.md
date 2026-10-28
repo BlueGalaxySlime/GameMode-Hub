@@ -1,3 +1,10 @@
+# GameMode Hub 0.5.26 (testowy)
+
+- **Transfer Wi-Fi — diagnostyka odmowy po wpisaniu PIN:** zamiast identycznego komunikatu dla wszystkich blokad serwer podaje kod: SIEC, ADRES, ORIGIN, REFERER lub METADANE. Kody nie ujawniają adresów urządzeń, nagłówków, PIN-ów ani ciasteczek; pozwalają ustalić, co dokładnie zablokowało parowanie na Macu.
+- **Safari/Firefox:** jeśli przeglądarka oznaczy żądanie jako „same-site”, serwer zaakceptuje je tylko przy zgodnym Origin albo Referer. Obce strony i połączenia wciąż są odrzucane.
+- **Ochrona bez zmian:** wymagany prywatny adres IP, dokładny adres Host, poprawny 8-cyfrowy PIN i sesja dla transferu plików. Bez roota, bez nadpisywania istniejących plików i bez udostępniania innych folderów.
+- **Testy:** dodano przypadek poprawnego parowania z „same-site” oraz rozróżnienie powodów odmowy. Na Macu i Lenovo wymagane potwierdzenie przyczyny po aktualizacji.
+
 # GameMode Hub 0.5.25 (testowy)
 
 - **Transfer Mac → Lenovo / SteamOS:** Safari po wpisaniu kodu parowania może wysłać formularz bez nagłówka Origin. Serwer teraz obsługuje takie żądania z tej samej lokalnej strony, nie odrzucając ich automatycznie jako „Odmowa dostępu”.
