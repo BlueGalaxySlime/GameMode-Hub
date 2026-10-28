@@ -7,7 +7,8 @@ import {
 import type { TabDefinition } from "./LibraryIntegration";
 import {
   tabManagerEnabledChanged, tabManagerTabsChanged,
-  tabManagerConflictChanged, detectTabMasterActivity
+  tabManagerConflictChanged, detectTabMasterActivity,
+  availableSteamLibraryTabs, setSystemTabHidden
 } from "./LibraryIntegration";
 import type { TabMasterActivity } from "./TabMasterDetection";
 
@@ -84,9 +85,15 @@ export function TabManagerModule() {
   }
 
   function openVisibility(parent: EventTarget) {
+    const systemTabs = availableSteamLibraryTabs();
     showContextMenu(
-      <Menu label="Wyświetlanie kart">
+      <Menu label="Wyświetlaj karty">
         {tabs.length === 0 && <MenuItem disabled>Brak własnych kart</MenuItem>}
+        {systemTabs.map(tab => <MenuItem key={tab.id}
+          onClick={() => { void setSystemTabHidden(tab.id, !tab.hidden).catch(() =>
+            setError("Nie można zmienić widoczności tej karty Steam.")); }}>
+          {tab.hidden ? "Pokaż" : "Ukryj"} · Steam · {tab.title}
+        </MenuItem>)}
         {tabs.map(tab => <MenuItem key={tab.id} disabled={busy}
           onClick={() => { void visibility(tab.id, tab.hidden); }}>
           {tab.hidden ? "Pokaż" : "Ukryj"} · {tab.title}
@@ -105,8 +112,8 @@ export function TabManagerModule() {
         Biblioteka
       </DialogButton>
     </Field>
-    <Field label="Wyświetlanie"
-      description="Pokaż lub ukryj własne karty. Karty systemowe Steam pozostają bez zmian.">
+    <Field label="Wyświetlaj"
+      description="Ukryj lub przywróć karty systemowe Steam i własne karty Huba.">
       <DialogButton disabled={busy} onClick={event => openVisibility(event.currentTarget)}>
         Karty
       </DialogButton>
