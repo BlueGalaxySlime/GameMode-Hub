@@ -71,7 +71,7 @@ DEFAULT_HUB_PREFERENCES = {
 
 
 def validate_hub_preferences(value):
-    if not isinstance(value, dict) or not set(value).issubset(DEFAULT_HUB_PREFERENCES):
+    if not isinstance(value, dict) or not value or not set(value).issubset(DEFAULT_HUB_PREFERENCES):
         raise ValueError("Nieprawidlowe opcje Huba.")
     # Merge previous installations' two-key settings with new defaults.
     options = {**DEFAULT_HUB_PREFERENCES, **value}
