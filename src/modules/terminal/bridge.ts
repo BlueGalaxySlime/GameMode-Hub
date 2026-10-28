@@ -8,5 +8,5 @@ export type TerminalBridge = {
   write(id: string, base64: string): Promise<{ ok: boolean }>;
   resize(id: string, cols: number, rows: number): Promise<{ ok: boolean }>;
   close(id: string): Promise<{ ok: boolean }>;
-  ping?(): Promise<{ ok: boolean }>;
+  ping?(): Promise<{ ok: boolean; version?: string; protocol?: number }>;
 };

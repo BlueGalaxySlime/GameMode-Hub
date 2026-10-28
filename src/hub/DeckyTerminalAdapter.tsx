@@ -18,7 +18,7 @@ const read = callable<[string], TerminalRead>("terminal_read");
 const write = callable<[string, string], { ok: boolean }>("terminal_write");
 const resize = callable<[string, number, number], { ok: boolean }>("terminal_resize");
 const close = callable<[string], { ok: boolean }>("terminal_close");
-const ping = callable<[], { ok: boolean }>("terminal_ping");
+const ping = callable<[], { ok: boolean; version?: string; protocol?: number }>("terminal_ping");
 const bridge: TerminalBridge = { start, read, write, resize, close, ping };
 
 /**

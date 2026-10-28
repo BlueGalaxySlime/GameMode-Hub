@@ -104,11 +104,14 @@ export function TerminalView({ bridge, render, fontSize = 15, autoStart = false,
     window.addEventListener("resize", refreshSize);
 
     const timer = window.setInterval(async () => {
-      const id = session.current;
-      if (!id || polling.current) return;
+      const id = slot.id;
+      if (!id || slot.phase !== "connected" || polling.current) return;
       polling.current = true;
       try {
-        const result = await bridge.read(id);
+        const result = await Promise.race([
+          bridge.read(id),
+          new Promise<never>((_, reject) => setTimeout(() => reject(new Error("Timeout odczytu terminala")), 3500))
+        ]);
         if (!mounted.current || id !== session.current) return;
         if (result.data) {
           const bytes = decodeBytes(result.data);
@@ -126,7 +129,12 @@ export function TerminalView({ bridge, render, fontSize = 15, autoStart = false,
           if (mounted.current) { setActive(false); setStatus(slot.error); }
         }
       } catch {
-        if (mounted.current && id === session.current) setStatus("Błąd odczytu terminala. Zamknij i uruchom sesję ponownie.");
+        if (slot.id === id) {
+          markBackendUnavailable("Połączenie terminala z backendem zostało przerwane. Nie wysyłamy kolejnych żądań, aby uniknąć zawieszenia SteamOS.");
+          slot.phase = "unavailable";
+          slot.error = getBackendError();
+          if (mounted.current) { setActive(false); setStatus(slot.error); }
+        }
       } finally {
         polling.current = false;
       }
@@ -194,6 +202,9 @@ export function TerminalView({ bridge, render, fontSize = 15, autoStart = false,
       if (bridge.ping) {
         const response = await bounded(bridge.ping(), 2500);
         if (!response.ok) throw new Error("Backend terminala nie jest gotowy");
+        if (response.protocol !== 2) {
+          throw new Error("Nieaktualny backend SteamHub. Przeładuj wtyczkę w Decky, aby uruchomić nowy silnik.");
+        }
       }
       if (timedOut) throw new Error("Backend nie odpowiedział");
       setStatus("Uruchamianie sesji…");
