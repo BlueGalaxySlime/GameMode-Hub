@@ -1,4 +1,7 @@
-# SteamHub 0.4.2
+# SteamHub 0.4.3
+
+Hotfix: sprawdzanie aktualizacji przez Steam WebView z zapasową ścieżką przez backend Decky.
+
 
 Hotfix aktualizatora i spójnego publikowania: ograniczenie czasu oczekiwania na instalację, zapobieganie ponawianiu przyjętej instalacji i dokładniejszy komunikat potwierdzenia.
 
