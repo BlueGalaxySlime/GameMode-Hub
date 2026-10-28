@@ -25,7 +25,13 @@ test("All Optimization modules are visible in one page without nested tabs", () 
   assert.ok(page.includes('<CollectionsModule />'));
   assert.ok(page.includes('<ProtonDBPage />'));
   assert.ok(page.includes('saveGameUi({ ...settings, [key]: value })'));
-  assert.ok(cards.includes('save_tab_definitions'));
+  const editor = fs.readFileSync("src/modules/tab-manager/LibraryCardsEditor.tsx", "utf8");
+  const integration = fs.readFileSync("src/modules/tab-manager/LibraryIntegration.tsx", "utf8");
+  assert.ok(editor.includes('save_tab_definitions'));
+  assert.ok(integration.includes('createElement(LibraryCardsEditor)'));
+  assert.ok(integration.includes('title: "+"'));
+  assert.ok(!cards.includes('save_tab_definitions'));
+  assert.ok(page.includes('<LibraryBackupSection />'));
   assert.ok(collections.includes('save_hub_collections'));
 });
 
@@ -33,5 +39,7 @@ test("No empty placeholder subpages or duplicate helper text", () => {
   assert.ok(!page.includes("Przyszłe ustawienia"));
   assert.ok(!page.includes('label="Źródła gier"'));
   assert.ok(!cards.includes('label="Karty biblioteki"'));
+  assert.ok(!cards.includes("Dodaj kartę"));
+  assert.ok(!cards.includes("Nazwa nowej karty"));
   assert.ok(!collections.includes('label="Kolekcje Huba"'));
 });
