@@ -6,7 +6,7 @@ import { breadcrumbs } from "../core/filePath";
 import { applyHubPreferences, getHubPreferences, readHubSession, subscribeHubPreferences, writeHubSession } from "../core/hubSession";
 import type { HubPreferences } from "../core/hubSession";
 import { useHubSessionState } from "./useHubSessionState";
-import { HubTextInput } from "./HubTextInput";
+import { HubTextInput, openHubTextMenu } from "./HubTextInput";
 import { CreateFolderDialog } from "./CreateFolderDialog";
 import { ConfirmTrashDialog, TrashListDialog } from "./TrashDialogs";
 import { TransferDialog } from "./TransferDialog";
@@ -82,6 +82,8 @@ export function FileManagerPage() {
   const [activePane, setActivePane] = useHubSessionState<"left" | "right">("files.activePane", "left");
   const [pathDraft, setPathDraft] = useHubSessionState("files.pathDraft", "");
   const [editingPath, setEditingPath] = useHubSessionState("files.editingPath", false);
+  const [selectingPath, setSelectingPath] = useState(false);
+  const [selectAllPath, setSelectAllPath] = useState(false);
   const [hidden, setHidden] = useHubSessionState("files.hidden", false);
   const [sortBy, setSortBy] = useHubSessionState<SortBy>("files.sortBy", "name");
   const [descending, setDescending] = useHubSessionState("files.descending", false);
@@ -682,7 +684,8 @@ export function FileManagerPage() {
         }}>
           {editingPath ? (
             <HubTextInput value={pathDraft} placeholder="/home/deck/…"
-              aria-label="Edytuj ścieżkę katalogu" focusOnMount
+              aria-label="Edytuj ścieżkę katalogu" focusOnMount={!selectingPath}
+              startInSelectionMode={selectingPath} selectAllOnMount={selectAllPath}
               onEditValue={setPathDraft}
               onExitEdit={() => { setPathDraft(currentPage?.path ?? ""); setEditingPath(false); }}
               disabled={busy}
@@ -713,7 +716,23 @@ export function FileManagerPage() {
                 event.stopPropagation();
                 openBrowserMenu(event.currentTarget ?? window);
               }}
-              onClick={() => setEditingPath(true)}
+              onMenuActionDescription="Edycja tekstu"
+              onMenuButton={event => {
+                event.preventDefault();
+                event.stopPropagation();
+                openHubTextMenu({
+                  parent: event.currentTarget ?? window,
+                  value: currentPage?.path ?? pathDraft,
+                  onEditValue: next => { setPathDraft(next); setSelectingPath(false); setEditingPath(true); },
+                  onStartSelection: (all = false) => {
+                    setPathDraft(currentPage?.path ?? pathDraft);
+                    setSelectAllPath(all);
+                    setSelectingPath(true);
+                    setEditingPath(true);
+                  }
+                });
+              }}
+              onClick={() => { setSelectingPath(false); setEditingPath(true); }}
               style={{ width: "100%", minWidth: 0, textAlign: "left",
                 padding: "8px 12px", overflow: "hidden",
                 textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
