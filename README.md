@@ -1,42 +1,34 @@
-# SteamHub
+# SteamHub — niezależna aplikacja Linux
 
-**SteamHub** — eksperymentalna, modułowa wtyczka do Decky Loader na SteamOS. Projekt rozwijany w repozytorium `SteamOS-Hub`.
+**SteamHub** działa bez Decky Loader i bez uruchomionego Steam. Starsza wtyczka Decky pozostaje opcjonalna.
 
-## 📦 Pobierz SteamHub
+## Instalacja na SteamOS
 
-### **[⬇️ Pobierz najnowszą wersję SteamHub (GitHub Releases)](https://github.com/BlueGalaxySlime/SteamOS-Hub/releases/latest)**
+1. W trybie pulpitu pobierz `SteamHub-0.5.0-x86_64.flatpak` z [GitHub Releases](https://github.com/BlueGalaxySlime/SteamOS-Hub/releases/latest).
+2. Otwórz pobrany plik w **KDE Discover** i potwierdź instalację.
+3. Uruchom SteamHub z menu aplikacji KDE.
 
-Na stronie wydania rozwiń **Assets** i pobierz **`SteamHub.zip`**.
+**Nie trzeba instalować Decky, rozpakowywać plików, używać terminala ani `sudo`.** Nie omijamy systemowego potwierdzenia instalacji.
 
-> **Nie wybieraj „Code → Download ZIP” ani „Source code (zip)”.** To archiwa kodu źródłowego, a nie paczki do instalacji w Decky Loader.
->
-> Jeśli link do najnowszego wydania nie działa lub nie ma pliku `SteamHub.zip`, paczka nie została jeszcze opublikowana.
+Aby uruchamiać Hub z **Gaming Mode**, na razie dodaj aplikację do Steam jako program spoza Steam. Automatyczne tworzenie skrótu w bibliotece Steam nie jest jeszcze dostępne.
+
+## AppImage — dla innych dystrybucji
+
+Pobierz `SteamHub-0.5.0-x86_64.AppImage`. Jeżeli to konieczne, w Dolphin ustaw prawo do uruchamiania pliku i otwórz go. W aplikacji wybierz **Ustawienia → Zainstaluj SteamHub**. Program kopiuje się do katalogu użytkownika i tworzy skrót w menu, bez uprawnień administratora.
 
 ## Aktualny stan
 
-Terminal wyświetla natywne kontrolki SteamOS (Decky UI), ale jego silnik Linux PTY i widok pozostają niezależne od Decky. W menu jest sekcja **Podziękowania** z autorami wykorzystanego kodu oraz zewnętrznych integracji. Szczegóły w `THIRD_PARTY_NOTICES.md`.
+- Samodzielny interfejs w stylu ustawień SteamOS, z obsługą kontrolera.
+- Rozpoznawanie dystrybucji Linux i sposobu uruchomienia.
+- Menedżer plików ograniczony do katalogu domowego — obecnie **tylko odczyt**.
+- Sekcje konfiguracji, aktualizacji i podziękowań.
+- Streaming, Biblioteki i Aplikacje są miejscami na przyszłe integracje.
+- **Terminal pozostaje wyłączony**, ponieważ przyczyna wcześniejszych restartów Gaming Mode nie została jeszcze ustalona.
 
+Nie deklarujemy jeszcze automatycznego aktualizowania Flatpaka ani automatycznej integracji z biblioteką Steam. Instalacja i obsługa na Legion Go S wymagają potwierdzenia na urządzeniu.
 
-SteamHub otwiera **pełnoekranowy panel** w stylu Ustawień SteamOS. W Quick Access jest tylko przycisk **Otwórz SteamHub**. W pełnym oknie możesz wybrać zainstalowane dodatki Decky, zobaczyć ich stan i zarządzać wyborem. Aktualizacje znajdują się w osobnej zakładce panelu. Oryginalny panel wybranego dodatku można wyświetlić na żądanie wewnątrz SteamHub, jeśli wtyczka udostępnia go w Decky. Docelowy wygląd opcji poszczególnych dodatków będzie dopracowywany przez niezależne adaptery — bez kopiowania ich kodu.
+## Wtyczka Decky (opcjonalna)
 
-## Instalacja
+Plik `SteamHub.zip` w tym samym wydaniu to **starsza wtyczka Decky**, a nie instalator samodzielnego Huba. Jej terminal pozostaje w trybie bezpiecznym.
 
-1. Pobierz `SteamHub.zip` z sekcji **Releases → Assets**.
-2. Otwórz Decky Loader w Gaming Mode.
-3. W ustawieniach Decky włącz **Developer Mode**, jeśli jest wyłączony.
-4. W sekcji deweloperskiej wybierz instalację wtyczki z pliku ZIP i wskaż `SteamHub.zip`.
-5. Po instalacji sprawdź, czy na liście wtyczek pojawia się **SteamHub**.
-
-Nie rozpakowuj paczki instalacyjnej. Jeśli masz wcześniejszą wersję o nazwie `SteamOS-Hub`, może być konieczne jej jednorazowe usunięcie przed instalacją `SteamHub`.
-
-## Aktualizacje
-
-Wtyczka ma przyciski **Sprawdź aktualizacje** i **Aktualizuj**. Aktualizacje nie są uruchamiane w tle. Funkcja instalacji aktualizacji wykorzystuje wewnętrzny mechanizm Decky Loader i **nie została jeszcze zweryfikowana na Lenovo Legion Go S**.
-
-## Stan projektu
-
-Modułowy interfejs pełnoekranowy jest dostępny. Ustawienia wybranych dodatków będą stopniowo integrowane przez niezależne adaptery.
-
-- [Wszystkie wydania](https://github.com/BlueGalaxySlime/SteamOS-Hub/releases)
-- [Instrukcje instalacji](docs/INSTALL.md)
-- [Informacje o aktualizacjach](docs/UPDATES.md)
+[Instrukcje](docs/INSTALL.md) · [Architektura](docs/ARCHITECTURE.md) · [Podziękowania i licencje](THIRD_PARTY_NOTICES.md)

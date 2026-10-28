@@ -92,7 +92,7 @@ jobs:
 
   release:
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-    needs: build
+    needs: [build, desktop]
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -103,6 +103,10 @@ jobs:
           node-version: '22'
       - run: npm install --no-audit --no-fund
       - run: npm run typecheck && npm run build && python3 scripts/package.py
+      - uses: actions/download-artifact@v4
+        with:
+          name: SteamHub-Linux
+          path: desktop/out
       - name: Publish GitHub Release
         env:
           GH_TOKEN: ${{ github.token }}
@@ -110,6 +114,10 @@ jobs:
           VERSION="v$(node -p "require('./package.json').version")"
           grep -Fq "CURRENT_VERSION = \"${VERSION#v}\"" main.py || { echo "Backend version mismatch"; exit 1; }
           grep -q "const VERSION = \"${VERSION#v}\"" src/hub/UpdaterPage.tsx || { echo "Frontend version mismatch"; exit 1; }
+          DESKTOP_VERSION="$(node -p "require('./desktop/package.json').version")"
+          test "$DESKTOP_VERSION" = "${VERSION#v}" || { echo "Desktop version mismatch"; exit 1; }
+          test -s "desktop/out/SteamHub-$DESKTOP_VERSION-x86_64.AppImage"
+          test -s "desktop/out/SteamHub-$DESKTOP_VERSION-x86_64.flatpak"
           HEAD_SHA="$(gh api repos/$GITHUB_REPOSITORY/branches/main --jq .commit.sha)"
           if [ "$HEAD_SHA" != "$GITHUB_SHA" ]; then
             echo "Skipping outdated build $GITHUB_SHA (main is $HEAD_SHA)."
@@ -119,5 +127,6 @@ jobs:
             echo "Release $VERSION already exists; refusing to overwrite."
             exit 0
           fi
-          gh release create "$VERSION" release/SteamHub.zip --target "$GITHUB_SHA" \
+          sha256sum release/SteamHub.zip desktop/out/*.AppImage desktop/out/*.flatpak > SHA256SUMS.txt
+          gh release create "$VERSION" release/SteamHub.zip desktop/out/*.AppImage desktop/out/*.flatpak SHA256SUMS.txt --target "$GITHUB_SHA" \
             --title "SteamHub $VERSION" --notes-file docs/RELEASE_NOTES.md

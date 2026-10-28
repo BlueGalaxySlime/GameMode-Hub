@@ -1,23 +1,20 @@
-# Roadmap
+# SteamHub Roadmap
 
-## 0.1.0 — Foundation (in progress)
-- [x] Create development branch
-- [x] Record architecture and scope
-- [x] Create module manifest schema example
-- [ ] Verify upstream licenses and component boundaries
-- [ ] Prototype Decky plugin skeleton and test on SteamOS
-- [ ] Define install/uninstall and rollback procedure
+## 0.5.0 — niezależny fundament Linux
+- [x] Samodzielna aplikacja niepotrzebująca Decky ani Steam do uruchomienia
+- [x] Interfejs nawiązujący do ustawień SteamOS i podstawowe sterowanie kontrolerem
+- [x] Wykrywanie dystrybucji i pakietu uruchomieniowego
+- [x] Czytnik plików w katalogu domowym, bez zapisu
+- [x] Instalacja AppImage do katalogu użytkownika i skrót KDE
+- [x] Kompilacja Flatpak i AppImage w GitHub Actions
+- [ ] Testy instalacji i pada na Legion Go S
+- [ ] Opcjonalny skrót do biblioteki Steam, za zgodą użytkownika
 
-## 0.2.0 — Game installation
-- [ ] Investigate Unifideck integration and supported store APIs
-- [ ] Choose Linux / Windows builds where available
-- [ ] Select Proton version for Windows builds
-- [ ] Test on Lenovo Legion Go S SteamOS
+## Kolejne etapy
+- [ ] Niezależny, sprawdzony na urządzeniu silnik terminala
+- [ ] Integracje Decky Manager, Sunshine, Unifideck i Desktop App przez adaptery
+- [ ] Instalator wykrywający platformę i wybierający format
+- [ ] Automatyczne aktualizacje przez repozytorium Flatpak / inne źródła
+- [ ] Rozbudowana obsługa pada i dostępność
 
-## Later
-- [ ] TabMaster-compatible library integration
-- [ ] Terminal in gaming mode
-- [ ] File manager
-- [ ] One-click installer and update manager
-
-No item marked as planned is implemented yet.
+Starsza wtyczka Decky pozostaje dostępna, z wyłączonym terminalem.

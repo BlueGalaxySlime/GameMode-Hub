@@ -1,3 +1,15 @@
+# SteamHub 0.5.0 — samodzielna aplikacja Linux
+
+- Nowa aplikacja Linux uruchamiana bez Steam i Decky.
+- Instalatory: `SteamHub-0.5.0-x86_64.flatpak` do KDE Discover i `SteamHub-0.5.0-x86_64.AppImage` do uruchamiania bez instalacji lub samodzielnego dodania skrótu.
+- Interfejs w stylu ustawień SteamOS i podstawowa nawigacja kontrolerem.
+- Wykrywanie systemu, menedżer plików tylko do odczytu, aktualizacje GitHub i podziękowania.
+- AppImage instaluje się w katalogu użytkownika bez `sudo`. Flatpak korzysta z graficznej instalacji Discover.
+- Terminal i wykonywanie poleceń pozostają wyłączone po wcześniejszych restartach Steam.
+- Dotychczasowa wtyczka `SteamHub.zip` nadal jest dostępna osobno i nie jest wymagana do pracy samodzielnego Huba.
+- Automatyczne dodanie do Steam, repozytoryjne aktualizacje Flatpak i działające integracje sklepów pozostają przyszłymi etapami.
+- **Pakiety zbudowano w CI; zachowanie na Legion Go S wymaga osobnego sprawdzenia.**
+
 # SteamHub 0.4.14 — bezpieczeństwo Gaming Mode
 
 - Tymczasowo wstrzymano uruchamianie terminala i emulatora xterm.js. Na nagraniu użytkownika uruchomienie modułu poprzedzało restart interfejsu Steam.

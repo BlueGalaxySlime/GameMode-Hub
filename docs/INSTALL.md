@@ -1,21 +1,28 @@
-# SteamOS-Hub preview — build and installation
+# Instalacja SteamHub
 
-## Status
+## SteamOS — jeden pakiet, graficzna instalacja
 
-This is a development preview, **not yet validated on Lenovo Legion Go S**. No production installer or automatic updater is included. The Decky UI currently only displays planned modules and checks GitHub Releases for updates.
+1. Wejdź do **trybu pulpitu** SteamOS.
+2. Pobierz `SteamHub-0.5.0-x86_64.flatpak` z [GitHub Releases](https://github.com/BlueGalaxySlime/SteamOS-Hub/releases/latest), z sekcji **Assets**.
+3. Otwórz pobrany plik w **KDE Discover** i zatwierdź instalację. System może pobrać wymagane środowisko Flatpak.
+4. Uruchom SteamHub z menu aplikacji KDE.
 
-## GitHub Actions build
+Instalacja nie wymaga Decky Loader, `sudo`, terminala ani rozpakowywania archiwów. Ze względów bezpieczeństwa system może wymagać zatwierdzenia pakietu.
 
-On push, pull request, or manual dispatch, the `Build SteamOS-Hub preview` workflow runs a TypeScript typecheck, builds the frontend, checks Python syntax, and creates a ZIP artifact called `SteamOS-Hub-preview`.
+**Gaming Mode:** na tym etapie SteamHub nie dodaje się sam do biblioteki Steam. W trybie pulpitu można dodać go do Steam jako grę spoza Steam, aby potem uruchamiać z Gaming Mode.
 
-The ZIP contains a top-level `SteamOS-Hub/` directory with `plugin.json`, `main.py` and compiled `dist/` assets. It does not contain node_modules, credentials or third-party modules.
+**Aktualizacje:** lokalny pakiet Flatpak nie jest jeszcze podłączony do Flathub ani do repozytorium Flatpak. Nowsze instalatory będą dostępne w GitHub Releases.
 
-## Installing on Decky Loader (after build verification)
+## AppImage
 
-Decky Loader must already be installed. Obtain the ZIP from the GitHub Actions artifact of a successful run. Decky Loader's developer/manual installation options vary by version; do not assume the preview ZIP is accepted by all versions. If manual ZIP installation is not available, use Decky's documented development installation flow. Test on a device before publishing a user-facing release.
+Pobierz `SteamHub-0.5.0-x86_64.AppImage`. Zaznacz wykonywanie pliku we właściwościach Dolphin, jeśli system tego wymaga, i uruchom. W SteamHub otwórz **Ustawienia → Zainstaluj SteamHub**. Aplikacja skopiuje plik do `~/.local/share/SteamHub/SteamHub.AppImage` i doda wpis w `~/.local/share/applications/` bez uprawnień administratora.
 
-## Updating
+AppImage może wymagać FUSE, dlatego **na SteamOS polecamy Flatpak**.
 
-The plugin's **Check updates** button only queries GitHub Releases. It does not install updates. The long-term preferred upgrade route is Decky Loader's supported plugin updater once accepted into its store. For manual preview installs, updates may require manual replacement until a verified upgrade path is implemented.
+## Opcjonalna wtyczka Decky
 
-Do not run arbitrary shell installers or execute ZIP contents with elevated privileges.
+`SteamHub.zip` jest odrębną wtyczką i wymaga Decky Loader. Nie jest potrzebna do korzystania z samodzielnej aplikacji Linux.
+
+## Stan funkcji
+
+Menedżer plików jest tylko do odczytu; terminal jest celowo nieaktywny ze względu na wcześniej zaobserwowane restarty Gaming Mode. Samodzielny Hub nie zarządza jeszcze instalacją zewnętrznych dodatków.

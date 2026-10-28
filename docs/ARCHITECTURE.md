@@ -88,3 +88,17 @@ the Decky terminal adapter no longer mounts xterm or calls the backend,
 and backend `terminal_start` refuses requests even from old cached UIs.
 This is an intentional temporary capability reduction. Restore only after
 the regression can be reproduced and isolated under safe test conditions.
+
+
+## Standalone Linux app (0.5.0)
+
+- `desktop/main.cjs`: Electron host with a strictly limited IPC API, navigation blocked, popups disabled, Node integration disabled, sandbox enabled.
+- `desktop/preload.cjs`: isolated API bridge, no direct Node access in the UI.
+- `desktop/ui/`: controller-friendly SteamOS-style settings layout independent of Decky and Steam.
+- `desktop/lib/platform.cjs`: Linux distribution / Flatpak / AppImage detection.
+- `desktop/lib/install.cjs`: atomic user-only AppImage installation with a desktop entry.
+- `desktop/lib/files.cjs`: read-only file listing confined to the home directory after resolving symbolic links.
+- `desktop/tests/`: unit tests for installation, path containment and platform detection.
+- The independent UI ships as an AppImage and a local Flatpak bundle.
+- Flatpak installation is handled by KDE Discover; there is no unverified shell installation script or elevated privilege request.
+- Optional Steam/Decky adapters are future integrations. Do not claim automatic Steam library registration, installed external plugins, or shell execution.

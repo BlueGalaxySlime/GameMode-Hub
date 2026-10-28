@@ -18,7 +18,7 @@ if _PLUGIN_ROOT not in sys.path:
 
 from hub_settings import get_selected_addons, set_selected_addons
 
-CURRENT_VERSION = "0.4.14"
+CURRENT_VERSION = "0.5.0"
 RELEASES_API = "https://api.github.com/repos/BlueGalaxySlime/SteamOS-Hub/releases/latest"
 ASSET_NAME = "SteamHub.zip"
 
@@ -60,7 +60,7 @@ def _fetch_latest_release():
         RELEASES_API,
         headers={
             "Accept": "application/vnd.github+json",
-            "User-Agent": "SteamHub/0.4.14",
+            "User-Agent": "SteamHub/0.5.0",
             "X-GitHub-Api-Version": "2022-11-28",
         },
     )
