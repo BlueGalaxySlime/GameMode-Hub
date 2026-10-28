@@ -4,6 +4,7 @@ import {
   DialogControlsSectionHeader, Field, TextField
 } from "@decky/ui";
 import { TerminalView } from "../modules/terminal/TerminalView";
+import { TerminalKeyboard } from "./TerminalKeyboard";
 import type { TerminalLayoutState } from "../modules/terminal/TerminalView";
 import type { TerminalBridge, TerminalRead } from "../modules/terminal/bridge";
 
@@ -28,9 +29,6 @@ function renderSteamOSLayout(state: TerminalLayoutState) {
           <DialogButton disabled={!state.hasSession} onClick={state.close}>Zamknij</DialogButton>
         </div>
       </Field>
-      <Field label="Ekran terminala"
-        description="Wyjście powłoki systemowej. Sesja działa jako zwykły użytkownik." />
-      {state.terminalElement}
       <Field label="Polecenie"
         description="Wpisz polecenie lub użyj klawiatury bezpośrednio w terminalu.">
         <TextField
@@ -44,6 +42,7 @@ function renderSteamOSLayout(state: TerminalLayoutState) {
         <DialogButton disabled={!state.active || !state.command.trim()}
           onClick={state.submit}>Wyślij</DialogButton>
       </Field>
+      <TerminalKeyboard state={state} />
       <Field label="Klawisze dodatkowe" description="Sterowanie także za pomocą kontrolera.">
         <div style={{ display: "flex", gap: 8 }}>
           <DialogButton disabled={!state.active} onClick={() => state.send("\u0003")}>Ctrl+C</DialogButton>
@@ -51,6 +50,8 @@ function renderSteamOSLayout(state: TerminalLayoutState) {
           <DialogButton disabled={!state.active} onClick={() => state.send("\r")}>Enter</DialogButton>
         </div>
       </Field>
+      <Field label="Ekran terminala" description="Wyjście powłoki Linuksa." />
+      {state.terminalElement}
       <Field label="Opcje zaawansowane" description="Informacje o działaniu terminala">
         <DialogButton onClick={state.toggleAdvanced}>
           {state.advanced ? "Zwiń" : "Rozwiń"}

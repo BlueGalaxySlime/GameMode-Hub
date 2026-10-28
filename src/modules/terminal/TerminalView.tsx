@@ -155,7 +155,8 @@ export function TerminalView({ bridge, render }: {
       session.current = result.id;
       setActive(true);
       setStatus("Aktywna sesja użytkownika Linuksa (bez uprawnień root).");
-      instance.focus();
+      // Keep controller focus on SteamOS input controls; clicking the xterm
+      // pane can still focus it when a physical keyboard is available.
     } catch (error) {
       setActive(false);
       setStatus("Nie udało się uruchomić: " + (error instanceof Error ? error.message : String(error)));

@@ -1,3 +1,13 @@
+# SteamHub 0.4.7
+
+- W terminalu dodano klawiaturę ekranową obsługiwaną przyciskami kontrolera SteamOS.
+- Litery, cyfry, znaki specjalne, wielkie litery, usuwanie, spacja i wysyłanie polecenia.
+- Przycisk pokazywania/ukrywania klawiatury; działa niezależnie od globalnej klawiatury Steam.
+- Pole wpisywania poleceń i klawiatura są teraz nad oknem wyjścia terminala, więc nie trzeba przewijać całego ekranu.
+- Terminal nie przechwytuje już automatycznie fokusu z kontrolek po uruchomieniu sesji.
+- Natywny wygląd kontrolek SteamOS i niezależny silnik Linux PTY zostały zachowane.
+- Wersja wymaga weryfikacji działania klawiatury kontrolerem na Legion Go S.
+
 # SteamHub 0.4.6
 
 - Natywne formatowanie terminala: wiersze ustawień, przyciski i pole tekstowe Decky UI w stylu SteamOS.
