@@ -255,7 +255,23 @@ function TextEditControls({ value, disabled, onEditValue, onExitEdit, multiline,
     }}
     style={{ width: "100%", minWidth: 0 }}>
     {!selecting && children}
-    {selecting && <div ref={selectionRowRef} style={{ width: "100%" }}>
+    {selecting && <div ref={selectionRowRef}
+        onKeyDown={event => {
+          if (event.key === "Escape" || event.key === "Backspace") {
+            event.preventDefault();
+            event.stopPropagation();
+            exitSelectionMode();
+            return;
+          }
+          const direction = ({
+            ArrowLeft: "left", ArrowRight: "right", ArrowUp: "up", ArrowDown: "down"
+          } as Record<string, TextDirection>)[event.key];
+          if (!direction) return;
+          event.preventDefault();
+          event.stopPropagation();
+          moveSelection(direction);
+        }}
+      style={{ width: "100%" }}>
       <DialogButton preferredFocus
         onCancelActionDescription="Wyjdź z zaznaczania"
         onCancelButton={event => {
@@ -279,21 +295,6 @@ function TextEditControls({ value, disabled, onEditValue, onExitEdit, multiline,
         onGamepadDirection={event => {
           const direction = gamepadDirection(event.detail.button);
           if (!direction || event.defaultPrevented) return;
-          event.preventDefault();
-          event.stopPropagation();
-          moveSelection(direction);
-        }}
-        onKeyDown={event => {
-          if (event.key === "Escape" || event.key === "Backspace") {
-            event.preventDefault();
-            event.stopPropagation();
-            exitSelectionMode();
-            return;
-          }
-          const direction = ({
-            ArrowLeft: "left", ArrowRight: "right", ArrowUp: "up", ArrowDown: "down"
-          } as Record<string, TextDirection>)[event.key];
-          if (!direction) return;
           event.preventDefault();
           event.stopPropagation();
           moveSelection(direction);
