@@ -16,6 +16,8 @@ import {
 import type { Patch } from "@decky/ui";
 import { createElement, useEffect, useState } from "react";
 import type { ReactElement } from "react";
+import { getTabMasterActivity } from "./TabMasterDetection";
+import type { TabMasterActivity, DeckyLoaderRegistry } from "./TabMasterDetection";
 
 declare const collectionStore: {
   GetCollection(id: string): any;
@@ -32,23 +34,15 @@ export type TabDefinition = {
 
 const readEnabled = callable<[], boolean>("get_tab_manager_enabled");
 const readTabs = callable<[], TabDefinition[]>("get_tab_definitions");
-const tabMasterInstalled = callable<[], boolean>("get_tabmaster_installed");
-/** Prefer Decky's active/disabled state; installation alone is not a conflict. */
-export async function detectTabMasterConflict(): Promise<boolean> {
-  const backend = (window as any).DeckyBackend;
-  try {
-    if (typeof backend?.callable === "function") {
-      const plugins = await backend.callable("loader/get_plugins")();
-      if (Array.isArray(plugins)) {
-        return plugins.some((plugin: any) =>
-          /^(tabmaster|tab master)$/i.test(String(plugin?.name ?? "")) && plugin?.disabled !== true
-        );
-      }
-    }
-  } catch (error) {
-    console.warn("[SteamHub] Unable to inspect active Decky plugins", error);
-  }
-  return tabMasterInstalled();
+/**
+ * Checks Decky's currently loaded plugin list, not the plugins installed
+ * on disk. TabMaster being disabled is therefore not a conflict.
+ */
+export function detectTabMasterActivity(): TabMasterActivity {
+  const loader = (window as Window & {
+    DeckyPluginLoader?: DeckyLoaderRegistry;
+  }).DeckyPluginLoader;
+  return getTabMasterActivity(loader);
 }
 
 
@@ -67,12 +61,13 @@ export function tabManagerStatus() {
 export async function startTabManager() {
   const request = ++generation;
   try {
-    const [savedEnabled, detected, savedTabs] = await Promise.all([
-      readEnabled(), detectTabMasterConflict(), readTabs()
+    const [savedEnabled, savedTabs] = await Promise.all([
+      readEnabled(), readTabs()
     ]);
     if (request !== generation) return;
     active = savedEnabled;
-    conflict = detected;
+    // Fail closed only when Decky's active-plugin state is unknown or active.
+    conflict = detectTabMasterActivity() !== "inactive";
     definitions = savedTabs;
     syncPatch();
   } catch (error) {
@@ -103,7 +98,7 @@ export function tabManagerTabsChanged(value: TabDefinition[]) {
 }
 
 function syncPatch() {
-  const shouldRun = active && !conflict;
+  const shouldRun = active && !conflict && detectTabMasterActivity() === "inactive";
   if (shouldRun && !currentPatch) {
     try {
       currentPatch = installLibraryPatch();
@@ -188,7 +183,8 @@ function nativeHubTab(): SteamTab {
 
 /** Uses Steam's original grid component rather than constructing a separate collection tab. */
 function mergeLibraryTabs(tabs: SteamTab[], deps: any[]): SteamTab[] {
-  if (!active || conflict) return tabs;
+  // Recheck at render time in case TabMaster was enabled after this patch.
+  if (!active || conflict || detectTabMasterActivity() !== "inactive") return tabs;
   const template = tabs.find(tab => tab?.id === "AllGames");
   if (!template) return tabs;
   // Never replace Steam's own tabs or objects; TabManager only appends additions.

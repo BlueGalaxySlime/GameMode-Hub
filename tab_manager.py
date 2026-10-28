@@ -31,15 +31,6 @@ def _write_tab_manager_enabled(enabled):
     return enabled
 
 
-def _tabmaster_installed():
-    """Best-effort informational check; never changes another plugin's state."""
-    candidates = (
-        Path.home() / "homebrew" / "plugins" / "TabMaster",
-        Path("/home/deck/homebrew/plugins/TabMaster"),
-    )
-    return any(path.is_dir() for path in candidates)
-
-
 # Tab definitions are kept separate from module activation and from Steam collections.
 TABS_FILE = SETTINGS_FILE.with_name("tabs.json")
 MAX_TABS = 64

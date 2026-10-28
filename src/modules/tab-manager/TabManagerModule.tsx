@@ -4,9 +4,10 @@ import { callable } from "@decky/api";
 
 import {
   TabDefinition, TabFilter, tabManagerEnabledChanged,
-  tabManagerTabsChanged, tabManagerConflictChanged, detectTabMasterConflict,
+  tabManagerTabsChanged, tabManagerConflictChanged, detectTabMasterActivity,
   availableSteamCollections
 } from "./LibraryIntegration";
+import type { TabMasterActivity } from "./TabMasterDetection";
 
 const FILTER_LABELS: Record<TabFilter, string> = {
   all: "Wszystkie gry",
@@ -29,7 +30,7 @@ const deleteProfile = callable<[string], string[]>("delete_tab_profile");
 export function TabManagerModule() {
   const [enabled, updateEnabled] = useState(false);
   const [busy, setBusy] = useState(true);
-  const [conflict, setConflict] = useState(false);
+  const [tabMasterActivity, setTabMasterActivity] = useState<TabMasterActivity>("unknown");
   const [tabs, setTabs] = useState<TabDefinition[]>([]);
   const [name, setName] = useState("");
   const [profileName, setProfileName] = useState("");
@@ -38,9 +39,15 @@ export function TabManagerModule() {
   const [editingTitle, setEditingTitle] = useState("");
   const [error, setError] = useState("");
 
+  function refreshTabMaster() {
+    const status = detectTabMasterActivity();
+    setTabMasterActivity(status);
+    tabManagerConflictChanged(status !== "inactive");
+  }
+
   useEffect(() => {
     let mounted = true;
-    detectTabMasterConflict().then(value => { if (mounted) { setConflict(value); tabManagerConflictChanged(value); } }).catch(() => {});
+    refreshTabMaster();
     Promise.all([getEnabled(), getTabs(), listProfiles()])
       .then(([value, definitions, savedProfiles]) => { if (mounted) { updateEnabled(value); setTabs(definitions); setProfiles(savedProfiles); } })
       .catch(() => { if (mounted) setError("Nie udało się odczytać ustawień zakładek."); })
@@ -52,9 +59,7 @@ export function TabManagerModule() {
     setBusy(true);
     setError("");
     try {
-      const currentlyConflicting = await detectTabMasterConflict();
-      setConflict(currentlyConflicting);
-      tabManagerConflictChanged(currentlyConflicting);
+      refreshTabMaster();
       const stored = await setEnabled(value);
       updateEnabled(stored);
       tabManagerEnabledChanged(stored);
@@ -155,7 +160,9 @@ export function TabManagerModule() {
     <PanelSectionRow>
       <ToggleField label="Tab Manager" checked={enabled} disabled={busy} onChange={toggle} />
     </PanelSectionRow>
-    {conflict && <PanelSectionRow><div>Wykryto aktywny TabMaster. Integracja zakładek jest wstrzymana, by uniknąć konfliktu.</div></PanelSectionRow>}
+    {tabMasterActivity === "active" && <PanelSectionRow><div>TabMaster jest uruchomiony. Wyłącz go w Decky, aby używać zakładek SteamHub.</div></PanelSectionRow>}
+    {tabMasterActivity === "unknown" && <PanelSectionRow><div>Nie można odczytać stanu TabMastera w Decky. Integracja biblioteki pozostaje wstrzymana.</div></PanelSectionRow>}
+    {tabMasterActivity !== "inactive" && <PanelSectionRow><ButtonItem disabled={busy} onClick={refreshTabMaster}>Sprawdź ponownie stan TabMastera</ButtonItem></PanelSectionRow>}
     {enabled && <>
       <PanelSectionRow><TextField label="Nazwa zakładki" value={name} onChange={event => setName(event.target.value)} /></PanelSectionRow>
       <PanelSectionRow><ButtonItem disabled={busy || !name.trim()} onClick={add}>Dodaj zakładkę</ButtonItem></PanelSectionRow>
@@ -189,7 +196,7 @@ export function TabManagerModule() {
         <ButtonItem disabled={busy} onClick={() => removeProfile(profile)}>Usuń profil</ButtonItem>
       </PanelSectionRow>)}
     </>}
-    {conflict && enabled && <PanelSectionRow><div>Integracja z biblioteką jest wstrzymana, dopóki wykrywany jest TabMaster.</div></PanelSectionRow>}
+
     {error && <PanelSectionRow><div role="alert">{error}</div></PanelSectionRow>}
   </PanelSection>;
 }
