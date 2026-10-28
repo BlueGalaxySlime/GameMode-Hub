@@ -67,7 +67,7 @@ def _validate_tabs(tabs):
             "id": tab_id, "title": title.strip(),
             "hidden": tab.get("hidden", False),
             "filter": kind,
-            "collection_id": collection_id if kind in ("collection", "hub_collection") else "",
+            "collection_id": collection_id if kind in ("collection", "hub_collection", "system_tab") else "",
         })
     return clean
 
