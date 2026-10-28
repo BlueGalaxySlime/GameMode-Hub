@@ -471,7 +471,7 @@ export function FileManagerPage() {
         } : currentPage?.parent ? event => {
           event.preventDefault();
           event.stopPropagation();
-          navigateDirectory(currentPage.parent, currentPane);
+          if (currentPage?.parent) navigateDirectory(currentPage.parent, currentPane);
         } : undefined}
         onKeyDown={event => {
           if (multiSelect && (event.key === "Escape" || event.key === "Backspace")) {
