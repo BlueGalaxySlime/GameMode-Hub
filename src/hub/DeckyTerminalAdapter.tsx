@@ -34,6 +34,7 @@ function SteamKeyboard({ state, buttonStyle }: {
   // Decky TextField forwards a private native-input ref, as used by Decky Terminal.
   const NativeTextField = TextField as any;
   const valueRef = useRef("");
+  const [inputValue, setInputValue] = useState("");
   const open = () => {
     const native = inputRef.current?.m_elInput as HTMLInputElement | undefined;
     if (native) {
@@ -63,9 +64,9 @@ function SteamKeyboard({ state, buttonStyle }: {
   return <>
     <NativeTextField ref={inputRef} id="steamhub-steam-keyboard"
       style={{ display: "none" }}
-      value={valueRef.current}
-      onChange={event => changed(event.target.value)}
-      onKeyDown={event => {
+      value={inputValue}
+      onChange={(event: React.ChangeEvent<HTMLInputElement>) => { setInputValue(event.target.value); changed(event.target.value); }}
+      onKeyDown={(event: React.KeyboardEvent<HTMLInputElement>) => {
         if (event.key === "Enter") {
           event.preventDefault();
           if (state.active) state.send("\r");
@@ -128,11 +129,13 @@ function SessionPane({
       <DialogButton style={smallButton} aria-label={fullScreen ? "Wyłącz pełny ekran" : "Pełny ekran"}
         onClick={toggleFullscreen}>{fullScreen ? <FaCompress /> : <FaExpand />}</DialogButton>
     </div>
-    {(!state.active) && <div role="status" aria-live="polite"
-      style={{ fontSize: "0.77rem", flexShrink: 0, padding: "3px 4px", overflowWrap: "anywhere" }}>
+    <div role="status" aria-live="polite" style={{
+      display: state.active ? "none" : "block", fontSize: "0.77rem",
+      flexShrink: 0, padding: "3px 4px", overflowWrap: "anywhere"
+    }}>
       {state.status}
       {failed && <DialogButton onClick={state.start}>Ponów</DialogButton>}
-    </div>}
+    </div>
     <div style={{ flex: "1 1 0", minHeight: 0, overflow: "hidden", width: "100%" }}>
       {state.terminalElement}
     </div>
