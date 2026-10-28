@@ -73,7 +73,7 @@ export function ProtonDBPage() {
         Oceny zgodności z Linux / Proton. Moduł nie działa podczas grania,
         dopóki nie sprawdzisz wybranej gry.
       </div>
-      <DialogButton onClick={event => openClientMenu(event.currentTarget)}>
+      <DialogButton onClick={event => openClientMenu(event.currentTarget ?? window)}>
         Klient: {CLIENTS.find(item => item.id === client)?.label ?? "Auto"}
       </DialogButton>
       <div style={{ fontSize: 12, opacity: 0.8 }}>
