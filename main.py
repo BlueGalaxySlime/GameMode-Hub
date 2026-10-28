@@ -30,6 +30,8 @@ from trash_manager import trash_entry, list_trash, restore_entry
 from lan_transfer import TransferManager
 from flatpak_manager import flatpak_overview, flatpak_update_user, flatpak_update_all_user
 from downloads_manager import DOWNLOADS
+from update_checks import UPDATE_CHECKS
+from runtime_state import set_hub_ui_open, get_runtime_state, diagnostics as runtime_diagnostics
 
 CURRENT_VERSION = "0.5.36"
 RELEASES_API = "https://api.github.com/repos/BlueGalaxySlime/GameMode-Hub/releases/latest"
@@ -146,6 +148,26 @@ class Plugin:
 
     async def set_hub_preferences(self, options):
         return await asyncio.to_thread(set_hub_preferences, options)
+
+    async def hub_ui_open(self, opened):
+        return set_hub_ui_open(opened)
+
+    async def hub_runtime_state(self):
+        active = DOWNLOADS.list()["active"]
+        return {"state": get_runtime_state(active), "downloads": active}
+
+    async def hub_dev_diagnostics(self):
+        if not get_hub_preferences().get("developerMode", False):
+            return {"enabled": False}
+        active = DOWNLOADS.list()["active"]
+        return {"enabled": True, **runtime_diagnostics(active),
+                "checks": UPDATE_CHECKS.all_statuses()}
+
+    async def checks_flatpak(self, force=False):
+        return UPDATE_CHECKS.request("flatpak", force)
+
+    async def checks_flatpak_status(self):
+        return UPDATE_CHECKS.status("flatpak")
 
     async def get_update_channel(self):
         return await asyncio.to_thread(get_update_channel)

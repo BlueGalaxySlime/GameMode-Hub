@@ -67,6 +67,7 @@ DEFAULT_HUB_PREFERENCES = {
     "saveSession": True,
     "splitFileTree": False,
     "autoKeyboard": True,
+    "developerMode": False,
 }
 
 

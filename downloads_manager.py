@@ -175,6 +175,11 @@ class DownloadManager:
                                 self._save_locked()
                         last_state = status["state"]
                     if status["state"] in TERMINAL_STATES:
+                        if status["state"] == "success":
+                            # Mark the cached status stale; don't run network
+                            # calls as a side effect of installing an update.
+                            from update_checks import UPDATE_CHECKS
+                            UPDATE_CHECKS.invalidate("flatpak")
                         break
                     time.sleep(1)
             except Exception:
