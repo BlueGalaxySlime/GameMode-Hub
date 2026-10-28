@@ -2,10 +2,11 @@ import { useEffect, useRef, useState } from "react";
 import { callable } from "@decky/api";
 import {
   DialogBody, DialogButton, DialogControlsSection, Focusable,
-  Menu, MenuItem, NavEntryPositionPreferences, showContextMenu
+  Menu, MenuGroup, MenuItem, NavEntryPositionPreferences, showContextMenu
 } from "@decky/ui";
 import { withTimeout } from "../utils/withTimeout";
 import { useHubSessionState } from "./useHubSessionState";
+import { HubTextInput } from "./HubTextInput";
 import {
   createSteamDesktopShortcut, openSteamDesktopShortcut, removeSteamDesktopShortcut
 } from "./desktopLaunch";
@@ -18,6 +19,7 @@ type SavedApp = {
 };
 type DesktopState = { apps: Record<string, SavedApp>; temporary: number[] };
 type Category = "all" | "favorites" | "flatpak" | "system" | "hidden";
+type DesktopSort = "recommended" | "name-asc" | "name-desc" | "recent";
 
 const listDesktopApps = callable<[], DesktopApp[]>("desktop_list_apps");
 const readState = callable<[], DesktopState>("desktop_get_state");
@@ -33,16 +35,31 @@ const categories: { key: Category; label: string }[] = [
   { key: "hidden", label: "Ukryte" }
 ];
 
+const sortOptions: { key: DesktopSort; label: string }[] = [
+  { key: "recommended", label: "Ulubione / ostatnie / A–Z" },
+  { key: "name-asc", label: "Nazwa A–Z" },
+  { key: "name-desc", label: "Nazwa Z–A" },
+  { key: "recent", label: "Ostatnio uruchamiane" }
+];
+
+function searchKey(text: string) {
+  return text.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLocaleLowerCase("pl");
+}
+
 let staleShortcutsChecked = false;
 
 export function DesktopPage() {
   const [apps, setApps] = useHubSessionState<DesktopApp[]>("desktop.apps", []);
   const [stored, setStored] = useHubSessionState<DesktopState>("desktop.state", { apps: {}, temporary: [] });
   const [category, setCategory] = useHubSessionState<Category>("desktop.category", "all");
+  const [sortMode, setSortMode] = useHubSessionState<DesktopSort>("desktop.sortMode", "recommended");
+  const [search, setSearch] = useHubSessionState("desktop.search", "");
+  const [editingSearch, setEditingSearch] = useState(false);
   const [message, setMessage] = useState("");
   const [busy, setBusy] = useState(false);
   const [working, setWorking] = useState<string | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
+  const searchControlRef = useRef<HTMLDivElement>(null);
 
   async function refresh() {
     setBusy(true);
@@ -174,22 +191,64 @@ export function DesktopPage() {
     );
   }
 
+  function finishSearch() {
+    setEditingSearch(false);
+    // The input unmounts on Enter/B. Keep focus on the new search button,
+    // rather than letting Steam navigation jump back to the sidebar.
+    window.setTimeout(() => {
+      searchControlRef.current?.querySelector<HTMLElement>(
+        'button, [role="button"], [tabindex]'
+      )?.focus({ preventScroll: true });
+    }, 0);
+  }
+
+  function changeCategory(next: Category) {
+    setCategory(next);
+    if (scrollRef.current) scrollRef.current.scrollTop = 0;
+  }
+
+  function openDesktopMenu(parent: EventTarget) {
+    showContextMenu(
+      <Menu label="Opcje pulpitu">
+        <MenuGroup label="Widok">
+          {categories.map(item =>
+            <MenuItem key={item.key} selected={category === item.key}
+              onSelected={() => changeCategory(item.key)}>{item.label}</MenuItem>)}
+        </MenuGroup>
+        <MenuGroup label="Sortowanie">
+          {sortOptions.map(item =>
+            <MenuItem key={item.key} selected={sortMode === item.key}
+              onSelected={() => setSortMode(item.key)}>{item.label}</MenuItem>)}
+        </MenuGroup>
+      </Menu>,
+      parent,
+      { bFitToWindow: true, bShiftToFitWindow: true, bPreferPopTop: true }
+    );
+  }
+
+  const activeCategory = categories.find(item => item.key === category)?.label ?? "Wszystkie";
+  const query = searchKey(search.trim());
+
   const visible = apps.filter(app => {
     const prefs = stored.apps[app.id] ?? {};
-    if (category === "hidden") return !!prefs.hidden;
-    if (prefs.hidden) return false;
-    if (category === "favorites") return !!prefs.favorite;
-    if (category === "flatpak") return app.flatpak;
-    if (category === "system") return !app.flatpak;
-    return true;
+    if (category === "hidden" ? !prefs.hidden : prefs.hidden) return false;
+    if (category === "favorites" && !prefs.favorite) return false;
+    if (category === "flatpak" && !app.flatpak) return false;
+    if (category === "system" && app.flatpak) return false;
+    return !query || searchKey(app.name).includes(query);
   }).sort((a, b) => {
     const pa = stored.apps[a.id] ?? {};
     const pb = stored.apps[b.id] ?? {};
-    if (category === "all" && !!pa.favorite !== !!pb.favorite) return pa.favorite ? -1 : 1;
-    if (category === "all" && (pa.lastOpened ?? 0) !== (pb.lastOpened ?? 0)) {
-      return (pb.lastOpened ?? 0) - (pa.lastOpened ?? 0);
+    if (sortMode === "recommended" && !!pa.favorite !== !!pb.favorite) {
+      return pa.favorite ? -1 : 1;
     }
-    return a.name.localeCompare(b.name, "pl");
+    if (sortMode === "recent" || sortMode === "recommended") {
+      if ((pa.lastOpened ?? 0) !== (pb.lastOpened ?? 0)) {
+        return (pb.lastOpened ?? 0) - (pa.lastOpened ?? 0);
+      }
+    }
+    const byName = a.name.localeCompare(b.name, "pl");
+    return sortMode === "name-desc" ? -byName : byName;
   });
 
   return <DialogBody>
@@ -203,21 +262,58 @@ export function DesktopPage() {
           minHeight: 23, alignItems: "center", fontSize: 12, opacity: 0.78 }}>
           <span>Widok: lista</span>
           <span>Aplikacje: {visible.length}</span>
-          <span>Sortowanie: {category === "all" ? "ulubione / ostatnie / A–Z" : "A–Z"}</span>
+          <span>Sortowanie: {sortOptions.find(item => item.key === sortMode)?.label ?? "Nazwa A–Z"}</span>
         </div>
+        {/* Like the Files breadcrumbs, but for the selected app catalogue. */}
         <Focusable flow-children="row"
           navEntryPreferPosition={NavEntryPositionPreferences.MAINTAIN_X}
-          aria-label="Kategorie aplikacji — lewo i prawo"
-          style={{ display: "flex", flexDirection: "row", gap: 4, flexWrap: "nowrap",
-            overflowX: "auto", overflowY: "hidden", minWidth: 0, width: "100%" }}>
-          {categories.map(item => <DialogButton key={item.key}
-            onClick={() => { setCategory(item.key); if (scrollRef.current) scrollRef.current.scrollTop = 0; }}
-            style={{ flex: "0 0 auto", minWidth: 0, padding: "4px 10px", fontSize: 12,
-              fontWeight: category === item.key ? 700 : 400,
-              background: category === item.key ? "#426b99" : undefined }}>
-            {item.label}
-          </DialogButton>)}
+          aria-label="Ścieżka pulpitu — lewo i prawo"
+          style={{ display: "flex", flexDirection: "row", gap: 4,
+            flexWrap: "nowrap", alignItems: "center", minWidth: 0,
+            width: "100%", overflowX: "auto", overflowY: "hidden" }}>
+          <DialogButton onClick={() => changeCategory("all")}
+            style={{ minWidth: 0, padding: "3px 9px", fontSize: 12, flex: "0 0 auto" }}>
+            Pulpit
+          </DialogButton>
+          <span aria-hidden="true" style={{ opacity: 0.6 }}>›</span>
+          <span style={{ fontSize: 12, fontWeight: 700, whiteSpace: "nowrap" }}>
+            {activeCategory}
+          </span>
         </Focusable>
+        {/* A edits the search query; Y opens native View / Sort submenus. */}
+        <div ref={searchControlRef} onContextMenu={event => {
+          event.preventDefault();
+          openDesktopMenu(event.currentTarget);
+        }}>
+          {editingSearch ? (
+            <HubTextInput value={search} focusOnMount
+              aria-label="Szukaj aplikacji" placeholder="Szukaj aplikacji…"
+              onChange={event => {
+                setSearch(event.target.value);
+                if (scrollRef.current) scrollRef.current.scrollTop = 0;
+              }}
+              onKeyDown={event => {
+                if (event.key === "Enter" || event.key === "Escape") {
+                  event.preventDefault();
+                  finishSearch();
+                }
+              }} />
+          ) : (
+            <DialogButton onOKActionDescription="Szukaj"
+              onOptionsActionDescription="Opcje pulpitu"
+              onOptionsButton={event => {
+                event.preventDefault();
+                event.stopPropagation();
+                openDesktopMenu(event.currentTarget ?? window);
+              }}
+              onClick={() => setEditingSearch(true)}
+              style={{ width: "100%", minWidth: 0, textAlign: "left",
+                padding: "8px 12px", overflow: "hidden",
+                textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+              {search || "Szukaj aplikacji…"}
+            </DialogButton>
+          )}
+        </div>
         <div aria-label="Aplikacje pulpitu" ref={scrollRef}
           style={{ minHeight: 160, height: "min(54vh, 540px)", width: "100%",
             overflowY: "auto", overscrollBehavior: "contain", paddingBottom: 36 }}>

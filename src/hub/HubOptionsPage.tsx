@@ -1,6 +1,6 @@
 import { useEffect, useState, useSyncExternalStore } from "react";
 import { callable } from "@decky/api";
-import { DialogBody, DialogControlsSection, Field, Toggle } from "@decky/ui";
+import { DialogBody, DialogControlsSection, DialogControlsSectionHeader, Field, SliderField, Toggle } from "@decky/ui";
 import { applyHubPreferences, getHubPreferences, subscribeHubPreferences } from "../core/hubSession";
 import type { HubPreferences } from "../core/hubSession";
 import { withTimeout } from "../utils/withTimeout";
@@ -13,7 +13,10 @@ export function initializeHubOptions() {
   return withTimeout(readOptions(), 4000).then(applyHubPreferences);
 }
 
-export function HubOptionsPage() {
+export function HubOptionsPage({ terminalFontSize, setTerminalFontSize }: {
+  terminalFontSize: number;
+  setTerminalFontSize: (value: number) => void;
+}) {
   const options = useSyncExternalStore(subscribeHubPreferences, getHubPreferences);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
@@ -46,11 +49,21 @@ export function HubOptionsPage() {
           onChange={value => { void update("saveSession", value); }} />
       </Field>
       <Field label="Automatycznie pokazuj klawiaturę"
-        description="Włącz: klawiatura ekranowa Steam przy edycji pól Huba. Wyłącz: pola przyjmują tekst z klawiatury fizycznej bez automatycznego wywoływania ekranowej. Ustawienie wspólne dla Plików i Terminala.">
+        description="Włącz: klawiatura ekranowa Steam przy edycji pól Huba. Wyłącz: pola przyjmują tekst z klawiatury fizycznej bez automatycznego wywoływania ekranowej. Ustawienie wspólne dla Plików, Pulpitu i Terminala.">
         <Toggle value={options.autoKeyboard} disabled={saving}
           onChange={value => { void update("autoKeyboard", value); }} />
       </Field>
       {error && <Field label="Błąd" description={error} />}
+    </DialogControlsSection>
+    <DialogControlsSection>
+      <DialogControlsSectionHeader>Terminal</DialogControlsSectionHeader>
+      <Field label="Tryb bezpieczny"
+        description="Uruchamianie terminala pozostaje wyłączone do czasu rozwiązania problemu restartów SteamOS." />
+      <Field label="Rozmiar czcionki terminala"
+        description="Zachowujemy ustawienie dla przyszłego uruchomienia terminala. Nie włącza ono powłoki.">
+        <SliderField min={11} max={22} step={1} value={terminalFontSize}
+          showValue onChange={setTerminalFontSize} />
+      </Field>
     </DialogControlsSection>
   </DialogBody>;
 }

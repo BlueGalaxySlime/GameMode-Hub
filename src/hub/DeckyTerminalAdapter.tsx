@@ -1,4 +1,4 @@
-import { DialogBody, DialogButton, DialogControlsSection, DialogControlsSectionHeader, Field, SliderField } from "@decky/ui";
+import { DialogBody, DialogButton, DialogControlsSection, DialogControlsSectionHeader, Field } from "@decky/ui";
 import { useHubSessionState } from "./useHubSessionState";
 import { FocusableInfoField } from "./FocusableInfoField";
 import { GamepadScrollArea } from "./GamepadScrollArea";
@@ -35,20 +35,3 @@ export function DeckyTerminalPage({ fontSize: _fontSize }: { fontSize: number })
   </DialogBody>;
 }
 
-export function TerminalOptionsPage({ fontSize, setFontSize }: {
-  fontSize: number;
-  setFontSize(value: number): void;
-}) {
-  return <DialogBody>
-    <GamepadScrollArea>
-      <DialogControlsSection>
-      <DialogControlsSectionHeader>Opcje terminala</DialogControlsSectionHeader>
-      <FocusableInfoField label="Tryb bezpieczny" description="Moduł PTY i emulator xterm.js są tymczasowo wyłączone, aby nie narażać interfejsu Steam na kolejne restarty." />
-      <Field label="Rozmiar czcionki" description="Ustawienie zostanie wykorzystane po przywróceniu działania terminala.">
-        <SliderField min={11} max={22} step={1} value={fontSize}
-          showValue onChange={setFontSize} />
-      </Field>
-      </DialogControlsSection>
-    </GamepadScrollArea>
-  </DialogBody>;
-}

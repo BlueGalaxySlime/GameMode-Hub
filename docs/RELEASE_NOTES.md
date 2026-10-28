@@ -1,3 +1,12 @@
+# GameMode Hub 0.5.19 (testowy)
+
+- **Pulpit — wyszukiwarka:** przycisk „Wszystkie” zastąpiono jednym paskiem wyszukiwania jak pasek adresu w Plikach. A otwiera pole wpisywania i klawiaturę SteamOS zgodnie z ustawieniem Huba; filtrowanie działa na bieżąco, również wewnątrz wybranej kategorii.
+- **Pulpit — menu Y na pasku:** „Widok” → Wszystkie / Ulubione / Flatpak / Systemowe / Ukryte. „Sortowanie” → Ulubione / ostatnie / A–Z, Nazwa A–Z, Nazwa Z–A lub Ostatnio uruchamiane. Wybrana kategoria widoczna jest jako ścieżka „Pulpit › Kategoria”, a wyszukiwanie, widok i sortowanie zachowują się przy przełączeniu kart (jeśli zapis sesji jest włączony).
+- **Nawigacja:** kolejność zakładek Pulpit → Pliki → Terminal → Dodatki → Opcje Huba → Aktualizacje → Podziękowania. Usunięto osobną kartę „Opcje terminala”; rozmiar czcionki przeniesiono do Opcji Huba. Terminal nadal pozostaje w trybie bezpiecznym.
+- **Podziękowania:** dodano atrybucję Desktop Apps (Decky, allmazz) oraz standardów freedesktop.org/XDG i informacje licencyjne.
+- **Testy:** dodano sprawdzenia układu wyszukiwania, menu Y, kategorii, sortowania i kolejności zakładek.
+- **Bez zmian w bezpieczeństwie:** brak odblokowania terminala i brak modyfikacji zabezpieczeń Kosza oraz operacji na plikach. Wymagane sprawdzenie sterowania padem na urządzeniu.
+
 # GameMode Hub 0.5.18 (testowy)
 
 - **Pliki — Kosz:** Y na pliku albo folderze → „Przenieś do Kosza”; osobne okno z nazwą elementu i potwierdzeniem. B anuluje. Usuwanie na zawsze nie jest dostępne.

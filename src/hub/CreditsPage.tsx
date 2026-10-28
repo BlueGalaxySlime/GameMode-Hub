@@ -7,6 +7,12 @@ type Credit = { project: string; authors: string; reason: string; license: strin
 
 /** Extend this list as code from more modules is used. */
 const reusedCode: Credit[] = [
+  {
+    project: "Desktop Apps (Decky)",
+    authors: "allmazz i współtwórcy",
+    reason: "Punkt odniesienia dla wykrywania aplikacji .desktop, integracji Flatpak oraz uruchamiania i zarządzania skrótami Steam. Widok Pulpitu jest autorskim interfejsem GameMode Hub.",
+    license: "GPL-3.0", source: "github.com/allmazz/decky-desktop-apps"
+  },
   { project: "Decky Terminal", authors: "Alex4386 i współtwórcy", reason: "Technika otwierania natywnej klawiatury SteamOS przez ukryte pole wejściowe.", license: "BSD-3-Clause", source: "github.com/Alex4386/decky-terminal" },
   {
     project: "TabMaster",
@@ -23,6 +29,12 @@ const reusedCode: Credit[] = [
 ];
 
 const externalProjects: Credit[] = [
+  {
+    project: "freedesktop.org / XDG",
+    authors: "Społeczność freedesktop.org",
+    reason: "Standardy wpisów aplikacji .desktop oraz kosza Trash, z których korzysta Pulpit i Pliki. Własna implementacja obsługi metadanych.",
+    license: "Otwarte specyfikacje", source: "specifications.freedesktop.org"
+  },
   {
     project: "Decky Loader / @decky/ui",
     authors: "SteamDeckHomebrew i współtwórcy",

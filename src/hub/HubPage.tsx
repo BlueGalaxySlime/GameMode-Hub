@@ -12,7 +12,7 @@ import { FileManagerPage } from "./FileManagerPage";
 import { DesktopPage } from "./DesktopPage";
 import { HubOptionsPage, initializeHubOptions } from "./HubOptionsPage";
 import { useHubSessionState } from "./useHubSessionState";
-import { DeckyTerminalPage, TerminalOptionsPage } from "./DeckyTerminalAdapter";
+import { DeckyTerminalPage } from "./DeckyTerminalAdapter";
 import { CreditsPage } from "./CreditsPage";
 import { DECKY_PLUGIN_NAME, HUB_ROUTE } from "../core/identity";
 import { CORE_MODULES } from "../core/modules";
@@ -220,19 +220,18 @@ export function HubPage() {
   const pages = [
     { title: "Pulpit", route: HUB_ROUTE + "/home", icon: <FaHome />,
       content: <DesktopPage /> },
-    { title: "Dodatki", route: HUB_ROUTE + "/addons", icon: <FaPuzzlePiece />,
-      content: <AddonSelector installed={installed} selected={selected} pending={busy}
-        error={error} toggle={toggle} reload={() => { void refresh(); }} /> },
     { title: "Pliki", route: HUB_ROUTE + "/files", icon: <FaFolderOpen />,
       content: <FileManagerPage /> },
-    { title: "Opcje Huba", route: HUB_ROUTE + "/options", icon: <FaCog />,
-      content: <HubOptionsPage /> },
     { title: "Terminal", route: HUB_ROUTE + "/terminal", icon: <FaTerminal />,
       hideTitle: true, padding: "none" as const,
       content: <DeckyTerminalPage fontSize={terminalFontSize} /> },
     "separator" as const,
-    { title: "Opcje terminala", route: HUB_ROUTE + "/terminal/options", icon: <FaCog />,
-      content: <TerminalOptionsPage fontSize={terminalFontSize} setFontSize={setTerminalFontSize} /> },
+    { title: "Dodatki", route: HUB_ROUTE + "/addons", icon: <FaPuzzlePiece />,
+      content: <AddonSelector installed={installed} selected={selected} pending={busy}
+        error={error} toggle={toggle} reload={() => { void refresh(); }} /> },
+    { title: "Opcje Huba", route: HUB_ROUTE + "/options", icon: <FaCog />,
+      content: <HubOptionsPage terminalFontSize={terminalFontSize}
+        setTerminalFontSize={setTerminalFontSize} /> },
     "separator" as const,
     { title: "Aktualizacje", route: HUB_ROUTE + "/updates", icon: <FaSyncAlt />,
       content: <UpdaterPage /> },

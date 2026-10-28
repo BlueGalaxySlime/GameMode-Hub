@@ -8,11 +8,11 @@ export type HubModule = {
 };
 export const CORE_MODULES: readonly HubModule[] = [
   { id:"home", title:"Pulpit", capabilities:[], enabledByDefault:true },
-  { id:"addons", title:"Dodatki", capabilities:["integrations"], enabledByDefault:true },
   { id:"files", title:"Pliki", capabilities:["storage"], enabledByDefault:true },
-  { id:"options", title:"Opcje Huba", capabilities:[], enabledByDefault:true },
-  // Terminal is intentionally disabled after crashes in SteamOS Gaming Mode.
+  // Terminal remains displayed in safe mode, without starting a shell.
   { id:"terminal", title:"Terminal", capabilities:["terminal"], enabledByDefault:false },
+  { id:"addons", title:"Dodatki", capabilities:["integrations"], enabledByDefault:true },
+  { id:"options", title:"Opcje Huba", capabilities:[], enabledByDefault:true },
   { id:"updates", title:"Aktualizacje", capabilities:["updates"], enabledByDefault:true },
   { id:"credits", title:"Podziękowania", capabilities:[], enabledByDefault:true }
 ] as const;

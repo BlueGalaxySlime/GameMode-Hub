@@ -61,6 +61,22 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 
 
+## Desktop Apps (Decky) — GPL-3.0
+
+Reference project: **decky-desktop-apps**, allmazz and contributors.
+Upstream: https://github.com/allmazz/decky-desktop-apps
+License: **GNU General Public License, version 3**.
+
+GameMode Hub's Pulpit uses a separately styled file-manager-like interface
+and implements application discovery from XDG .desktop entries. Steam shortcut
+creation, launch and cleanup follow the upstream approach, adapted to this
+project's service and settings. GameMode Hub remains GPL-3.0-only and is
+not an official release of the Desktop Apps plugin.
+
+The XDG Desktop Entry and Trash formats are public freedesktop.org standards:
+https://specifications.freedesktop.org/
+No third-party Trash implementation is bundled.
+
 ## External integrations and platform (no plugin implementation copied)
 
 - Decky Loader / @decky/ui: SteamDeckHomebrew and contributors — native

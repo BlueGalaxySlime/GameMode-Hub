@@ -8,9 +8,9 @@ const hub = fs.readFileSync("src/hub/HubPage.tsx", "utf8");
 const backend = fs.readFileSync("main.py", "utf8");
 const bundle = fs.readFileSync("scripts/package.py", "utf8");
 
-test("Pulpit uses native Files-style list and tag navigation, not Desktop Apps UI", () => {
+test("Pulpit uses the Files layout with a search bar and category breadcrumb", () => {
   assert.ok(hub.includes("content: <DesktopPage />"));
-  assert.ok(page.includes('aria-label="Kategorie aplikacji — lewo i prawo"'));
+  assert.ok(page.includes('aria-label="Ścieżka pulpitu — lewo i prawo"'));
   assert.ok(page.includes('flow-children="row"'));
   assert.ok(page.includes('flow-children="column"'));
   assert.ok(page.includes('height: "min(54vh, 540px)"'));
@@ -36,4 +36,62 @@ test("Pulpit has favorite, Steam library and hide actions; no Open duplicate", (
   assert.ok(page.includes('"Ukryj"'));
   assert.ok(page.includes('onOKActionDescription="Uruchom"'));
   assert.ok(!page.includes('>Otwórz</MenuItem>'));
+});
+
+test("A on the search bar edits text through the shared SteamOS keyboard input", () => {
+  assert.ok(page.includes('import { HubTextInput } from "./HubTextInput"'));
+  assert.ok(page.includes('const [search, setSearch] = useHubSessionState("desktop.search", "")'));
+  assert.ok(page.includes('const [editingSearch, setEditingSearch] = useState(false)'));
+  assert.ok(page.includes('<HubTextInput value={search} focusOnMount'));
+  assert.ok(page.includes('aria-label="Szukaj aplikacji"'));
+  assert.ok(page.includes('onClick={() => setEditingSearch(true)}'));
+  assert.ok(page.includes('onOKActionDescription="Szukaj"'));
+  assert.ok(page.includes('onChange={event => {'));
+  assert.ok(page.includes('setSearch(event.target.value)'));
+  assert.ok(page.includes('finishSearch()'));
+  assert.ok(page.includes('searchControlRef.current?.querySelector<HTMLElement>'));
+  assert.ok(page.includes('searchKey(app.name).includes(query)'));
+  assert.ok(!page.includes('aria-label="Kategorie aplikacji — lewo i prawo"'));
+});
+
+test("Y on the search bar opens View and Sort submenus, without a category button row", () => {
+  assert.ok(page.includes('onOptionsActionDescription="Opcje pulpitu"'));
+  assert.ok(page.includes('openDesktopMenu(event.currentTarget ?? window)'));
+  assert.ok(page.includes('<MenuGroup label="Widok">'));
+  assert.ok(page.includes('<MenuGroup label="Sortowanie">'));
+  for (const label of ["Wszystkie", "Ulubione", "Flatpak", "Systemowe", "Ukryte",
+    "Nazwa A–Z", "Nazwa Z–A", "Ostatnio uruchamiane"]) {
+    assert.ok(page.includes('label: "' + label + '"'), label);
+  }
+  assert.ok(page.includes('selected={category === item.key}'));
+  assert.ok(page.includes('selected={sortMode === item.key}'));
+  assert.ok(page.includes('onSelected={() => changeCategory(item.key)}'));
+  assert.ok(page.includes('const [sortMode, setSortMode] = useHubSessionState<DesktopSort>'));
+  assert.ok(page.includes('const activeCategory = categories.find('));
+  assert.ok(page.includes('onClick={() => changeCategory("all")}'));
+  assert.ok(page.includes('aria-label="Ścieżka pulpitu — lewo i prawo"'));
+  assert.ok(!page.includes('cancelText="Wstecz"'));
+});
+
+test("sidebar starts with Pulpit / Pliki / Terminal; terminal settings live in Hub Options", () => {
+  const order = [...hub.matchAll(/title: "(Pulpit|Pliki|Terminal|Dodatki|Opcje Huba)"/g)].map(m => m[1]);
+  assert.deepEqual(order, ["Pulpit", "Pliki", "Terminal", "Dodatki", "Opcje Huba"]);
+  assert.ok(!hub.includes('title: "Opcje terminala"'));
+  assert.ok(hub.includes('setTerminalFontSize={setTerminalFontSize}'));
+  const options = fs.readFileSync("src/hub/HubOptionsPage.tsx", "utf8");
+  assert.ok(options.includes('label="Rozmiar czcionki terminala"'));
+  assert.ok(options.includes('showValue onChange={setTerminalFontSize}'));
+  assert.ok(options.includes('Uruchamianie terminala pozostaje wyłączone'));
+  const terminal = fs.readFileSync("src/hub/DeckyTerminalAdapter.tsx", "utf8");
+  assert.ok(!terminal.includes("TerminalOptionsPage"));
+});
+
+test("credits acknowledge Desktop Apps and XDG standards", () => {
+  const credits = fs.readFileSync("src/hub/CreditsPage.tsx", "utf8");
+  const notices = fs.readFileSync("THIRD_PARTY_NOTICES.md", "utf8");
+  assert.ok(credits.includes('project: "Desktop Apps (Decky)"'));
+  assert.ok(credits.includes('source: "github.com/allmazz/decky-desktop-apps"'));
+  assert.ok(credits.includes('project: "freedesktop.org / XDG"'));
+  assert.ok(credits.includes('<GamepadScrollArea>'));
+  assert.ok(notices.includes('https://github.com/allmazz/decky-desktop-apps'));
 });
