@@ -1,0 +1,70 @@
+{
+  "name": "steamhub-desktop",
+  "productName": "SteamHub",
+  "version": "0.5.0",
+  "description": "SteamOS Hub — niezależna aplikacja Linux",
+  "main": "main.cjs",
+  "license": "GPL-3.0-only",
+  "private": true,
+  "scripts": {
+    "start": "electron .",
+    "test": "node --test tests/*.test.cjs",
+    "package": "electron-builder --linux AppImage flatpak --x64 --publish never"
+  },
+  "devDependencies": {
+    "electron": "45.1.0",
+    "electron-builder": "26.18.0"
+  },
+  "build": {
+    "appId": "io.github.BlueGalaxySlime.SteamHub",
+    "productName": "SteamHub",
+    "asar": true,
+    "files": [
+      "main.cjs",
+      "preload.cjs",
+      "lib/**",
+      "ui/**",
+      "package.json"
+    ],
+    "directories": {
+      "output": "out"
+    },
+    "toolsets": {
+      "appimage": "1.0.3"
+    },
+    "linux": {
+      "target": [
+        "AppImage",
+        "flatpak"
+      ],
+      "category": "Utility",
+      "executableName": "steamhub",
+      "desktop": {
+        "entry": {
+          "Name": "SteamHub",
+          "Comment": "Niezależny panel SteamOS Hub",
+          "Categories": "Utility;System;"
+        }
+      }
+    },
+    "appImage": {
+      "artifactName": "SteamHub-${version}-x86_64.AppImage"
+    },
+    "flatpak": {
+      "artifactName": "SteamHub-${version}-x86_64.flatpak",
+      "branch": "stable",
+      "runtime": "org.freedesktop.Platform",
+      "sdk": "org.freedesktop.Sdk",
+      "runtimeVersion": "24.08",
+      "baseVersion": "24.08",
+      "finishArgs": [
+        "--socket=wayland",
+        "--socket=x11",
+        "--share=ipc",
+        "--device=dri",
+        "--filesystem=home:ro",
+        "--share=network"
+      ]
+    }
+  }
+}
