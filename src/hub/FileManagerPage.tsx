@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, useSyncExternalStore } from "react";
+import { useEffect, useLayoutEffect, useRef, useState, useSyncExternalStore } from "react";
 import { callable } from "@decky/api";
 import { DialogBody, DialogButton, DialogControlsSection, Focusable, Menu, MenuGroup, MenuItem, NavEntryPositionPreferences, showContextMenu } from "@decky/ui";
 import { withTimeout } from "../utils/withTimeout";
@@ -143,6 +143,16 @@ export function FileManagerPage() {
   const locked = useRef(false);
   const treeScrollRef = useRef<HTMLDivElement>(null);
   const fileScrollRef = useRef<HTMLDivElement>(null);
+  // A clicked directory is removed from the DOM after navigation. Restore
+  // focus inside that SAME pane, otherwise Steam selects the sidebar tab.
+  const pendingDirectoryFocus = useRef<"left" | "right" | null>(null);
+
+  function navigateDirectory(path: string, pane: "left" | "right",
+    offset = 0, order: SortBy = sortBy, reverse = descending) {
+    if (busy || locked.current) return;
+    pendingDirectoryFocus.current = pane;
+    void load(path, hidden, offset, order, reverse, pane);
+  }
 
   async function changeSplitTree(enabled: boolean) {
     if (savingSplit || enabled === splitTree) return;
@@ -198,6 +208,7 @@ export function FileManagerPage() {
       setMessage(response.truncated ? "Wyświetlanych jest maksymalnie 1500 elementów." : "");
     } catch (error) {
       if (id !== request.current) return;
+      pendingDirectoryFocus.current = null;
       setMessage("Nie można otworzyć folderu: " + String(error));
     } finally {
       if (id === request.current) setBusy(false);
@@ -215,6 +226,22 @@ export function FileManagerPage() {
     if (treeScrollRef.current) treeScrollRef.current.scrollTop = readHubSession("files.treeScrollTop", 0);
     if (fileScrollRef.current) fileScrollRef.current.scrollTop = readHubSession("files.listScrollTop", 0);
   }, [page?.path, page?.offset, rightPage?.path, rightPage?.offset, splitTree]);
+
+  useLayoutEffect(() => {
+    if (busy || !pendingDirectoryFocus.current) return;
+    const pane = pendingDirectoryFocus.current;
+    const container = (pane === "left" ? treeScrollRef : fileScrollRef).current;
+    // Prefer a directory entry, then ".." for an empty directory.
+    const target = container?.querySelector<HTMLElement>(
+      '[data-file-entry] [role="button"], [data-file-entry] button, ' +
+      '[data-file-entry] [tabindex], [data-parent-row] [role="button"], ' +
+      '[data-parent-row] button, [data-parent-row] [tabindex]'
+    );
+    if (target) {
+      pendingDirectoryFocus.current = null;
+      target.focus({ preventScroll: true });
+    }
+  }, [busy, page, rightPage, splitTree]);
 
   // Apply global visibility/sort settings without losing either pane's path.
   async function reloadBoth(showHidden: boolean, order: SortBy, reverse: boolean) {
@@ -442,7 +469,7 @@ export function FileManagerPage() {
         } : currentPage?.parent ? event => {
           event.preventDefault();
           event.stopPropagation();
-          void load(currentPage.parent, hidden, 0, sortBy, descending, currentPane);
+          navigateDirectory(currentPage.parent, currentPane);
         } : undefined}
         onKeyDown={event => {
           if (multiSelect && (event.key === "Escape" || event.key === "Backspace")) {
@@ -455,7 +482,49 @@ export function FileManagerPage() {
             void load(currentPage?.path ?? null, hidden, currentPage?.offset ?? 0, sortBy, descending, currentPane);
           }
         }}>
-        {/* The address bar is directly focusable: Y opens the same native menu
+        {/* Widok i status na samej górze, przed tagami lokalizacji i paskiem adresu. */}
+        <div aria-label="Stan przeglądarki plików"
+          style={{ display: "flex", flexWrap: "wrap", alignItems: "center",
+            gap: 14, fontSize: 12, opacity: 0.78, minHeight: 23 }}>
+          <span>Widok: lista</span>
+          <span>Sortowanie: {sortOptions.find(option => option.data === sortMode)?.label ?? "Nazwa A–Z"}</span>
+          <span>Ukryte: {hidden ? "widoczne" : "niewidoczne"}</span>
+          <span style={{ fontWeight: 700 }}>Podział: {splitTree ? "WŁ." : "WYŁ."}</span>
+          {splitTree && <span>Panel: {activePane === "left" ? "lewy" : "prawy"}</span>}
+          {multiSelect && <span>Zaznaczanie: {markedPaths.length} (B: wyjdź)</span>}
+          {clipboard && <span>Schowek: {clipboard.paths.length}</span>}
+        </div>
+
+        {/* Each breadcrumb is a focusable controller target, within allowed roots. */}
+        {!!currentPage && <Focusable flow-children="row"
+          navEntryPreferPosition={NavEntryPositionPreferences.MAINTAIN_X}
+          aria-label="Tagi lokalizacji — lewo i prawo"
+          style={{ display: "flex", flexDirection: "row", flexWrap: "nowrap",
+            alignItems: "center", gap: 4, minWidth: 0, width: "100%",
+            overflowX: "auto", overflowY: "hidden" }}>
+          {breadcrumbs(currentPage.path, currentPage.roots).map((part, i) =>
+            <div key={part.path} style={{ display: "flex", flex: "0 0 auto",
+              gap: 4, alignItems: "center", minWidth: 0 }}>
+              {i > 0 && <span style={{ opacity: 0.55 }}>›</span>}
+              <DialogButton disabled={busy || currentPage.path === part.path}
+                style={{ minWidth: 0, padding: "3px 9px", fontSize: 12, maxWidth: 190,
+                  overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}
+                onClick={() => navigateDirectory(part.path, currentPane)}>
+                {part.name}
+              </DialogButton>
+            </div>)}
+        </Focusable>}
+
+        {action === "folder" && <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+          <HubTextInput value={name} placeholder="Nazwa folderu"
+            onChange={event => setName(event.target.value)} />
+          <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
+            <DialogButton disabled={busy || !name.trim()}
+              onClick={() => { void operate("mkdir"); }}>Utwórz</DialogButton>
+            <DialogButton disabled={busy} onClick={() => setAction(null)}>Anuluj</DialogButton>
+          </div>
+        </div>}
+        {/* The one address bar sits immediately above the tree; Y opens its native menu
             used by entries; A enables text editing of the path. */}
         <div onContextMenu={event => {
           event.preventDefault();
@@ -494,41 +563,6 @@ export function FileManagerPage() {
           )}
         </div>
 
-        {/* Each breadcrumb is a focusable controller target, within allowed roots. */}
-        {!!currentPage && <div style={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: 4, minWidth: 0 }}>
-          {breadcrumbs(currentPage.path, currentPage.roots).map((part, i) =>
-            <div key={part.path} style={{ display: "flex", gap: 4, alignItems: "center", minWidth: 0 }}>
-              {i > 0 && <span style={{ opacity: 0.55 }}>›</span>}
-              <DialogButton disabled={busy || currentPage.path === part.path}
-                style={{ minWidth: 0, padding: "3px 9px", fontSize: 12, maxWidth: 190,
-                  overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}
-                onClick={() => void load(part.path, hidden, 0, sortBy, descending, currentPane)}>
-                {part.name}
-              </DialogButton>
-            </div>)}
-        </div>}
-
-        {/* Read-only status; commands live in the Y context menu on the path. */}
-        <div aria-label="Stan przeglądarki plików"
-          style={{ display: "flex", flexWrap: "wrap", alignItems: "center",
-            gap: 14, fontSize: 12, opacity: 0.78, minHeight: 23 }}>
-          <span>Sortowanie: {sortOptions.find(option => option.data === sortMode)?.label ?? "Nazwa A–Z"}</span>
-          <span>Ukryte: {hidden ? "widoczne" : "niewidoczne"}</span>
-          <span style={{ fontWeight: 700 }}>Podział: {splitTree ? "WŁ." : "WYŁ."}</span>
-          {splitTree && <span>Panel: {activePane === "left" ? "lewy" : "prawy"}</span>}
-          {multiSelect && <span>Zaznaczanie: {markedPaths.length} (B: wyjdź)</span>}
-          {clipboard && <span>Schowek: {clipboard.paths.length}</span>}
-        </div>
-
-        {action === "folder" && <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-          <HubTextInput value={name} placeholder="Nazwa folderu"
-            onChange={event => setName(event.target.value)} />
-          <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
-            <DialogButton disabled={busy || !name.trim()}
-              onClick={() => { void operate("mkdir"); }}>Utwórz</DialogButton>
-            <DialogButton disabled={busy} onClick={() => setAction(null)}>Anuluj</DialogButton>
-          </div>
-        </div>}
         {/* Two complete file panels, one shared white address bar above. */}
         {page && <Focusable flow-children={splitTree ? "row" : "column"}
           navEntryPreferPosition={NavEntryPositionPreferences.MAINTAIN_Y}
@@ -554,13 +588,13 @@ export function FileManagerPage() {
                 style={{ minHeight: 0, height: "100%", overflowY: "auto",
                   overscrollBehavior: "contain", display: "flex",
                   flexDirection: "column", gap: 3, paddingBottom: 48 }}>
-                <ParentDirectoryRow parent={folder.parent} disabled={busy}
+                <div data-parent-row><ParentDirectoryRow parent={folder.parent} disabled={locked.current}
                   onOpen={parent => {
                     activatePane(pane);
-                    void load(parent, hidden, 0, sortBy, descending, pane);
-                  }} />
+                    navigateDirectory(parent, pane);
+                  }} /></div>
                 {folder.items.map(entry =>
-                  <div key={entry.path} style={{ width: "100%", minWidth: 0 }}>
+                  <div key={entry.path} data-file-entry style={{ width: "100%", minWidth: 0 }}>
                     {activePane === pane && selected?.path === entry.path && action === "rename" ? (
                       <Focusable flow-children="row"
                         navEntryPreferPosition={NavEntryPositionPreferences.MAINTAIN_X}
@@ -584,7 +618,7 @@ export function FileManagerPage() {
                           onClick={() => setAction(null)}>×</DialogButton>
                       </Focusable>
                     ) : (
-                      <DialogButton disabled={busy || entry.symlink}
+                      <DialogButton disabled={entry.symlink || locked.current}
                         onOKActionDescription={multiSelect ? "Zaznacz / odznacz" : entry.directory ? "Otwórz" : "Zaznacz"}
                         onOptionsActionDescription="Opcje"
                         onOptionsButton={event => openFileMenu(entry, event.currentTarget ?? window, pane)}
@@ -599,7 +633,7 @@ export function FileManagerPage() {
                           if (multiSelect) {
                             toggleMarked(entry.path);
                           } else if (entry.directory) {
-                            void load(entry.path, hidden, 0, sortBy, descending, pane);
+                            navigateDirectory(entry.path, pane);
                           } else {
                             setSelected(entry);
                             setAction(null);
@@ -630,8 +664,7 @@ export function FileManagerPage() {
                     <DialogButton disabled={busy || folder.offset === 0}
                       onClick={() => {
                         activatePane(pane);
-                        void load(folder.path, hidden, Math.max(0, folder.offset - folder.limit),
-                          sortBy, descending, pane);
+                        navigateDirectory(folder.path, pane, Math.max(0, folder.offset - folder.limit));
                       }}>Poprzednia</DialogButton>
                     <span style={{ opacity: 0.75, fontSize: 12 }}>
                       {Math.floor(folder.offset / folder.limit) + 1} / {Math.ceil(folder.total / folder.limit)}
@@ -639,8 +672,7 @@ export function FileManagerPage() {
                     <DialogButton disabled={busy || folder.offset + folder.limit >= folder.total}
                       onClick={() => {
                         activatePane(pane);
-                        void load(folder.path, hidden, folder.offset + folder.limit,
-                          sortBy, descending, pane);
+                        navigateDirectory(folder.path, pane, folder.offset + folder.limit);
                       }}>Następna</DialogButton>
                   </Focusable>}
               </div>
