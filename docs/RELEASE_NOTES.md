@@ -1,4 +1,7 @@
-# SteamHub 0.4.0
+# SteamHub 0.4.1
+
+Hotfix aktualizatora: ograniczenie czasu oczekiwania na instalację, zapobieganie ponawianiu przyjętej instalacji i dokładniejszy komunikat potwierdzenia.
+
 
 Nowy układ w stylu ustawień SteamOS:
 
