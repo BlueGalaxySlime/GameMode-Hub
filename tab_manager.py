@@ -8,7 +8,7 @@ SETTINGS_FILE = Path.home() / ".config" / "steamhub" / "modules.json"
 def _read_tab_manager_enabled():
     try:
         data = json.loads(SETTINGS_FILE.read_text(encoding="utf-8"))
-        return data.get("tab_manager_enabled") is True
+        return isinstance(data, dict) and data.get("tab_manager_enabled") is True
     except (FileNotFoundError, OSError, ValueError, TypeError):
         return False
 
