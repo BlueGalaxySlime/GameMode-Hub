@@ -1,3 +1,12 @@
+# GameMode Hub 0.5.41 (testowy)
+
+- **Konta → Epic Games:** zastąpiono informacyjny ekran UniFiDeck testowym adapterem Epic. Wykrywa rozpoznane skróty Epic Games Launcher albo opcjonalnie Heroic, nie dopasowuje aplikacji jedynie po nazwie i pozwala uruchomić je świadomie przez SteamOS Gaming Mode.
+- **Bez haseł i tokenów:** Hub nie jest klientem logowania Epic, nie skanuje danych Legendary ani nie importuje sesji Unifideck. Wyświetla wyłącznie „niezweryfikowany”, bo instalacja launchera nie potwierdza logowania.
+- **Zabezpieczenia i uczciwy status:** sekcja Bezpieczeństwo podaje, co jest przechowywane przez launcher, a czego Hub nie czyta. Nie zakłada, że sesje Heroic lub Epic uruchamianego przez Proton są chronione KWallet.
+- **Bezpieczny start:** używa istniejącego mechanizmu tymczasowych skrótów Steam. Błąd zapisu identyfikatora blokuje uruchomienie, a zamknięcie lub odmowa uruchomienia usuwa tymczasowy skrót.
+- **Testy:** rozpoznawanie launcherów, odmowa przy fałszywym ID, wycofanie skrótu po błędzie i brak odczytu kont. Działanie prawdziwego launchera oraz logowania w Gaming Mode wymaga sprawdzenia na Lenovo.
+- **Zakres:** to pierwszy adapter logowania zewnętrznego, nie pełne przeniesienie biblioteki i pobierania Epic do Huba; pozostałe funkcje UniFiDeck nie są zmieniane. Szczegóły: `docs/EPIC_SECURITY.md`.
+
 # GameMode Hub 0.5.40 (testowy)
 
 - **Jednolity model zakładek:** zamiast pojedynczego paska informacji, włączone opcjonalnie UI → Gaming Mode pokazuje dla skrótów nie-Steam cztery zakładki wzorowane na SteamOS: aktywność, własna biblioteka, społeczność/pomoc i szczegóły. Ich etykiety i dostępne działania różnią się zależnie od GOG, Epic i innych źródeł.

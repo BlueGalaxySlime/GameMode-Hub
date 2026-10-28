@@ -135,28 +135,28 @@ test("B is captured on Desktop also outside search edit mode", () => {
   assert.ok(page.includes('event.stopPropagation();'));
 });
 
-test("Konta is fourth tab without mock login buttons", () => {
+test("Konta remains the fourth controller tab and now shows Epic only", () => {
   const tabs = [...hub.matchAll(/title: "(Pulpit|Pliki|Terminal|Konta|Dodatki)"/g)]
     .map(match => match[1]);
   assert.deepEqual(tabs, ["Pulpit", "Pliki", "Terminal", "Konta", "Dodatki"]);
-  assert.ok(hub.includes('content: <AccountsPage installed={installed} />'));
-  const source = fs.readFileSync("src/hub/AccountsPage.tsx", "utf8");
-  assert.ok(source.includes("Stan sklepów pobierany bezpośrednio z UniFiDeck"));
-  assert.ok(source.includes('readUnifideckStatuses()'));
-  assert.ok(source.includes('label={item.name}'));
-  assert.ok(source.includes("<GamepadScrollArea>"));
-  assert.ok(!source.includes("oauth"));
+  assert.ok(hub.includes('content: <AccountsPage />'));
+  const accounts = fs.readFileSync("src/hub/AccountsPage.tsx", "utf8");
+  assert.ok(accounts.includes("Konta — Epic Games (test)"));
+  assert.ok(accounts.includes("Status konta: niezweryfikowany"));
+  assert.ok(accounts.includes("Bezpieczeństwo konta"));
+  assert.ok(accounts.includes("<GamepadScrollArea>"));
 });
 
-test("Accounts uses UniFiDeck read-only RPC, never reads credential files", () => {
-  const bridge = fs.readFileSync("src/hub/unifideckBridge.ts", "utf8");
-  assert.ok(bridge.includes('backend.callable("loader/call_plugin_method")'));
-  assert.ok(bridge.includes('invoke("Unifideck", "check_store_status")'));
-  assert.ok(!bridge.includes('invoke("Unifideck", "store_auth")'));
-  assert.ok(!bridge.includes('.config/legendary'));
-  assert.ok(!bridge.includes('gog_token.json'));
-  assert.ok(bridge.includes('candidate.available'));
-  assert.ok(hub.includes('content: <AccountsPage installed={installed} />'));
+test("Epic accounts use the Desktop launcher instead of UniFiDeck RPC or credentials", () => {
+  const accounts = fs.readFileSync("src/hub/AccountsPage.tsx", "utf8");
+  const adapter = fs.readFileSync("src/hub/epicAccountAdapter.ts", "utf8");
+  assert.ok(accounts.includes('callable<[], DesktopApp[]>("desktop_list_apps")'));
+  assert.ok(adapter.includes("createSteamDesktopShortcut"));
+  assert.ok(adapter.includes("rememberTemporary"));
+  assert.ok(adapter.includes("openSteamDesktopShortcut"));
+  assert.ok(!accounts.includes("readUnifideckStatuses"));
+  assert.ok(!adapter.includes('backend.callable("loader/call_plugin_method")'));
+  assert.ok(!fs.existsSync("src/hub/unifideckBridge.ts"));
 });
 
 test("Desktop View exposes readable auto rules and per-app category overrides", () => {
