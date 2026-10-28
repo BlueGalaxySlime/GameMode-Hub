@@ -7,7 +7,7 @@ import {
 import { callable } from "@decky/api";
 import { FaCog, FaFolderOpen, FaHeart, FaHome, FaPlug, FaPuzzlePiece, FaSyncAlt, FaTerminal, FaUserCircle, FaBug, FaDownload } from "react-icons/fa";
 import { withTimeout } from "../utils/withTimeout";
-import { UpdaterPage } from "./UpdaterPage";
+import { UpdatesPage } from "./UpdatesPage";
 import { FileManagerPage } from "./FileManagerPage";
 import { DesktopPage } from "./DesktopPage";
 import { AccountsPage } from "./AccountsPage";
@@ -32,6 +32,7 @@ type DeckyBackendAPI = {
 
 const getSelection = callable<[], string[]>("get_selected_addons");
 const saveSelection = callable<[string[]], string[]>("set_selected_addons");
+const setUiOpen = callable<[boolean], { ok: boolean }>("hub_ui_open");
 
 async function listInstalledAddons(): Promise<InstalledAddon[]> {
   const backend = (window as Window & { DeckyBackend?: DeckyBackendAPI }).DeckyBackend;
@@ -191,6 +192,11 @@ export function HubPage() {
   }
 
   useEffect(() => {
+    void setUiOpen(true).catch(() => {});
+    return () => { void setUiOpen(false).catch(() => {}); };
+  }, []);
+
+  useEffect(() => {
     void initializeHubOptions().catch(() => {});
     let mounted = true;
     Promise.allSettled([getSelection(), listInstalledAddons()]).then(([saved, discovery]) => {
@@ -237,7 +243,7 @@ export function HubPage() {
       content: <HubOptionsPage terminalFontSize={terminalFontSize}
         setTerminalFontSize={setTerminalFontSize} /> },
     { title: "Aktualizacje", route: HUB_ROUTE + "/updates", icon: <FaSyncAlt />,
-      content: <UpdaterPage /> },
+      content: <UpdatesPage /> },
     { title: "Pobieranie", route: HUB_ROUTE + "/downloads", icon: <FaDownload />,
       content: <DownloadsPage /> },
     { title: "Podziękowania", route: HUB_ROUTE + "/credits", icon: <FaHeart />,
