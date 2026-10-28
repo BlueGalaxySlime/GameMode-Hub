@@ -479,6 +479,8 @@ export function DesktopPage() {
           {editingSearch ? (
             <HubTextInput value={search} focusOnMount
               aria-label="Szukaj aplikacji" placeholder="Szukaj aplikacji…"
+              onEditValue={next => { setSearch(next); if (scrollRef.current) scrollRef.current.scrollTop = 0; }}
+              onExitEdit={finishSearch}
               onChange={event => {
                 setSearch(event.target.value);
                 if (scrollRef.current) scrollRef.current.scrollTop = 0;

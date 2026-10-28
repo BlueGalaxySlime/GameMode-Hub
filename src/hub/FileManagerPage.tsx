@@ -683,6 +683,8 @@ export function FileManagerPage() {
           {editingPath ? (
             <HubTextInput value={pathDraft} placeholder="/home/deck/…"
               aria-label="Edytuj ścieżkę katalogu" focusOnMount
+              onEditValue={setPathDraft}
+              onExitEdit={() => { setPathDraft(currentPage?.path ?? ""); setEditingPath(false); }}
               disabled={busy}
               onChange={event => setPathDraft(event.target.value)}
               onKeyDown={event => {
@@ -759,6 +761,7 @@ export function FileManagerPage() {
                         style={{ display: "flex", alignItems: "center", gap: 4, minWidth: 0 }}>
                         <div style={{ flex: "1 1 0", minWidth: 0 }}>
                           <HubTextInput value={name} aria-label="Nowa nazwa"
+                            onEditValue={setName} onExitEdit={() => setAction(null)}
                             onChange={event => setName(event.target.value)}
                             onKeyDown={event => {
                               if (event.key === "Enter" && name.trim()) {

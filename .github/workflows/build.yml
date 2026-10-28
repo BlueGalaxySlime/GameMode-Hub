@@ -45,6 +45,8 @@ jobs:
         run: node --test tests/terminal-safe-mode.test.cjs
       - name: Verify session preservation and options
         run: node --test tests/hub-session.test.cjs
+      - name: Verify text editing, selection and clipboard controls
+        run: node --test tests/text-selection.test.cjs
       - name: Verify file manager layout and path navigation
         run: node --test tests/file-manager-layout.test.cjs
       - name: Verify Desktop Apps-style launcher with Files UI

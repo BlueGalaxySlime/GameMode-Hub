@@ -139,7 +139,9 @@ test("updater opens native channel/version menus without inline version list", (
 test("one Hub keyboard preference switches between Steam and physical input", () => {
   assert.ok(hubOptions.includes('value={options.autoKeyboard}'));
   assert.ok(hubTextInput.includes('getHubPreferences, subscribeHubPreferences'));
-  assert.ok(hubTextInput.includes('if (options.autoKeyboard)'));
+  assert.ok(hubTextInput.includes('options.autoKeyboard'));
+  assert.ok(hubTextInput.includes('TextEditControls'));
+  assert.ok(hubTextInput.includes('onOptionsActionDescription="Wytnij / Kopiuj / Wklej"'));
   assert.ok(hubTextInput.includes('<TextField {...fieldProps}'));
   assert.ok(hubTextInput.includes('inputMode="none"'));
   assert.ok(ui.includes('import { HubTextInput } from "./HubTextInput"'));

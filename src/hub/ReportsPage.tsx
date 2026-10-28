@@ -85,6 +85,7 @@ export function ReportsPage() {
           {editingTitle ? (
             <HubTextInput value={title} focusOnMount aria-label="Tytuł zgłoszenia"
               placeholder="Tytuł błędu (np. Y nie otwiera menu)…"
+              onEditValue={next => setTitle(next.slice(0, MAX_TITLE))} onExitEdit={() => finishTitle()}
               onChange={event => setTitle(event.target.value.slice(0, MAX_TITLE))}
               onKeyDown={event => {
                 if (event.key === "Enter" || event.key === "Escape" ||
@@ -116,6 +117,7 @@ export function ReportsPage() {
           {editingDetail ? (
             <HubTextArea value={detail} rows={5} maxLength={MAX_TEXT}
               focusOnMount aria-label="Opis błędu i sposób odtworzenia"
+              onEditValue={next => setDetail(next.slice(0, MAX_TEXT))} onExitEdit={finishDetail}
               placeholder="Opis błędu: co się stało i jak odtworzyć problem…"
               onKeyDown={event => {
                 if (event.key === "Escape") {
