@@ -10,6 +10,10 @@ on:
   pull_request:
   workflow_dispatch:
 
+concurrency:
+  group: steamhub-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 permissions:
   contents: read
 
@@ -61,6 +65,8 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           VERSION="v$(node -p "require('./package.json').version")"
+          test "$(grep -oP '^CURRENT_VERSION = "\\K[^"]+' main.py)" = "${VERSION#v}" || { echo "Backend version mismatch"; exit 1; }
+          grep -q "const VERSION = \"${VERSION#v}\"" src/hub/UpdaterPage.tsx || { echo "Frontend version mismatch"; exit 1; }
           if gh release view "$VERSION" >/dev/null 2>&1; then
             echo "Release $VERSION already exists; refusing to overwrite."
             exit 0
