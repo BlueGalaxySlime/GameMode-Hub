@@ -18,12 +18,13 @@ Steam oraz wskazana kolekcja Steam. Dostępne Quick Tabs: Zainstalowane i Ulubio
 
 ## Zgodność z TabMaster
 
-SteamHub sprawdza poprzez Decky Loader, czy **TabMaster jest aktywny**.
-Jeżeli jest uruchomiony, Tab Manager wstrzymuje patch biblioteki. Nie zmienia
-plików, danych ani stanu TabMastera. Wyłączenie TabMastera w Decky
-umożliwia włączenie Tab Managera bez odinstalowywania pierwszej wtyczki.
-Gdy nie uda się sprawdzić aktywności w Decky, weryfikacja jest zachowawcza
-i może zablokować integrację do czasu ponownego sprawdzenia.
+SteamHub używa listy **uruchomionych wtyczek** Decky Loader (`DeckyPluginLoader.hasPlugin("TabMaster")`), a nie samej obecności katalogu TabMaster na dysku.
+**Zainstalowany, ale wyłączony TabMaster nie blokuje Tab Managera.**
+Jeżeli TabMaster działa, SteamHub wstrzymuje patch biblioteki, bez zmian
+w jego plikach czy ustawieniach. Po wyłączeniu TabMastera użyj przycisku
+**Sprawdź ponownie stan TabMastera** albo ponownie otwórz panel SteamHub.
+Gdy odczyt stanu loadera jest niedostępny, integracja nie uruchamia się,
+a interfejs wyświetla odrębny komunikat diagnostyczny.
 
 Ustawienie ON/OFF, definicje zakładek i profile są zapisywane w katalogu
 `~/.config/steamhub/`, poza katalogiem samej wtyczki.
