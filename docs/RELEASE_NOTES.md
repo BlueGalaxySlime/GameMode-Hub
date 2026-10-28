@@ -1,3 +1,12 @@
+# GameMode Hub 0.5.12
+
+- **Pliki:** opcje otwierane przyciskiem Y na pasku adresu w natywnym menu SteamOS: Nowy folder, Pokaż ukryte, Podziel ekran i Sortowanie (podmenu w prawo). Na stałym pasku pokazujemy jedynie bieżące sortowanie i widoczność ukrytych plików.
+- **Nawigacja:** A na pasku adresu umożliwia edycję ścieżki; A na katalogu otwiera katalog, Y na pliku/katalogu pokazuje menu jego działań. Dodano pierwszy wiersz „... — Katalog wyżej”.
+- **Przeglądanie:** stałe górne opcje i oddzielny obszar przewijania plików. Podział dotyczy wyłącznie drzewa katalogów i listy plików; przy podziale oba panele przewijają się niezależnie.
+- **Sesje:** zachowywanie stanu kart w pamięci przy przełączaniu, w tym otwartego katalogu, zaznaczeń i przewijania; ustawienie globalne w Opcjach Huba. Podział ekranu dostępny tylko w Plikach, nie w Opcjach Huba.
+- **Aktualizacje:** natywne menu wyboru kanału (Testowy/Stabilny) i nakładkowa lista dostępnych wersji zamiast rozwijania strony. Bez zmian w zabezpieczeniach instalacji i cofania wersji.
+- Kanał **Testowy** (prerelease); brak zmian w wyłączonym terminalu. Wymagane sprawdzenie sterowania kontrolerem na Legion Go S.
+
 # GameMode Hub 0.5.11
 
 - **Opcje Huba** w głównym menu: Zachowuj stan kart (domyślnie włączone) oraz Podział drzewa plików (domyślnie wyłączony). Ustawienia przeżywają ponowną instalację wtyczki.
