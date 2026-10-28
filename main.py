@@ -81,7 +81,7 @@ class Plugin:
         try:
             return await asyncio.wait_for(asyncio.to_thread(_fetch_latest_release), timeout=10)
         except asyncio.TimeoutError:
-            status, detail = "error", "Upłynął czas oczekiwania na GitHub. Spróbuj ponownie."
+            status, detail = "error", "Przekroczono limit czasu sprawdzania GitHub. Spróbuj ponownie."
         except urllib.error.HTTPError as error:
             if error.code == 404:
                 status, detail = "no_releases", "GitHub nie znalazł opublikowanego wydania (HTTP 404)."
