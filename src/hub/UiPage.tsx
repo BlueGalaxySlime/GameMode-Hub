@@ -65,13 +65,14 @@ export function UiPage() {
       </DialogButton>
       {showLookup && <ProtonDBPage />}
     </>}
-    {category==="gaming" && gamingModule==="cards" && <TabManagerModule />}
-    {category==="gaming" && gamingModule==="collections" && <CollectionsModule />}
     {category!=="gaming" && <Field
       label={category==="display" ? "Obraz" : "Konsola"}
       description={category==="display"
         ? "Przyszłe ustawienia wyglądu ekranu gry będą tu dodawane osobno. Obecnie brak aktywnych modyfikacji obrazu."
         : "Przyszłe ustawienia elementów konsoli i sterowania. Hub nie modyfikuje mapowania przycisków SteamOS."} />}
     {error && <Field label="Błąd" description={error} />}
-  </DialogControlsSection></DialogBody>;
+  </DialogControlsSection>
+    {category==="gaming" && gamingModule==="cards" && <TabManagerModule />}
+    {category==="gaming" && gamingModule==="collections" && <CollectionsModule />}
+  </DialogBody>;
 }
