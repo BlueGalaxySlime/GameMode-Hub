@@ -28,6 +28,11 @@ test("All Optimization modules are visible in one page without nested tabs", () 
   const menu = fs.readFileSync("src/modules/tab-manager/LibraryCardsContextMenu.tsx", "utf8");
   const integration = fs.readFileSync("src/modules/tab-manager/LibraryIntegration.tsx", "utf8");
   assert.ok(menu.includes('save_tab_definitions'));
+  assert.ok(menu.includes('filter: "system_tab"'));
+  assert.ok(menu.includes('setSystemTabHidden(originalId, true)'));
+  assert.ok(menu.includes('selectedSystem &&'));
+  assert.ok(menu.includes('selected &&'));
+  assert.ok(menu.includes('Usuń kartę'));
   assert.ok(menu.includes('<MenuGroup label="Szybkie karty">'));
   assert.ok(menu.includes('<MenuGroup label="Profile kart">'));
   assert.ok(menu.includes('<MenuGroup label="Kolejność kart Huba">'));
@@ -35,10 +40,12 @@ test("All Optimization modules are visible in one page without nested tabs", () 
   assert.ok(integration.includes('onMenuActionDescription: "Karty"'));
   assert.ok(integration.includes('onMenuButton: () =>'));
   assert.ok(!integration.includes('title: "+"'));
+  assert.ok(integration.includes('hiddenSteamTabs.includes(tab.id)'));
+  assert.ok(integration.includes('filter === "system_tab"'));
   assert.ok(!integration.includes('createElement(LibraryCardsEditor)'));
   assert.ok(!cards.includes('<Toggle'));
   assert.ok(cards.includes('label="Zarządzaj"'));
-  assert.ok(cards.includes('label="Wyświetlanie"'));
+  assert.ok(cards.includes('label="Wyświetlaj"'));
   assert.ok(page.includes('<LibraryBackupSection />'));
   assert.ok(collections.includes('save_hub_collections'));
 });
