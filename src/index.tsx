@@ -11,6 +11,7 @@ import { closeHubView, getHubRevision, openHubRecoveryMenu,
 import { APP_NAME, DECKY_PLUGIN_NAME, HUB_ROUTE } from "./core/identity";
 import { initializeGameUi } from "./game-view/gameViewStore";
 import { startUnifiedGameUi } from "./game-view/gamePagePatch";
+import { startTabManager, stopTabManager } from "./modules/tab-manager/LibraryIntegration";
 
 class HubErrorBoundary extends Component<{ resetKey: number; children: ReactNode },
     { failed: boolean }> {
@@ -103,6 +104,7 @@ function QuickAccessContent() {
 export default definePlugin(() => {
   // Settings load once at plugin startup. The game patch is opt-in and fail-closed.
   const stopGameUi = startUnifiedGameUi();
+  void startTabManager();
   void initializeGameUi().catch(() => {});
   routerHook.addRoute(HUB_ROUTE, () => <HubHost />);
   routerHook.addRoute(HUB_ROUTE + "/downloads", () => <DownloadsPage />);
@@ -113,6 +115,7 @@ export default definePlugin(() => {
     icon: <FaTools />,
     onDismount: () => {
       stopGameUi();
+      stopTabManager();
       routerHook.removeRoute(HUB_ROUTE + "/downloads");
       routerHook.removeRoute(HUB_ROUTE);
     }

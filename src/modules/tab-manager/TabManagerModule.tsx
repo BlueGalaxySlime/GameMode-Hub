@@ -1,11 +1,11 @@
 import { useEffect, useState } from "react";
-import { ButtonItem, PanelSection, PanelSectionRow, TextField, ToggleField } from "@decky/ui";
 import { callable } from "@decky/api";
-
+import { DialogButton, DialogControlsSection, Field, Toggle } from "@decky/ui";
+import { HubTextInput } from "../../hub/HubTextInput";
 import {
-  TabDefinition, TabFilter, tabManagerEnabledChanged,
+  type TabDefinition, type TabFilter, tabManagerEnabledChanged,
   tabManagerTabsChanged, tabManagerConflictChanged, detectTabMasterActivity,
-  availableSteamCollections
+  availableSteamCollections, availableHubCollections
 } from "./LibraryIntegration";
 import type { TabMasterActivity } from "./TabMasterDetection";
 
@@ -14,7 +14,8 @@ const FILTER_LABELS: Record<TabFilter, string> = {
   installed: "Zainstalowane",
   favorites: "Ulubione",
   non_steam: "Spoza Steam",
-  collection: "Kolekcja Steam"
+  collection: "Kolekcja Steam",
+  hub_collection: "Kolekcja Huba"
 };
 const SIMPLE_FILTERS: TabFilter[] = ["all", "installed", "favorites", "non_steam"];
 const getEnabled = callable<[], boolean>("get_tab_manager_enabled");
@@ -26,7 +27,7 @@ const saveProfile = callable<[string], string[]>("save_tab_profile");
 const loadProfile = callable<[string], TabDefinition[]>("load_tab_profile");
 const deleteProfile = callable<[string], string[]>("delete_tab_profile");
 
-/** Independent settings UI for the optional native library patch. */
+/** Cards in the Gaming Mode library. Independent of collection definitions. */
 export function TabManagerModule() {
   const [enabled, updateEnabled] = useState(false);
   const [busy, setBusy] = useState(true);
@@ -37,6 +38,7 @@ export function TabManagerModule() {
   const [profiles, setProfiles] = useState<string[]>([]);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editingTitle, setEditingTitle] = useState("");
+  const [deleteId, setDeleteId] = useState<string | null>(null);
   const [error, setError] = useState("");
 
   function refreshTabMaster() {
@@ -49,13 +51,20 @@ export function TabManagerModule() {
     let mounted = true;
     refreshTabMaster();
     Promise.all([getEnabled(), getTabs(), listProfiles()])
-      .then(([value, definitions, savedProfiles]) => { if (mounted) { updateEnabled(value); setTabs(definitions); setProfiles(savedProfiles); } })
-      .catch(() => { if (mounted) setError("Nie udało się odczytać ustawień zakładek."); })
-      .finally(() => { if (mounted) setBusy(false); });
+      .then(([value, definitions, savedProfiles]) => {
+        if (mounted) {
+          updateEnabled(value);
+          setTabs(definitions);
+          setProfiles(savedProfiles);
+        }
+      }).catch(() => {
+        if (mounted) setError("Nie udało się odczytać konfiguracji kart.");
+      }).finally(() => { if (mounted) setBusy(false); });
     return () => { mounted = false; };
   }, []);
 
   async function toggle(value: boolean) {
+    if (busy) return;
     setBusy(true);
     setError("");
     try {
@@ -63,32 +72,35 @@ export function TabManagerModule() {
       const stored = await setEnabled(value);
       updateEnabled(stored);
       tabManagerEnabledChanged(stored);
-    }
-    catch { setError("Błąd zapisu ustawienia."); }
+    } catch { setError("Nie udało się zapisać przełącznika."); }
     finally { setBusy(false); }
   }
 
   async function persist(next: TabDefinition[]) {
+    if (busy) return;
     setBusy(true);
     setError("");
-    try { const stored = await saveTabs(next); setTabs(stored); tabManagerTabsChanged(stored); }
-    catch { setError("Błąd zapisu zakładek."); }
+    try {
+      const stored = await saveTabs(next);
+      setTabs(stored);
+      tabManagerTabsChanged(stored);
+      setDeleteId(null);
+    } catch { setError("Błąd zapisu kart. Poprzednie ustawienia pozostają bez zmian."); }
     finally { setBusy(false); }
   }
 
   async function storeProfile() {
     const title = profileName.trim();
-    if (!title) return;
-    setBusy(true);
-    setError("");
+    if (!title || busy) return;
+    setBusy(true); setError("");
     try { setProfiles(await saveProfile(title)); setProfileName(""); }
     catch { setError("Nie udało się zapisać profilu."); }
     finally { setBusy(false); }
   }
 
   async function applyProfile(title: string) {
-    setBusy(true);
-    setError("");
+    if (busy) return;
+    setBusy(true); setError("");
     try {
       const newTabs = await loadProfile(title);
       setTabs(newTabs);
@@ -98,54 +110,36 @@ export function TabManagerModule() {
   }
 
   async function removeProfile(title: string) {
-    setBusy(true);
-    setError("");
+    if (busy) return;
+    setBusy(true); setError("");
     try { setProfiles(await deleteProfile(title)); }
     catch { setError("Nie udało się usunąć profilu."); }
     finally { setBusy(false); }
   }
 
-  function duplicate(tab: TabDefinition) {
-    const id = "copy-" + Date.now().toString(36) + "-" + Math.random().toString(36).slice(2, 9);
-    void persist([...tabs, { ...tab, id, title: tab.title + " (kopia)" }]);
-  }
-
-  function add() {
-    const title = name.trim();
-    if (!title) return;
-    const id = "custom-" + Date.now().toString(36) + "-" + Math.random().toString(36).slice(2, 9);
-    void persist([...tabs, { id, title, hidden: false, filter: "all", collection_id: "" }]);
+  function addTab(title: string, filter: TabFilter = "all") {
+    if (!title.trim()) return;
+    const id = "custom-" + Date.now().toString(36) + "-" + Math.random().toString(36).slice(2, 8);
+    void persist([...tabs, { id, title: title.trim(), hidden: false, filter, collection_id: "" }]);
     setName("");
   }
 
-  function quickTab(title: string, filter: TabFilter) {
-    const id = "quick-" + Date.now().toString(36) + "-" + Math.random().toString(36).slice(2, 9);
-    void persist([...tabs, { id, title, hidden: false, filter, collection_id: "" }]);
-  }
-
   function cycleFilter(tab: TabDefinition) {
-    const collections = availableSteamCollections();
-    const options: TabFilter[] = collections.length ? [...SIMPLE_FILTERS, "collection"] : SIMPLE_FILTERS;
-    const index = options.indexOf(tab.filter);
-    const next = options[(index + 1) % options.length];
-    const collection_id = next === "collection" ? collections[0].id : "";
-    void persist(tabs.map(item => item.id === tab.id ? { ...item, filter: next, collection_id } : item));
+    const options: TabFilter[] = [...SIMPLE_FILTERS];
+    if (availableSteamCollections().length) options.push("collection");
+    if (availableHubCollections().length) options.push("hub_collection");
+    const next = options[(options.indexOf(tab.filter) + 1) % options.length];
+    const collection_id = next === "collection" ? availableSteamCollections()[0].id
+      : next === "hub_collection" ? availableHubCollections()[0].id : "";
+    void persist(tabs.map(t => t.id === tab.id ? { ...t, filter: next, collection_id } : t));
   }
 
   function cycleCollection(tab: TabDefinition) {
-    const collections = availableSteamCollections();
-    if (!collections.length) return;
-    const current = collections.findIndex(collection => collection.id === tab.collection_id);
-    const collection_id = collections[(current + 1) % collections.length].id;
-    void persist(tabs.map(item => item.id === tab.id ? { ...item, collection_id } : item));
-  }
-
-  function rename(id: string) {
-    const title = editingTitle.trim();
-    if (!title) return;
-    void persist(tabs.map(tab => tab.id === id ? { ...tab, title } : tab));
-    setEditingId(null);
-    setEditingTitle("");
+    const options = tab.filter === "hub_collection" ? availableHubCollections() : availableSteamCollections();
+    if (!options.length) return;
+    const index = options.findIndex(c => c.id === tab.collection_id);
+    const id = options[(index + 1) % options.length].id;
+    void persist(tabs.map(t => t.id === tab.id ? { ...t, collection_id: id } : t));
   }
 
   function move(index: number, offset: number) {
@@ -156,47 +150,80 @@ export function TabManagerModule() {
     void persist(next);
   }
 
-  return <PanelSection title="Moduły · Tab Manager">
-    <PanelSectionRow>
-      <ToggleField label="Tab Manager" checked={enabled} disabled={busy} onChange={toggle} />
-    </PanelSectionRow>
-    {tabMasterActivity === "active" && <PanelSectionRow><div>TabMaster jest uruchomiony. Wyłącz go w Decky, aby używać zakładek SteamHub.</div></PanelSectionRow>}
-    {tabMasterActivity === "unknown" && <PanelSectionRow><div>Nie można odczytać stanu TabMastera w Decky. Integracja biblioteki pozostaje wstrzymana.</div></PanelSectionRow>}
-    {tabMasterActivity !== "inactive" && <PanelSectionRow><ButtonItem disabled={busy} onClick={refreshTabMaster}>Sprawdź ponownie stan TabMastera</ButtonItem></PanelSectionRow>}
-    {enabled && <>
-      <PanelSectionRow><TextField label="Nazwa zakładki" value={name} onChange={event => setName(event.target.value)} /></PanelSectionRow>
-      <PanelSectionRow><ButtonItem disabled={busy || !name.trim()} onClick={add}>Dodaj zakładkę</ButtonItem></PanelSectionRow>
-      <PanelSectionRow><ButtonItem disabled={busy} onClick={() => quickTab("Zainstalowane", "installed")}>Quick Tab · Zainstalowane</ButtonItem></PanelSectionRow>
-      <PanelSectionRow><ButtonItem disabled={busy} onClick={() => quickTab("Ulubione", "favorites")}>Quick Tab · Ulubione</ButtonItem></PanelSectionRow>
-      {tabs.map((tab, index) => <PanelSectionRow key={tab.id}>
-        {editingId === tab.id ? <>
-          <TextField label="Nowa nazwa" value={editingTitle} onChange={event => setEditingTitle(event.target.value)} />
-          <ButtonItem disabled={busy || !editingTitle.trim()} onClick={() => rename(tab.id)}>Zapisz nazwę</ButtonItem>
-          <ButtonItem disabled={busy} onClick={() => setEditingId(null)}>Anuluj</ButtonItem>
-        </> : <>
-          <div>{tab.title}</div>
-          <ButtonItem disabled={busy} onClick={() => { setEditingId(tab.id); setEditingTitle(tab.title); }}>Zmień nazwę</ButtonItem>
-        </>}
-        <ButtonItem disabled={busy} onClick={() => cycleFilter(tab)}>Filtr: {FILTER_LABELS[tab.filter] ?? "Wszystkie gry"}</ButtonItem>
-        {tab.filter === "collection" && <ButtonItem disabled={busy} onClick={() => cycleCollection(tab)}>
-          Kolekcja: {availableSteamCollections().find(item => item.id === tab.collection_id)?.title ?? "Niedostępna"}
-        </ButtonItem>}
-        <ToggleField label="Widoczna" checked={!tab.hidden} disabled={busy} onChange={visible => void persist(tabs.map(t => t.id === tab.id ? { ...t, hidden: !visible } : t))} />
-        <ButtonItem disabled={busy || index === 0} onClick={() => move(index, -1)}>W górę</ButtonItem>
-        <ButtonItem disabled={busy || index === tabs.length - 1} onClick={() => move(index, 1)}>W dół</ButtonItem>
-        <ButtonItem disabled={busy} onClick={() => duplicate(tab)}>Duplikuj</ButtonItem>
-        <ButtonItem disabled={busy} onClick={() => void persist(tabs.filter(t => t.id !== tab.id))}>Usuń</ButtonItem>
-      </PanelSectionRow>)}
-      <PanelSectionRow><div>Profile zakładek</div></PanelSectionRow>
-      <PanelSectionRow><TextField label="Nazwa profilu" value={profileName} onChange={event => setProfileName(event.target.value)} /></PanelSectionRow>
-      <PanelSectionRow><ButtonItem disabled={busy || !profileName.trim()} onClick={storeProfile}>Zapisz aktualny układ jako profil</ButtonItem></PanelSectionRow>
-      {profiles.map(profile => <PanelSectionRow key={profile}>
-        <div>{profile}</div>
-        <ButtonItem disabled={busy} onClick={() => applyProfile(profile)}>Wczytaj</ButtonItem>
-        <ButtonItem disabled={busy} onClick={() => removeProfile(profile)}>Usuń profil</ButtonItem>
-      </PanelSectionRow>)}
-    </>}
-
-    {error && <PanelSectionRow><div role="alert">{error}</div></PanelSectionRow>}
-  </PanelSection>;
+  return <DialogControlsSection>
+    <Field label="Karty biblioteki"
+      description="Własne karty Gaming Mode. Nie zastępują kolekcji; mogą wyświetlać ich zawartość. Integracja z natywną biblioteką Steam jest eksperymentalna i domyślnie wyłączona." />
+    <Field label="Wyświetlaj karty w bibliotece Steam"
+      description="Ustawienie zapisuje się osobno od definicji kart. Przy konflikcie z TabMasterem nie zmienia interfejsu Steam.">
+      <Toggle value={enabled} disabled={busy} onChange={value => { void toggle(value); }} />
+    </Field>
+    {tabMasterActivity !== "inactive" && <Field label="Integracja wstrzymana"
+      description={tabMasterActivity === "active"
+        ? "Włączony TabMaster. Wyłącz go w Decky, aby uniknąć konfliktu w bibliotece."
+        : "Nie można potwierdzić stanu TabMastera. Biblioteka Steam pozostaje nietknięta."}>
+      <DialogButton disabled={busy} onClick={refreshTabMaster}>Sprawdź ponownie</DialogButton>
+    </Field>}
+    <Field label="Nazwa nowej karty">
+      <HubTextInput value={name} disabled={busy} placeholder="Nazwa karty"
+        onChange={event => setName(event.target.value)} onEditValue={setName} />
+    </Field>
+    <DialogButton disabled={busy || !name.trim() || tabs.length >= 64}
+      onClick={() => addTab(name)}>Dodaj kartę</DialogButton>
+    <DialogButton disabled={busy || tabs.length >= 64}
+      onClick={() => addTab("Zainstalowane", "installed")}>Dodaj: Zainstalowane</DialogButton>
+    <DialogButton disabled={busy || tabs.length >= 64}
+      onClick={() => addTab("Ulubione", "favorites")}>Dodaj: Ulubione</DialogButton>
+    {tabs.map((tab, index) => <div key={tab.id}
+      style={{ borderBottom: "1px solid rgba(255,255,255,.15)", padding: "8px 0" }}>
+      {editingId === tab.id ? <>
+        <Field label="Nowa nazwa karty">
+          <HubTextInput value={editingTitle} disabled={busy}
+            onChange={event => setEditingTitle(event.target.value)} onEditValue={setEditingTitle} />
+        </Field>
+        <DialogButton disabled={busy || !editingTitle.trim()} onClick={() => {
+          void persist(tabs.map(t => t.id === tab.id ? { ...t, title: editingTitle.trim() } : t));
+          setEditingId(null);
+        }}>Zapisz nazwę</DialogButton>
+        <DialogButton disabled={busy} onClick={() => setEditingId(null)}>Anuluj</DialogButton>
+      </> : <Field label={tab.title} description={FILTER_LABELS[tab.filter]} />}
+      <Field label="Widoczna">
+        <Toggle value={!tab.hidden} disabled={busy} onChange={visible => void persist(
+          tabs.map(t => t.id === tab.id ? { ...t, hidden: !visible } : t)
+        )} />
+      </Field>
+      <DialogButton disabled={busy} onClick={() => { setEditingId(tab.id); setEditingTitle(tab.title); }}>Zmień nazwę</DialogButton>
+      <DialogButton disabled={busy} onClick={() => cycleFilter(tab)}>
+        Filtr: {FILTER_LABELS[tab.filter]}
+      </DialogButton>
+      {(tab.filter === "collection" || tab.filter === "hub_collection") &&
+        <DialogButton disabled={busy} onClick={() => cycleCollection(tab)}>
+          Kolekcja: {(tab.filter === "collection" ? availableSteamCollections() : availableHubCollections())
+            .find(item => item.id === tab.collection_id)?.title ?? "Niedostępna"}
+        </DialogButton>}
+      <DialogButton disabled={busy || index === 0} onClick={() => move(index, -1)}>Wyżej</DialogButton>
+      <DialogButton disabled={busy || index === tabs.length - 1} onClick={() => move(index, 1)}>Niżej</DialogButton>
+      <DialogButton disabled={busy || tabs.length >= 64} onClick={() => {
+        const id = "copy-" + Date.now().toString(36) + "-" + Math.random().toString(36).slice(2, 8);
+        void persist([...tabs, { ...tab, id, title: tab.title + " (kopia)" }]);
+      }}>Duplikuj</DialogButton>
+      {deleteId === tab.id ? <>
+        <Field label="Usunąć kartę?" description="Kolekcje i gry pozostaną bez zmian." />
+        <DialogButton disabled={busy} onClick={() => void persist(tabs.filter(t => t.id !== tab.id))}>Potwierdź</DialogButton>
+        <DialogButton disabled={busy} onClick={() => setDeleteId(null)}>Anuluj</DialogButton>
+      </> : <DialogButton disabled={busy} onClick={() => setDeleteId(tab.id)}>Usuń kartę</DialogButton>}
+    </div>)}
+    <Field label="Profile kart" description="Zapisany profil przechowuje układ i filtry kart, nie modyfikuje kolekcji." />
+    <Field label="Nazwa profilu">
+      <HubTextInput value={profileName} disabled={busy} placeholder="Nazwa układu"
+        onChange={event => setProfileName(event.target.value)} onEditValue={setProfileName} />
+    </Field>
+    <DialogButton disabled={busy || !profileName.trim()} onClick={() => { void storeProfile(); }}>
+      Zapisz układ
+    </DialogButton>
+    {profiles.map(profile => <Field key={profile} label={profile}>
+      <DialogButton disabled={busy} onClick={() => void applyProfile(profile)}>Wczytaj</DialogButton>
+      <DialogButton disabled={busy} onClick={() => void removeProfile(profile)}>Usuń profil</DialogButton>
+    </Field>)}
+    {error && <Field label="Błąd" description={error} />}
+  </DialogControlsSection>;
 }

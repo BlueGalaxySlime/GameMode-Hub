@@ -1,3 +1,12 @@
+# GameMode Hub 0.5.47 (testowy)
+
+- **UI → Optymalizacja**. Dotychczasowa trasa strony i ustawienia pozostają zachowane.
+- **Gaming Mode → Karty**: natywny moduł tworzenia kart biblioteki, nazw, widoczności, filtrów, kolejności i profili. Integracja z paskiem biblioteki jest eksperymentalna i domyślnie wyłączona. Nie instalujemy TabMastera i nie zastępujemy wbudowanych kart Steam.
+- **Gaming Mode → Kolekcje**: odrębne kolekcje Huba, własne nazwy, ręczne AppID, reguły Wszystkie / Zainstalowane / Ulubione / Spoza Steam, zmiana kolejności i bezpieczne usuwanie. Kolekcja nie znika po usunięciu karty, a karta może wskazywać kolekcję.
+- Dane kolekcji trafiają do `~/.config/gamemodehub/collections.json`; istniejące dane kart pozostają osobno w katalogu `~/.config/steamhub/` (zgodność ze starszym prototypem).
+- Karty nie ingerują w Steam, dopóki użytkownik nie włączy eksperymentalnej integracji. Gdy TabMaster działa lub nie można sprawdzić konfliktu, integracja pozostaje wstrzymana. Do weryfikacji na Lenovo wymagany jest test pełnego Gaming Mode.
+- Pakiet zawiera teraz backend kart oraz kolekcji i ich nowe testy. Nadal bez procesów root i uruchamiania terminala.
+
 # GameMode Hub 0.5.46 (testowy)
 
 - **☰ (trzy kreski / Menu) na podświetlonym polu tekstowym** otwiera natywne menu edycji tekstu **bez aktywowania klawiatury ekranowej SteamOS**. Dotyczy Szukaj w Pulpicie, paska adresu w Plikach oraz Tytułu i Opisu w Zgłoszeniach.

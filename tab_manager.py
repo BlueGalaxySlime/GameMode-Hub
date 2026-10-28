@@ -34,7 +34,7 @@ def _write_tab_manager_enabled(enabled):
 # Tab definitions are kept separate from module activation and from Steam collections.
 TABS_FILE = SETTINGS_FILE.with_name("tabs.json")
 MAX_TABS = 64
-FILTER_TYPES = frozenset(("all", "installed", "favorites", "non_steam", "collection"))
+FILTER_TYPES = frozenset(("all", "installed", "favorites", "non_steam", "collection", "hub_collection"))
 
 
 def _validate_tabs(tabs):
@@ -61,13 +61,13 @@ def _validate_tabs(tabs):
         collection_id = tab.get("collection_id", "")
         if not isinstance(collection_id, str) or len(collection_id) > 160:
             raise ValueError("Invalid collection id")
-        if kind == "collection" and not collection_id:
+        if kind in ("collection", "hub_collection") and not collection_id:
             raise ValueError("Missing collection id")
         clean.append({
             "id": tab_id, "title": title.strip(),
             "hidden": tab.get("hidden", False),
             "filter": kind,
-            "collection_id": collection_id if kind == "collection" else "",
+            "collection_id": collection_id if kind in ("collection", "hub_collection") else "",
         })
     return clean
 

@@ -1,45 +1,24 @@
-# Tab Manager — SteamHub (wersja eksperymentalna)
+# Karty i kolekcje — GameMode Hub
 
-Tab Manager jest niezależnym modułem SteamHub do zarządzania zakładkami na ekranie
-**Biblioteka** SteamOS. Po włączeniu moduł próbuje dołączyć rzeczywistą zakładkę
-**SteamHub** i zakładki skonfigurowane przez użytkownika do natywnego paska biblioteki.
-Nie tworzy do tego celu kolekcji o nazwie SteamHub.
+Moduły są dostępne w **Optymalizacja → Gaming Mode → Karty / Kolekcje**.
 
-## Użycie
+## Karty
 
-1. Decky → **SteamHub → Moduły → Tab Manager**.
-2. Włącz moduł (domyślnie **OFF**).
-3. Wejdź ponownie do ekranu **Biblioteka**, aby patch trasy został zastosowany.
-4. Dodawaj i edytuj zakładki, zmieniaj kolejność, widoczność i proste filtry.
-5. Zapisz układ jako profil albo wczytaj istniejący profil.
+Własny Tab Manager zapisuje definicje kart i profile niezależnie od kolekcji. Umożliwia dodanie karty, zmianę nazwy, widoczności, kolejności, filtru oraz powiązanie karty z kolekcją Steam lub kolekcją Huba.
+Integracja z paskiem biblioteki SteamOS jest eksperymentalna i domyślnie **OFF**. Pochodzi z istniejącego, do tej pory niewłączonego prototypu Tab Managera; to nie jest osobna instalacja TabMastera.
+Nie zmienia oryginalnych kart biblioteki Steam. Gdy włączony jest TabMaster lub status jest nieznany, interfejs Huba nie patchuje biblioteki.
 
-Dostępne filtry: wszystkie gry, zainstalowane, ulubione, aplikacje spoza
-Steam oraz wskazana kolekcja Steam. Dostępne Quick Tabs: Zainstalowane i Ulubione.
+## Kolekcje
 
-## Zgodność z TabMaster
+Osobny moduł definiuje kolekcje zapisane w `~/.config/gamemodehub/collections.json`, bez modyfikowania danych kolekcji Steam. Są obsługiwane ręczne listy numerycznych Steam AppID (także skrótów spoza Steam) oraz filtry: Wszystkie, Zainstalowane, Ulubione, Spoza Steam. Identyfikatory kolekcji są stabilne przy zmianie nazwy.
 
-SteamHub używa listy **uruchomionych wtyczek** Decky Loader (`DeckyPluginLoader.hasPlugin("TabMaster")`), a nie samej obecności katalogu TabMaster na dysku.
-**Zainstalowany, ale wyłączony TabMaster nie blokuje Tab Managera.**
-Jeżeli TabMaster działa, SteamHub wstrzymuje patch biblioteki, bez zmian
-w jego plikach czy ustawieniach. Po wyłączeniu TabMastera użyj przycisku
-**Sprawdź ponownie stan TabMastera** albo ponownie otwórz panel SteamHub.
-Gdy odczyt stanu loadera jest niedostępny, integracja nie uruchamia się,
-a interfejs wyświetla odrębny komunikat diagnostyczny.
+Usunięcie karty nie usuwa kolekcji. Usunięcie kolekcji nie usuwa karty (karta będzie pusta do wybrania istniejącej kolekcji). Zarządzanie samymi kolekcjami Huba działa bez włączania eksperymentalnego patcha Steam.
 
-Ustawienie ON/OFF, definicje zakładek i profile są zapisywane w katalogu
-`~/.config/steamhub/`, poza katalogiem samej wtyczki.
+## Ograniczenia i bezpieczeństwo
 
-## Ograniczenia
+- Widok i reguły kolekcji Huba nie są jeszcze zapisywane jako natywne kolekcje Steam.
+- Obsługa natywnego paska wymaga testów na fizycznym SteamOS. Po aktualizacjach Steam niepubliczna struktura biblioteki może się zmienić; patch można wyłączyć.
+- Dane kolekcji i kart są niezależne od przeglądania plików, tokenów kont i plików gier.
+- Starsze ustawienia kart i profile pozostają w `~/.config/steamhub/` dla kompatybilności. Nazwę katalogu ujednolicimy przez migrację w osobnej zmianie.
+- Technika modyfikacji biblioteki pochodzi z adaptacji TabMastera. Zobacz `THIRD_PARTY_NOTICES.md`.
 
-To **eksperymentalna implementacja**, a nie jeszcze pełny odpowiednik TabMastera.
-Zaawansowane filtry, integracje znajomych i tagów oraz część ustawień Steam
-nie zostały przeniesione. Patch korzysta z niepublicznej struktury UI Steam,
-która może zmieniać się po aktualizacjach. Automatyczna kompilacja i testy
-backendu nie zastępują testów na rzeczywistym urządzeniu SteamOS.
-
-## Licencja i autorzy
-
-Technika patchowania biblioteki jest adaptacją
-[TabMaster](https://github.com/Tormak9970/TabMaster), którego autorami
-są Travis Lane (Tormak) i inni współtwórcy. Zapoznaj się z
-[`THIRD_PARTY_NOTICES.md`](../THIRD_PARTY_NOTICES.md) i [`LICENSE`](../LICENSE).
