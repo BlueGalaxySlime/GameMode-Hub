@@ -10,7 +10,7 @@ OUT = ROOT / "release" / "SteamHub.zip"
 if not DIST.is_dir() or not any(DIST.rglob("*.js")):
     raise SystemExit("Missing compiled frontend in dist/. Run npm run build first.")
 
-files = [ROOT / "plugin.json", ROOT / "main.py", ROOT / "tab_manager.py", ROOT / "package.json", ROOT / "THIRD_PARTY_NOTICES.md", ROOT / "LICENSE"]
+files = [ROOT / "plugin.json", ROOT / "main.py", ROOT / "package.json", ROOT / "THIRD_PARTY_NOTICES.md", ROOT / "LICENSE"]
 files += sorted(path for path in DIST.rglob("*") if path.is_file())
 for path in files:
     if not path.is_file():
