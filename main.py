@@ -20,7 +20,7 @@ from hub_settings import get_selected_addons, set_selected_addons, get_update_ch
 from release_catalog import RELEASES_API as RELEASE_CATALOG_API, catalog, validate_channel
 from file_manager import listing as list_files, create_folder, rename_entry, paste_entry
 
-CURRENT_VERSION = "0.5.6"
+CURRENT_VERSION = "0.5.7"
 RELEASES_API = "https://api.github.com/repos/BlueGalaxySlime/GameMode-Hub/releases/latest"
 ASSET_NAME = "GameMode-Hub.zip"
 
@@ -141,8 +141,8 @@ class Plugin:
             asyncio.to_thread(_fetch_releases, channel), timeout=10
         )
 
-    async def files_list(self, path=None, hidden=False, offset=0):
-        return await asyncio.to_thread(list_files, path, hidden, offset)
+    async def files_list(self, path=None, hidden=False, offset=0, sort_by="name", descending=False):
+        return await asyncio.to_thread(list_files, path, hidden, offset, sort_by, descending)
 
     async def files_mkdir(self, folder, name):
         return await asyncio.to_thread(create_folder, folder, name)

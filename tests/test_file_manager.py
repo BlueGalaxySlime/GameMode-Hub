@@ -103,6 +103,36 @@ class FileManagerTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             file_manager.paste_entry(str(folder), str(target), "copy")
 
+
+    def test_sort_before_pagination(self):
+        for name, size in (("c.txt", 10), ("a.txt", 30), ("b.txt", 20)):
+            (self.home / name).write_bytes(b"x" * size)
+        self.assertEqual([x["name"] for x in file_manager.listing(sort_by="name")["items"]],
+                         ["a.txt", "b.txt", "c.txt"])
+        self.assertEqual([x["name"] for x in file_manager.listing(sort_by="size")["items"]],
+                         ["c.txt", "b.txt", "a.txt"])
+        self.assertEqual([x["name"] for x in file_manager.listing(sort_by="size", descending=True)["items"]],
+                         ["a.txt", "b.txt", "c.txt"])
+        (self.home / "folder").mkdir()
+        self.assertEqual(file_manager.listing(sort_by="size")["items"][0]["name"], "folder")
+
+    def test_date_sorting(self):
+        files = [self.home / "old.txt", self.home / "new.txt"]
+        for path in files:
+            path.write_text("x")
+        os.utime(files[0], (1000000000, 1000000000))
+        os.utime(files[1], (1100000000, 1100000000))
+        self.assertEqual([x["name"] for x in file_manager.listing(sort_by="date", descending=True)["items"]],
+                         ["new.txt", "old.txt"])
+
+    def test_reject_invalid_sort(self):
+        for setting in ("", "../", "type", None, 4):
+            with self.subTest(setting=setting), self.assertRaises(ValueError):
+                file_manager.listing(sort_by=setting)
+        for descending in ("true", 1, None):
+            with self.subTest(descending=descending), self.assertRaises(ValueError):
+                file_manager.listing(descending=descending)
+
     def test_pagination_bounds(self):
         for i in range(45):
             (self.home / f"item{i:03d}").write_text("")

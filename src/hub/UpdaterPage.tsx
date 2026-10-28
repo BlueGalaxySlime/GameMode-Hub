@@ -8,7 +8,7 @@ import { RequestTimeoutError, withTimeout } from "../utils/withTimeout";
 import { APP_NAME, DECKY_PLUGIN_NAME } from "../core/identity";
 import { ReleaseEntry, UpdateChannel, selectReleases } from "../core/releaseCatalog";
 
-const VERSION = "0.5.6";
+const VERSION = "0.5.7";
 const URL = "https://api.github.com/repos/BlueGalaxySlime/GameMode-Hub/releases?per_page=50";
 const getChannel = callable<[], UpdateChannel>("get_update_channel");
 const saveChannel = callable<[UpdateChannel], UpdateChannel>("set_update_channel");

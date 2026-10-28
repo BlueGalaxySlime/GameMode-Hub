@@ -78,7 +78,7 @@ def locations():
     return [{"name": label, "path": str(root)} for label, root in _allowed_roots()]
 
 
-def listing(path=None, hidden=False, offset=0):
+def listing(path=None, hidden=False, offset=0, sort_by="name", descending=False):
     folder = _normalize(path)
     if not folder.is_dir():
         raise NotADirectoryError("To nie jest folder.")
@@ -86,6 +86,8 @@ def listing(path=None, hidden=False, offset=0):
         raise ValueError("Nieprawidłowe ustawienie ukrytych plików.")
     if isinstance(offset, bool) or not isinstance(offset, int) or offset < 0:
         raise ValueError("Nieprawidłowa strona.")
+    if sort_by not in ("name", "size", "date") or not isinstance(descending, bool):
+        raise ValueError("Nieprawidłowe sortowanie.")
     results = []
     with os.scandir(folder) as entries:
         for entry in entries:
@@ -105,10 +107,23 @@ def listing(path=None, hidden=False, offset=0):
                     "directory": is_dir,
                     "symlink": symlink,
                     "size": stat.st_size if not is_dir else None,
+                    "modified": stat.st_mtime,
                 })
             except (PermissionError, FileNotFoundError, OSError):
                 continue
-    results.sort(key=lambda item: (not item["directory"], item["name"].casefold()))
+    # Sort BEFORE pagination: page boundaries must remain consistent.
+    # Keep folders above files in all modes.
+    folders = [item for item in results if item["directory"]]
+    files = [item for item in results if not item["directory"]]
+    def key(item):
+        if sort_by == "name":
+            return item["name"].casefold()
+        if sort_by == "size":
+            return (item["size"] or 0, item["name"].casefold())
+        return (item["modified"], item["name"].casefold())
+    folders.sort(key=lambda item: item["name"].casefold(), reverse=descending)
+    files.sort(key=key, reverse=descending)
+    results = folders + files
     root_paths = {root for _, root in _allowed_roots()}
     parent = folder.parent if folder not in root_paths else None
     if parent is not None:

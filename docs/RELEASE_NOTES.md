@@ -1,3 +1,13 @@
+# GameMode Hub 0.5.7
+
+- Minimalistyczny menedżer plików: bez podwójnego tytułu i pól „Bieżący katalog”, „Lokalizacje”, „Nawigacja”, „Stan” oraz „Bezpieczeństwo”.
+- Na górze edytowalny pasek pełnej ścieżki. Enter lub przycisk „Przejdź” otwiera wpisany katalog.
+- Klikalne segmenty ścieżki (np. Dom › Downloads) służą do przechodzenia do katalogów nadrzędnych.
+- Zwięzły pasek: folder nadrzędny, odświeżanie, tworzenie folderu, ukryte pliki włącz/wyłącz, sortowanie po nazwie/rozmiarze/dacie oraz kierunek ↑/↓.
+- Pliki i foldery zajmują szerokość panelu. Folder otwiera się jednym przyciskiem, ⋯ wyświetla jego operacje.
+- Sortowanie wykonywane przed stronicowaniem po stronie Pythona; foldery pozostają nad plikami.
+- Bez zmian w terminalu ani kanałach aktualizacji. Bez dopisków do numeru wydania.
+
 # GameMode Hub 0.5.6 — Pliki w Quick Access
 
 - Dodano własną sekcję **Pliki** w bocznym menu GameMode Hub, bez zależności od zewnętrznej wtyczki Decky Manager.
