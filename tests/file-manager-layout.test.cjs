@@ -242,3 +242,14 @@ test("Y offers a reversible Trash action with explicit confirmation and recovery
   }
   assert.ok(packageCode.includes('"trash_manager.py"'));
 });
+
+test("B in Files never leaves Hub accidentally, even at the home directory", () => {
+  assert.ok(ui.includes('onCancelButton={event => {'));
+  assert.ok(ui.includes('backInFiles();'));
+  assert.ok(ui.includes('addressControlRef.current?.querySelector<HTMLElement>'));
+  assert.ok(ui.includes('ref={addressControlRef}'));
+  assert.ok(ui.includes('currentPage?.parent'));
+  assert.ok(ui.includes('event.stopPropagation()'));
+  assert.ok(ui.includes('onCancelActionDescription={multiSelect ?'));
+  assert.ok(ui.includes('"Pasek adresu"'));
+});

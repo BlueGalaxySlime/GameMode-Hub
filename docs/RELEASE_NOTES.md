@@ -1,3 +1,10 @@
+# GameMode Hub 0.5.22 (testowy)
+
+- **Obsługa B:** zidentyfikowano przypadek, w którym B z listy Pulpitu albo korzenia Plików wracał od razu do ekranu Steam. Pulpit przechwytuje teraz anulowanie również poza polem wyszukiwania; zamyka edycję, wraca z kategorii do Wszystkich, czyści wyszukiwanie lub przenosi fokus na pasek. Pliki zachowują B do katalogu nadrzędnego, ale w korzeniu B kieruje fokus na pasek adresu, zamiast opuszczać Huba.
+- **Konta:** nowa czwarta zakładka po Terminalu, przed Dodatkami. To przygotowana sekcja, bez fikcyjnego logowania lub przechowywania haseł.
+- **Nawigacja:** Pulpit → Pliki → Terminal → Konta → Dodatki → Opcje Huba → Aktualizacje → Podziękowania; brak separatorów.
+- **Testy:** regresje sprawdzające przechwycenie B w Pulpicie i Plikach oraz obecność i pozycję Kont. Zachowanie na urządzeniu nadal wymaga potwierdzenia.
+
 # GameMode Hub 0.5.21 (testowy)
 
 - **Nawigacja padem:** usunięto dwa sztuczne separatory w bocznej liście między Terminalem a Dodatkami oraz między Opcjami Huba a Aktualizacjami. Każda zakładka jest teraz sąsiadem następnej, bez dodatkowego kroku góra/dół.

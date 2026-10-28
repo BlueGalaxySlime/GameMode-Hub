@@ -5,11 +5,12 @@ import {
   DialogControlsSectionHeader, Field, Navigation, SidebarNavigation, Toggle
 } from "@decky/ui";
 import { callable } from "@decky/api";
-import { FaCog, FaFolderOpen, FaHeart, FaHome, FaPlug, FaPuzzlePiece, FaSyncAlt, FaTerminal } from "react-icons/fa";
+import { FaCog, FaFolderOpen, FaHeart, FaHome, FaPlug, FaPuzzlePiece, FaSyncAlt, FaTerminal, FaUserCircle } from "react-icons/fa";
 import { withTimeout } from "../utils/withTimeout";
 import { UpdaterPage } from "./UpdaterPage";
 import { FileManagerPage } from "./FileManagerPage";
 import { DesktopPage } from "./DesktopPage";
+import { AccountsPage } from "./AccountsPage";
 import { HubOptionsPage, initializeHubOptions } from "./HubOptionsPage";
 import { useHubSessionState } from "./useHubSessionState";
 import { DeckyTerminalPage } from "./DeckyTerminalAdapter";
@@ -225,6 +226,8 @@ export function HubPage() {
     { title: "Terminal", route: HUB_ROUTE + "/terminal", icon: <FaTerminal />,
       hideTitle: true, padding: "none" as const,
       content: <DeckyTerminalPage fontSize={terminalFontSize} /> },
+    { title: "Konta", route: HUB_ROUTE + "/accounts", icon: <FaUserCircle />,
+      content: <AccountsPage /> },
     { title: "Dodatki", route: HUB_ROUTE + "/addons", icon: <FaPuzzlePiece />,
       content: <AddonSelector installed={installed} selected={selected} pending={busy}
         error={error} toggle={toggle} reload={() => { void refresh(); }} /> },

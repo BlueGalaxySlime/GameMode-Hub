@@ -150,6 +150,7 @@ export function FileManagerPage() {
   const locked = useRef(false);
   const treeScrollRef = useRef<HTMLDivElement>(null);
   const fileScrollRef = useRef<HTMLDivElement>(null);
+  const addressControlRef = useRef<HTMLDivElement>(null);
   // A clicked directory is removed from the DOM after navigation. Restore
   // focus inside that SAME pane, otherwise Steam selects the sidebar tab.
   const pendingDirectoryFocus = useRef<"left" | "right" | null>(null);
@@ -525,32 +526,40 @@ export function FileManagerPage() {
     }
   }
 
+  function backInFiles() {
+    if (multiSelect) {
+      exitMultiSelect();
+    } else if (editingPath) {
+      setPathDraft(currentPage?.path ?? "");
+      setEditingPath(false);
+    } else if (currentPage?.parent) {
+      navigateDirectory(currentPage.parent, currentPane);
+    } else {
+      // Root has no parent. Keep the gamepad inside Hub rather than exiting it.
+      addressControlRef.current?.querySelector<HTMLElement>(
+        'button, [role="button"], [tabindex]'
+      )?.focus({ preventScroll: true });
+    }
+  }
+
   // SteamOS owns the black footer. Expose controller hints through the
   // focus/navigation API, not duplicate text buttons or a custom footer.
   return <DialogBody>
     <DialogControlsSection>
       <Focusable
         style={{ display: "flex", flexDirection: "column", gap: 8, width: "100%", minWidth: 0 }}
-        onCancelActionDescription={multiSelect ? "Zakończ zaznaczanie" : editingPath ? "Zamknij edycję" : currentPage?.parent ? "W górę" : "Wstecz"}
-        onCancelButton={multiSelect ? event => {
+        onCancelActionDescription={multiSelect ? "Zakończ zaznaczanie" : editingPath ? "Zamknij edycję" : currentPage?.parent ? "Katalog wyżej" : "Pasek adresu"}
+        onCancelButton={event => {
           event.preventDefault();
           event.stopPropagation();
-          exitMultiSelect();
-        } : editingPath ? event => {
-          event.preventDefault();
-          event.stopPropagation();
-          setPathDraft(currentPage?.path ?? "");
-          setEditingPath(false);
-        } : currentPage?.parent ? event => {
-          event.preventDefault();
-          event.stopPropagation();
-          if (currentPage?.parent) navigateDirectory(currentPage.parent, currentPane);
-        } : undefined}
+          backInFiles();
+        }}
         onKeyDown={event => {
-          if (multiSelect && (event.key === "Escape" || event.key === "Backspace")) {
+          if (event.key === "Escape" || multiSelect && event.key === "Backspace") {
             event.preventDefault();
             event.stopPropagation();
-            exitMultiSelect();
+            backInFiles();
+            return;
           }
           if (event.key === "F5") {
             event.preventDefault();
@@ -596,7 +605,7 @@ export function FileManagerPage() {
 
         {/* The one address bar sits immediately above the tree; Y opens its native menu
             used by entries; A enables text editing of the path. */}
-        <div onContextMenu={event => {
+        <div ref={addressControlRef} onContextMenu={event => {
           event.preventDefault();
           openBrowserMenu(event.currentTarget);
         }}>

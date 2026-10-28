@@ -199,6 +199,27 @@ export function DesktopPage() {
     }, 0);
   }
 
+  function backInDesktop() {
+    if (editingSearch) {
+      finishSearch();
+    } else if (category !== "all") {
+      changeCategory("all");
+      focusSearchBar();
+    } else if (search) {
+      setSearch("");
+      focusSearchBar();
+    } else {
+      // At the catalogue root B moves focus to search instead of leaving Hub.
+      focusSearchBar();
+    }
+  }
+
+  function focusSearchBar() {
+    searchControlRef.current?.querySelector<HTMLElement>(
+      'button, [role="button"], [tabindex]'
+    )?.focus({ preventScroll: true });
+  }
+
   function changeCategory(next: Category) {
     setCategory(next);
     if (scrollRef.current) scrollRef.current.scrollTop = 0;
@@ -232,17 +253,17 @@ export function DesktopPage() {
     <DialogControlsSection>
       <Focusable flow-children="column"
         style={{ display: "flex", flexDirection: "column", gap: 8, minWidth: 0, width: "100%" }}
-        onCancelActionDescription={editingSearch ? "Zamknij wyszukiwanie" : undefined}
-        onCancelButton={editingSearch ? event => {
+        onCancelActionDescription={editingSearch ? "Zamknij wyszukiwanie" : "Wróć do wyszukiwania"}
+        onCancelButton={event => {
           event.preventDefault();
           event.stopPropagation();
-          finishSearch();
-        } : undefined}
+          backInDesktop();
+        }}
         onKeyDown={event => {
-          if (editingSearch && event.key === "Escape") {
+          if (event.key === "Escape") {
             event.preventDefault();
             event.stopPropagation();
-            finishSearch();
+            backInDesktop();
             return;
           }
           if (event.key === "F5") { event.preventDefault(); void refresh(); }

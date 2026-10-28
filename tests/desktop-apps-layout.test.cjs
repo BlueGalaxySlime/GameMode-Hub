@@ -75,8 +75,8 @@ test("Y on the search bar opens View and Sort submenus, without a category butto
 });
 
 test("sidebar starts with Pulpit / Pliki / Terminal; terminal settings live in Hub Options", () => {
-  const order = [...hub.matchAll(/title: "(Pulpit|Pliki|Terminal|Dodatki|Opcje Huba)"/g)].map(m => m[1]);
-  assert.deepEqual(order, ["Pulpit", "Pliki", "Terminal", "Dodatki", "Opcje Huba"]);
+  const order = [...hub.matchAll(/title: "(Pulpit|Pliki|Terminal|Konta|Dodatki|Opcje Huba)"/g)].map(m => m[1]);
+  assert.deepEqual(order, ["Pulpit", "Pliki", "Terminal", "Konta", "Dodatki", "Opcje Huba"]);
   assert.ok(!hub.includes('title: "Opcje terminala"'));
   assert.ok(hub.includes('setTerminalFontSize={setTerminalFontSize}'));
   const options = fs.readFileSync("src/hub/HubOptionsPage.tsx", "utf8");
@@ -98,8 +98,8 @@ test("credits acknowledge Desktop Apps and XDG standards", () => {
 });
 
 test("B on search consumes SteamOS cancel before it can leave the Hub", () => {
-  assert.ok(page.includes('onCancelActionDescription={editingSearch ? "Zamknij wyszukiwanie" : undefined}'));
-  assert.ok(page.includes('onCancelButton={editingSearch ? event => {'));
+  assert.ok(page.includes('onCancelActionDescription={editingSearch ? "Zamknij wyszukiwanie" : "Wróć do wyszukiwania"}'));
+  assert.ok(page.includes('onCancelButton={event => {'));
   assert.ok(page.includes('event.preventDefault();'));
   assert.ok(page.includes('event.stopPropagation();'));
   assert.ok(page.includes('finishSearch();'));
@@ -119,8 +119,29 @@ test("all View categories have their own selectable menu actions and visible lab
 test("all sidebar tabs form one contiguous controller-navigation list", () => {
   const pages = hub.split("  const pages = [", 2)[1].split("\n  ];", 1)[0];
   assert.ok(!pages.includes('"separator" as const'));
-  const names = [...pages.matchAll(/title: "(Pulpit|Pliki|Terminal|Dodatki|Opcje Huba|Aktualizacje|Podziękowania)"/g)]
+  const names = [...pages.matchAll(/title: "(Pulpit|Pliki|Terminal|Konta|Dodatki|Opcje Huba|Aktualizacje|Podziękowania)"/g)]
     .map(match => match[1]);
-  assert.deepEqual(names, ["Pulpit", "Pliki", "Terminal", "Dodatki",
+  assert.deepEqual(names, ["Pulpit", "Pliki", "Terminal", "Konta", "Dodatki",
     "Opcje Huba", "Aktualizacje", "Podziękowania"]);
+});
+
+test("B is captured on Desktop also outside search edit mode", () => {
+  assert.ok(page.includes('onCancelButton={event => {'));
+  assert.ok(page.includes('backInDesktop();'));
+  assert.ok(page.includes('if (editingSearch) {'));
+  assert.ok(page.includes('finishSearch();'));
+  assert.ok(page.includes('changeCategory("all")'));
+  assert.ok(page.includes('focusSearchBar();'));
+  assert.ok(page.includes('event.stopPropagation();'));
+});
+
+test("Konta is fourth tab without mock login buttons", () => {
+  const tabs = [...hub.matchAll(/title: "(Pulpit|Pliki|Terminal|Konta|Dodatki)"/g)]
+    .map(match => match[1]);
+  assert.deepEqual(tabs, ["Pulpit", "Pliki", "Terminal", "Konta", "Dodatki"]);
+  assert.ok(hub.includes('content: <AccountsPage />'));
+  const source = fs.readFileSync("src/hub/AccountsPage.tsx", "utf8");
+  assert.ok(source.includes("Łączenie z usługami nie jest jeszcze dostępne."));
+  assert.ok(source.includes("<GamepadScrollArea>"));
+  assert.ok(!source.includes("oauth"));
 });
