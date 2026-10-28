@@ -1,5 +1,6 @@
 """SteamHub release checker. Installation is delegated to Decky Loader."""
 import asyncio
+from hub_settings import get_selected_addons, set_selected_addons
 import json
 import re
 import ssl
@@ -7,7 +8,7 @@ from pathlib import Path
 import urllib.error
 import urllib.request
 
-CURRENT_VERSION = "0.3.3"
+CURRENT_VERSION = "0.4.0"
 RELEASES_API = "https://api.github.com/repos/BlueGalaxySlime/SteamOS-Hub/releases/latest"
 ASSET_NAME = "SteamHub.zip"
 
@@ -49,7 +50,7 @@ def _fetch_latest_release():
         RELEASES_API,
         headers={
             "Accept": "application/vnd.github+json",
-            "User-Agent": "SteamHub/0.3.3",
+            "User-Agent": "SteamHub/0.4.0",
             "X-GitHub-Api-Version": "2022-11-28",
         },
     )
@@ -74,6 +75,12 @@ def _fetch_latest_release():
 
 
 class Plugin:
+    async def get_selected_addons(self):
+        return await asyncio.to_thread(get_selected_addons)
+
+    async def set_selected_addons(self, names):
+        return await asyncio.to_thread(set_selected_addons, names)
+
     async def _main(self):
         pass
 
