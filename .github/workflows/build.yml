@@ -1,4 +1,4 @@
-name: Build SteamHub preview
+name: Build SteamHub
 
 on:
   push:
@@ -35,7 +35,7 @@ jobs:
         run: python3 scripts/package.py
       - uses: actions/upload-artifact@v4
         with:
-          name: SteamHub-preview
+          name: SteamHub-build
           path: release/SteamHub.zip
           if-no-files-found: error
 
@@ -61,11 +61,5 @@ jobs:
             echo "Release $VERSION already exists; refusing to overwrite."
             exit 0
           fi
-          if [[ "$VERSION" == *-preview.* ]]; then
-            gh release create "$VERSION" release/SteamHub.zip --target "$GITHUB_SHA" \
-              --prerelease --title "SteamHub $VERSION (testowa)" \
-              --notes-file docs/RELEASE_NOTES_PREVIEW.md
-          else
-            gh release create "$VERSION" release/SteamHub.zip --target "$GITHUB_SHA" \
-              --title "SteamHub $VERSION" --generate-notes
-          fi
+          gh release create "$VERSION" release/SteamHub.zip --target "$GITHUB_SHA" \
+            --title "SteamHub $VERSION" --notes-file docs/RELEASE_NOTES.md

@@ -1,4 +1,5 @@
 """Unit tests for SteamHub Tab Manager backend (python -m unittest discover -s tests)."""
+import io
 import json
 import tempfile
 import unittest
@@ -27,6 +28,24 @@ class TabManagerTests(unittest.TestCase):
     def test_preview_version_upgrades_to_stable(self):
         self.assertLess(main._version("v0.3.0-preview.1"), main._version("v0.3.0"))
         self.assertLess(main._version("v0.2.3"), main._version("v0.3.0-preview.1"))
+
+
+    def test_stable_tag_detected_by_update_checker(self):
+        response = {
+            "tag_name": "v0.3.0",
+            "assets": [{
+                "name": "SteamHub.zip",
+                "digest": "sha256:" + "a" * 64,
+                "browser_download_url": "https://github.com/BlueGalaxySlime/SteamOS-Hub/releases/download/v0.3.0/SteamHub.zip",
+            }],
+        }
+        with (patch.object(main, "CURRENT_VERSION", "0.2.3"),
+              patch.object(main, "_ssl_context", return_value=None),
+              patch.object(main.urllib.request, "urlopen", return_value=io.BytesIO(json.dumps(response).encode()))):
+            result = main._fetch_latest_release()
+        self.assertTrue(result["available"])
+        self.assertEqual(result["latest"], "0.3.0")
+        self.assertEqual(result["sha256"], "a" * 64)
 
     def test_default_disabled(self):
         self.assertFalse(tab_manager._read_tab_manager_enabled())
