@@ -184,7 +184,14 @@ def paste_entry(source, target_folder, mode):
         if original in destination.parents:
             raise ValueError("Folder docelowy znajduje się wewnątrz źródłowego.")
         if mode == "copy":
-            raise ValueError("Kopiowanie całych folderów nie jest jeszcze obsługiwane.")
+            # Do not follow symlinks: mod folders may contain links to paths
+            # outside the allowed user roots. Reject before creating anything.
+            for root, dirs, files in os.walk(original, followlinks=False):
+                for item in dirs + files:
+                    if (Path(root) / item).is_symlink():
+                        raise PermissionError("Folder zawiera dowiązanie symboliczne.")
+            shutil.copytree(original, destination, symlinks=True)
+            return {"path": str(destination)}
         # os.rename is atomic, and safely fails across separate drives.
         original.rename(destination)
     elif original.is_file():
@@ -217,3 +224,30 @@ def _copy_file(source, destination):
         if created:
             destination.unlink(missing_ok=True)
         raise
+
+
+def paste_entries(sources, target_folder, mode):
+    """Preflight a batch to avoid overwriting files or copying nested selections."""
+    _guard_write()
+    if not isinstance(sources, list) or not 1 <= len(sources) <= 80:
+        raise ValueError("Wybierz od 1 do 80 elementów.")
+    if mode not in ("copy", "move"):
+        raise ValueError("Nieznana operacja.")
+    dest_dir = _normalize(target_folder)
+    if not dest_dir.is_dir():
+        raise NotADirectoryError("Nie znaleziono katalogu docelowego.")
+    originals = [_require_source(source) for source in sources]
+    if len(set(originals)) != len(originals):
+        raise ValueError("Wybór zawiera powtórzenia.")
+    for source in originals:
+        target = _child(dest_dir, source.name)
+        if target == source or target.exists() or target.is_symlink():
+            raise FileExistsError("Element istnieje w katalogu docelowym: " + source.name)
+        if source.is_dir() and (source in dest_dir.parents or source == dest_dir):
+            raise ValueError("Nie można wkleić folderu wewnątrz niego samego.")
+        if any(source in other.parents for other in originals):
+            raise ValueError("Nie zaznaczaj jednocześnie folderu i jego zawartości.")
+    completed = []
+    for source in originals:
+        completed.append(paste_entry(str(source), str(dest_dir), mode))
+    return {"items": completed, "count": len(completed)}
