@@ -3,7 +3,7 @@ import { callable } from "@decky/api";
 import { DialogBody, DialogButton, DialogControlsSection, Focusable, Menu, MenuItem, NavEntryPositionPreferences, showContextMenu, TextField, Toggle } from "@decky/ui";
 import { withTimeout } from "../utils/withTimeout";
 import { breadcrumbs } from "../core/filePath";
-import { getHubPreferences, subscribeHubPreferences } from "../core/hubSession";
+import { getHubPreferences, readHubSession, subscribeHubPreferences, writeHubSession } from "../core/hubSession";
 import { useHubSessionState } from "./useHubSessionState";
 
 type SortBy = "name" | "type" | "size" | "date";
@@ -44,6 +44,23 @@ function readableSize(size: number | null) {
   return (size / (1024 * 1024 * 1024)).toFixed(1) + " GB";
 }
 
+function ParentDirectoryRow({ parent, disabled, onOpen }: {
+  parent: string | null;
+  disabled: boolean;
+  onOpen: (path: string) => void;
+}) {
+  if (!parent) return null;
+  return <DialogButton disabled={disabled} aria-label="Katalog wyżej"
+    onOKActionDescription="Katalog wyżej"
+    style={{ width: "100%", minWidth: 0, textAlign: "left", padding: "7px 9px" }}
+    onClick={() => onOpen(parent)}>
+    <span style={{ display: "flex", alignItems: "center", gap: 9, minWidth: 0 }}>
+      <span style={{ fontWeight: 700 }}>...</span>
+      <span style={{ fontSize: 12, opacity: 0.75 }}>Katalog wyżej</span>
+    </span>
+  </DialogButton>;
+}
+
 export function FileManagerPage() {
   // Remember the whole browser state across SidebarNavigation tab unmounts.
   // Clipboard and selection are RAM-only, never serialized to disk.
@@ -63,6 +80,8 @@ export function FileManagerPage() {
   const [busy, setBusy] = useState(false);
   const request = useRef(0);
   const locked = useRef(false);
+  const treeScrollRef = useRef<HTMLDivElement>(null);
+  const fileScrollRef = useRef<HTMLDivElement>(null);
 
   async function load(path: string | null, showHidden: boolean,
     offset = 0, order: SortBy = sortBy, reverse = descending) {
@@ -78,6 +97,12 @@ export function FileManagerPage() {
       if (!response || !Array.isArray(response.items) || typeof response.path !== "string") {
         throw new Error("Nieprawidłowa odpowiedź systemu plików.");
       }
+      // Directory navigation and sorting begin at the top; switching Hub
+      // tabs instead restores the saved scroll position for each pane.
+      writeHubSession("files.treeScrollTop", 0);
+      writeHubSession("files.listScrollTop", 0);
+      if (treeScrollRef.current) treeScrollRef.current.scrollTop = 0;
+      if (fileScrollRef.current) fileScrollRef.current.scrollTop = 0;
       setPage(response);
       setPathDraft(response.path);
       setSelected(null);
@@ -99,6 +124,16 @@ export function FileManagerPage() {
     if (!page) void load(null, hidden, 0, sortBy, descending);
     return () => { request.current++; };
   }, []);
+
+  useEffect(() => {
+    if (!page) return;
+    if (treeScrollRef.current) {
+      treeScrollRef.current.scrollTop = readHubSession("files.treeScrollTop", 0);
+    }
+    if (fileScrollRef.current) {
+      fileScrollRef.current.scrollTop = readHubSession("files.listScrollTop", 0);
+    }
+  }, [page?.path, page?.offset, splitTree]);
 
   async function operate(operation: "mkdir" | "rename" | "paste") {
     if (!page || locked.current) return;
@@ -233,8 +268,9 @@ export function FileManagerPage() {
         {/* Same compact toolbar as SteamOS settings. Native controller dropdown. */}
         <Focusable flow-children="right"
           navEntryPreferPosition={NavEntryPositionPreferences.MAINTAIN_X}
-          style={{ display: "flex", flexWrap: "wrap", alignItems: "center",
-            gap: 5, width: "100%", minWidth: 0 }}>
+          style={{ display: "flex", flexWrap: "nowrap", alignItems: "center",
+            gap: 5, width: "100%", minWidth: 0, overflowX: "auto",
+            overflowY: "hidden", paddingBottom: 2 }}>
           {page?.roots.filter(root => !breadcrumbs(page.path, page.roots)
             .some(part => part.path === root.path)).map(root =>
             <div key={root.path} style={{ flex: "0 0 auto", width: "auto" }}>
@@ -288,22 +324,25 @@ export function FileManagerPage() {
           </DialogButton>
         </div>}
 
-        {/* Only this directory-browser area is split, never the toolbar or Hub. */}
-        {page && <Focusable flow-children={splitTree ? "right" : undefined}
+        {/* The options toolbar stays above this fixed-height browser area.
+            D-pad up/down traverses a pane; left/right changes panes. */}
+        {page && <Focusable flow-children={splitTree ? "right" : "down"}
           navEntryPreferPosition={NavEntryPositionPreferences.MAINTAIN_Y}
           style={{ display: "flex", flexDirection: splitTree ? "row" : "column",
             alignItems: "stretch", gap: splitTree ? 8 : 0,
-            width: "100%", minWidth: 0 }}>
+            width: "100%", minWidth: 0, height: "min(54vh, 540px)",
+            minHeight: 160, overflow: "hidden" }}>
           {splitTree && <Focusable flow-children="down"
             navEntryPreferPosition={NavEntryPositionPreferences.MAINTAIN_Y}
             style={{ width: "34%", minWidth: 125, flex: "0 0 34%",
-              paddingRight: 7, borderRight: "1px solid #444",
-              maxHeight: "56vh", overflowY: "auto", display: "flex",
-              flexDirection: "column", gap: 3 }}>
-            <DialogButton disabled={busy || !page.parent}
-              onOKActionDescription="W górę"
-              style={{ width: "100%", minWidth: 0, textAlign: "left", padding: "6px 8px" }}
-              onClick={() => { if (page.parent) void load(page.parent, hidden); }}>..</DialogButton>
+              height: "100%", overflow: "hidden",
+              paddingRight: 7, borderRight: "1px solid #444" }}>
+            <div ref={treeScrollRef}
+              onScroll={event => writeHubSession("files.treeScrollTop", event.currentTarget.scrollTop)}
+              style={{ height: "100%", overflowY: "auto", overscrollBehavior: "contain",
+                display: "flex", flexDirection: "column", gap: 3, paddingBottom: 48 }}>
+              <ParentDirectoryRow parent={page.parent} disabled={busy}
+                onOpen={parent => { void load(parent, hidden); }} />
             {page.items.filter(entry => entry.directory).map(entry =>
               selected?.path === entry.path && action === "rename"
                 ? <Focusable key={entry.path} flow-children="right"
@@ -337,13 +376,18 @@ export function FileManagerPage() {
                         whiteSpace: "nowrap" }}>{entry.name}</span>
                     </span>
                   </DialogButton>)}
+            </div>
           </Focusable>}
           <Focusable flow-children="down"
             navEntryPreferPosition={NavEntryPositionPreferences.MAINTAIN_Y}
-            style={{ display: "flex", flexDirection: "column", gap: 3,
-              flex: "1 1 0", minWidth: 0,
-              maxHeight: splitTree ? "56vh" : undefined,
-              overflowY: splitTree ? "auto" : undefined }}>
+            style={{ display: "flex", flex: "1 1 0", minWidth: 0,
+              height: "100%", overflow: "hidden" }}>
+            <div ref={fileScrollRef}
+              onScroll={event => writeHubSession("files.listScrollTop", event.currentTarget.scrollTop)}
+              style={{ height: "100%", overflowY: "auto", overscrollBehavior: "contain",
+                display: "flex", flexDirection: "column", gap: 3, paddingBottom: 48 }}>
+              <ParentDirectoryRow parent={page.parent} disabled={busy}
+                onOpen={parent => { void load(parent, hidden); }} />
             {(splitTree ? page.items.filter(entry => !entry.directory) : page.items)
               .map(entry =>
               <div key={entry.path} style={{ width: "100%", minWidth: 0 }}>
@@ -405,8 +449,9 @@ export function FileManagerPage() {
                   </DialogButton>
                 )}
               </div>)}
-            {page.items.length === 0 && !busy &&
+            {(splitTree ? page.items.every(entry => entry.directory) : page.items.length === 0) && !busy &&
               <div style={{ opacity: 0.7, padding: 6 }}>Pusty folder</div>}
+            </div>
           </Focusable>
         </Focusable>}
 
