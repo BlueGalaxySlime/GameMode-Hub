@@ -58,6 +58,7 @@ type EditControlsProps = {
   onExitEdit?: () => void;
   multiline: boolean;
   startInSelectionMode?: boolean;
+  selectAllOnMount?: boolean;
   children: ReactNode;
 };
 
@@ -68,11 +69,11 @@ type EditControlsProps = {
  * starts it. Outside that mode B is left entirely to the parent/SteamOS.
  */
 function TextEditControls({ value, disabled, onEditValue, onExitEdit, multiline,
-  startInSelectionMode = false, children }: EditControlsProps) {
+  startInSelectionMode = false, selectAllOnMount = false, children }: EditControlsProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const selectionRowRef = useRef<HTMLDivElement>(null);
-  const anchorRef = useRef(0);
-  const headRef = useRef(0);
+  const anchorRef = useRef(startInSelectionMode && !selectAllOnMount ? value.length : 0);
+  const headRef = useRef(startInSelectionMode ? value.length : 0);
   const selectingRef = useRef(startInSelectionMode && !!value);
   const lastDirectionRef = useRef<{ direction: TextDirection | null; at: number }>({ direction: null, at: 0 });
   const lastClearRef = useRef<string | null>(null);
@@ -326,13 +327,14 @@ export type HubTextInputProps = {
   "aria-label"?: string;
   focusOnMount?: boolean;
   startInSelectionMode?: boolean;
+  selectAllOnMount?: boolean;
 };
 
 export function HubTextInput(props: HubTextInputProps) {
   const options = useSyncExternalStore(subscribeHubPreferences, getHubPreferences);
-  const { focusOnMount, startInSelectionMode, onEditValue, onExitEdit, ...fieldProps } = props;
+  const { focusOnMount, startInSelectionMode, selectAllOnMount, onEditValue, onExitEdit, ...fieldProps } = props;
   return <TextEditControls value={props.value} multiline={false} disabled={props.disabled}
-    startInSelectionMode={startInSelectionMode}
+    startInSelectionMode={startInSelectionMode} selectAllOnMount={selectAllOnMount}
     onEditValue={onEditValue} onExitEdit={onExitEdit}>
     {options.autoKeyboard
       ? <TextField {...fieldProps} focusOnMount={focusOnMount} />
@@ -360,14 +362,15 @@ export type HubTextAreaProps = {
   "aria-label"?: string;
   focusOnMount?: boolean;
   startInSelectionMode?: boolean;
+  selectAllOnMount?: boolean;
   onKeyDown?: KeyboardEventHandler<HTMLTextAreaElement>;
 };
 
 export function HubTextArea(props: HubTextAreaProps) {
   const options = useSyncExternalStore(subscribeHubPreferences, getHubPreferences);
-  const { focusOnMount, startInSelectionMode, onEditValue, onExitEdit, ...fieldProps } = props;
+  const { focusOnMount, startInSelectionMode, selectAllOnMount, onEditValue, onExitEdit, ...fieldProps } = props;
   return <TextEditControls value={props.value} multiline disabled={props.disabled}
-    startInSelectionMode={startInSelectionMode}
+    startInSelectionMode={startInSelectionMode} selectAllOnMount={selectAllOnMount}
     onEditValue={onEditValue} onExitEdit={onExitEdit}>
     <textarea {...fieldProps} autoFocus={focusOnMount}
       inputMode={options.autoKeyboard ? "text" : "none"}
