@@ -87,6 +87,9 @@ export function ReportsPage() {
               {title || "Tytuł błędu (np. Y nie otwiera menu)…"}
             </DialogButton>
           )}
+          <div style={{ fontSize: 11, opacity: 0.75, textAlign: "right", marginTop: 3 }}>
+            {title.length} / {MAX_TITLE} znaków
+          </div>
         </div>
         <div ref={detailRowRef} style={{ width: "100%", minWidth: 0 }}>
           {editingDetail ? (
