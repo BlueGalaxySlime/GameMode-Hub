@@ -11,13 +11,13 @@ import { callable, routerHook } from "@decky/api";
 import type { RoutePatch } from "@decky/api";
 import {
   afterPatch, findInReactTree, gamepadTabbedPageClasses,
-  replacePatch, wrapReactType
+  replacePatch, showContextMenu, wrapReactType
 } from "@decky/ui";
 import type { Patch } from "@decky/ui";
 import { createElement, useEffect, useState } from "react";
 import type { ReactElement } from "react";
 import { getTabMasterActivity } from "./TabMasterDetection";
-import { LibraryCardsEditor } from "./LibraryCardsEditor";
+import { LibraryCardsContextMenu } from "./LibraryCardsContextMenu";
 import type { TabMasterActivity, DeckyLoaderRegistry } from "./TabMasterDetection";
 
 declare const collectionStore: {
@@ -207,33 +207,35 @@ function virtualCollection(tab: TabDefinition) {
   };
 }
 
-/** Uses Steam's original grid component rather than constructing a separate collection tab. */
+function menuFooter(tab: SteamTab): SteamTab {
+  return {
+    ...tab,
+    footer: {
+      ...(tab.footer ?? {}),
+      onMenuActionDescription: "Karty",
+      onMenuButton: () => {
+        showContextMenu(createElement(LibraryCardsContextMenu, { selectedTabId: tab.id }));
+      }
+    }
+  };
+}
+
+/** Uses Steam's original grid and its built-in Menu button for the focused tab. */
 function mergeLibraryTabs(tabs: SteamTab[], deps: any[]): SteamTab[] {
   // Recheck at render time in case TabMaster was enabled after this patch.
   if (!active || conflict || detectTabMasterActivity() !== "inactive") return tabs;
   const template = tabs.find(tab => tab?.id === "AllGames");
   if (!template) return tabs;
   // Never replace Steam's own tabs or objects; TabManager only appends additions.
-  const result = [...tabs];
-
+  const result = tabs.map(menuFooter);
   const configured = definitions.filter(tab => !tab.hidden);
-  // Minimal native "+" control on the library tab strip: editing stays in Steam,
-  // while Optimization only stores the feature switch.
-  const editor: SteamTab = {
-    id: "GameModeHub:editor",
-    title: "+",
-    content: createElement("div", {
-      style: { margin: "0 auto", maxWidth: 900, padding: "12px 18px 50px" },
-      role: "region", "aria-label": "Edycja kart biblioteki"
-    }, createElement(LibraryCardsEditor))
-  };
-  if (!configured.length) return [...result, editor];
+  if (!configured.length) return result;
 
   const tabGrid = findInReactTree(
     template.content,
     (node: any) => node?.type && node.type.toString?.().includes("Library_FilteredByHeader")
   )?.type;
-  if (!tabGrid) return [...result, editor];
+  if (!tabGrid) return result;
   const tabContext = (template.content.type as any)?._context;
 
   const [sortBy, setSortBy, openSortingMenu] = deps;
@@ -247,7 +249,7 @@ function mergeLibraryTabs(tabs: SteamTab[], deps: any[]): SteamTab[] {
     const content = tabContext
       ? createElement(tabContext.Provider, { value: { label: tab.title } }, grid)
       : grid;
-    result.push({
+    result.push(menuFooter({
       id: "GameModeHub:" + tab.id,
       title: tab.title,
       content,
@@ -255,9 +257,8 @@ function mergeLibraryTabs(tabs: SteamTab[], deps: any[]): SteamTab[] {
         "span", { className: gamepadTabbedPageClasses.TabCount },
         collection.visibleApps.length
       )
-    });
+    }));
   }
-  result.push(editor);
   return result;
 }
 
