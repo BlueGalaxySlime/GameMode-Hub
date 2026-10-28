@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { callable } from "@decky/api";
 import { DialogButton, DialogControlsSection, DialogControlsSectionHeader, Field } from "@decky/ui";
 import {
-  tabManagerTabsChanged, hubCollectionsChanged, type TabDefinition
+  tabManagerTabsChanged, hubCollectionsChanged, hiddenSteamTabsChanged, type TabDefinition
 } from "../modules/tab-manager/LibraryIntegration";
 import type { HubCollection } from "../modules/collection-manager/CollectionsModule";
 
@@ -18,6 +18,7 @@ const list = callable<[], Backup[]>("get_hub_library_backups");
 const create = callable<[], Backup>("create_hub_library_backup");
 const restore = callable<[string], { ok: boolean; safety_backup: string }>("restore_hub_library_backup");
 const readTabs = callable<[], TabDefinition[]>("get_tab_definitions");
+const readHidden = callable<[], string[]>("get_hidden_steam_tabs");
 const readCollections = callable<[], HubCollection[]>("get_hub_collections");
 
 function dateOf(item: Backup) {
@@ -58,9 +59,10 @@ export function LibraryBackupSection() {
     setBusy(true); setError(""); setMessage("");
     try {
       const result = await restore(id);
-      const [tabs, collections, backups] = await Promise.all([readTabs(), readCollections(), list()]);
+      const [tabs, collections, hidden, backups] = await Promise.all([readTabs(), readCollections(), readHidden(), list()]);
       tabManagerTabsChanged(tabs);
       hubCollectionsChanged(collections);
+      hiddenSteamTabsChanged(hidden);
       setItems(backups);
       setConfirmId(null);
       setMessage(result.ok ? "Przywrócono ustawienia. Automatycznie zapisano również stan sprzed przywrócenia."
