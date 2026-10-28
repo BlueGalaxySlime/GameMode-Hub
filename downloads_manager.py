@@ -56,13 +56,17 @@ class DownloadManager:
                 if state not in ACTIVE_STATES + TERMINAL_STATES:
                     continue
                 target = item.get("target", "")
-                if not isinstance(target, str) or len(target) > 200:
+                scope = item.get("scope", "user")
+                if (not isinstance(target, str) or len(target) > 200 or
+                    scope not in ("user", "system")):
                     continue
                 self._jobs.append({
                     "id": item["id"],
                     "kind": "flatpak",
                     "target": target,
-                    "label": "Flatpak: " + (target or "wszystkie użytkownika"),
+                    "scope": scope,
+                    "label": "Flatpak " + ("systemowy" if scope == "system" else "użytkownika")
+                             + ": " + (target or "wszystkie"),
                     "state": "interrupted" if state in ACTIVE_STATES else state,
                     "message": "Przerwane przez restart backendu; uruchom ponownie ręcznie."
                                if state in ACTIVE_STATES else str(item.get("message", ""))[:180],
@@ -78,7 +82,9 @@ class DownloadManager:
             return {"jobs": [dict(x) for x in reversed(self._jobs[-MAX_HISTORY:])],
                     "active": sum(x["state"] in ACTIVE_STATES for x in self._jobs)}
 
-    def enqueue_flatpak(self, target=None):
+    def enqueue_flatpak(self, target=None, scope="user"):
+        if scope not in ("user", "system"):
+            raise ValueError("Nieprawidłowy rodzaj instalacji.")
         if os.geteuid() == 0:
             raise PermissionError("Pobieranie Flatpak nie używa roota.")
         if target is not None and (not isinstance(target, str) or
@@ -89,12 +95,15 @@ class DownloadManager:
                 raise RuntimeError("Moduł pobierania jest wyłączany.")
             # A repeated click or stale frontend must not enqueue duplicates.
             existing = next((x for x in self._jobs if
-                             x["state"] in ACTIVE_STATES and x["target"] == (target or "")), None)
+                             x["state"] in ACTIVE_STATES and x["target"] == (target or "") and
+                             x.get("scope", "user") == scope), None)
             if existing is not None:
                 return dict(existing)
             self._serial += 1
             job = {"id": self._serial, "kind": "flatpak", "target": target or "",
-                   "label": "Flatpak: " + (target or "wszystkie użytkownika"),
+                   "scope": scope,
+                   "label": "Flatpak " + ("systemowy" if scope == "system" else "użytkownika")
+                            + ": " + (target or "wszystkie"),
                    "state": "queued", "message": "W kolejce", "elapsed": 0}
             self._jobs.append(job)
             self._jobs = self._jobs[-MAX_HISTORY:]
@@ -149,8 +158,9 @@ class DownloadManager:
                 self._active_id = job_id
                 self._save_locked()
                 target = job["target"] or None
+                scope = job.get("scope", "user")
             try:
-                self._task.start(target)
+                self._task.start(target, scope=scope)
                 last_state = ""
                 while True:
                     status = self._task.status()

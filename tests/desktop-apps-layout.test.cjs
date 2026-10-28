@@ -274,7 +274,7 @@ test("Flatpak task does not lock modal and all user updates run in one process",
   const svc = fs.readFileSync("flatpak_manager.py", "utf8");
   assert.ok(dialog.includes('onCancel={() => closeModal?.()}'));
   assert.ok(dialog.includes('<DialogButton onClick={() => closeModal?.()}>Zamknij</DialogButton>'));
-  assert.ok(dialog.includes('enqueueFlatpakDownload(target)'));
+  assert.ok(dialog.includes('enqueueFlatpakDownload(target, scope)'));
   assert.ok(dialog.includes('useDownloads()'));
   assert.ok(dialog.includes('Możesz zamknąć okno'));
   assert.ok(dialog.includes('task?.elapsed'));
@@ -294,11 +294,23 @@ test("Downloads is a separate Decky/Hub screen backed by nonblocking queue", () 
   assert.ok(hub.includes('<DownloadsPage />'));
   assert.ok(downloads.includes('useDownloads()'));
   assert.ok(downloads.includes('Anuluj zadanie'));
-  assert.ok(flatpak.includes('enqueueFlatpakDownload(target)'));
+  assert.ok(flatpak.includes('enqueueFlatpakDownload(target, scope)'));
   assert.ok(flatpak.includes('Możesz zamknąć okno'));
   assert.ok(manager.includes('class DownloadManager:'));
   assert.ok(manager.includes('STATE_FILE = Path.home()'));
   assert.ok(manager.includes('threading.Thread('));
   assert.ok(manager.includes('if existing is not None:'));
   assert.ok(bundle.includes('"downloads_manager.py"'));
+});
+ 
+test("System Firefox can be updated and bulk includes all installations", () => {
+  const ui = fs.readFileSync("src/hub/FlatpakManagerDialog.tsx", "utf8");
+  const backend = fs.readFileSync("flatpak_manager.py", "utf8");
+  const queue = fs.readFileSync("downloads_manager.py", "utf8");
+  assert.ok(ui.includes('Aktualizuj wszystkie dostępne ({total})'));
+  assert.ok(ui.includes('Systemowe: {systemUpdates}'));
+  assert.ok(ui.includes('scope: item.installation === "user" ? "user" : "system"'));
+  assert.ok(ui.includes('enqueueFlatpakDownload(null, scope)'));
+  assert.ok(backend.includes('args = ["flatpak", "--" + scope, "update"'));
+  assert.ok(queue.includes('def enqueue_flatpak(self, target=None, scope="user")'));
 });

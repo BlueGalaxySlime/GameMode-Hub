@@ -6,6 +6,7 @@ export type Download = {
   id: number;
   kind: "flatpak";
   target: string;
+  scope: "user" | "system";
   label: string;
   state: "queued" | "preparing" | "running" | "cancelling" |
          "success" | "failed" | "cancelled" | "interrupted";
@@ -15,13 +16,13 @@ export type Download = {
 export type DownloadsSnapshot = { jobs: Download[]; active: number };
 
 const getDownloads = callable<[], DownloadsSnapshot>("downloads_list");
-const enqueue = callable<[string | null], Download>("downloads_enqueue_flatpak");
+const enqueue = callable<[string | null, "user" | "system"], Download>("downloads_enqueue_flatpak");
 const cancel = callable<[number], DownloadsSnapshot>("downloads_cancel");
 export const isDownloadActive = (job: Download) =>
   ["queued", "preparing", "running", "cancelling"].includes(job.state);
 
-export async function enqueueFlatpakDownload(id: string | null) {
-  return withTimeout(enqueue(id), 8000);
+export async function enqueueFlatpakDownload(id: string | null, scope: "user" | "system" = "user") {
+  return withTimeout(enqueue(id, scope), 8000);
 }
 export async function cancelDownload(id: number) {
   return withTimeout(cancel(id), 8000);

@@ -31,7 +31,7 @@ from lan_transfer import TransferManager
 from flatpak_manager import flatpak_overview, flatpak_update_user, flatpak_update_all_user
 from downloads_manager import DOWNLOADS
 
-CURRENT_VERSION = "0.5.34"
+CURRENT_VERSION = "0.5.35"
 RELEASES_API = "https://api.github.com/repos/BlueGalaxySlime/GameMode-Hub/releases/latest"
 ASSET_NAME = "GameMode-Hub.zip"
 
@@ -202,8 +202,8 @@ class Plugin:
     async def downloads_list(self):
         return DOWNLOADS.list()
 
-    async def downloads_enqueue_flatpak(self, app_id=None):
-        return DOWNLOADS.enqueue_flatpak(app_id)
+    async def downloads_enqueue_flatpak(self, app_id=None, scope="user"):
+        return DOWNLOADS.enqueue_flatpak(app_id, scope)
 
     async def downloads_cancel(self, job_id):
         return DOWNLOADS.cancel(job_id)

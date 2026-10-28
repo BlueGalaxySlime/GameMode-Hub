@@ -1,3 +1,10 @@
+# GameMode Hub 0.5.35 (testowy)
+
+- **Naprawiony martwy przycisk aktualizacji:** gdy aktualizacja dotyczy tylko systemowego Firefoksa, można ją teraz wybrać i wysłać do Pobierania.
+- **Aktualizuj wszystkie dostępne:** jedna decyzja dodaje zadania dla instalacji użytkownika i systemowej (jeżeli są dostępne), bez klikania każdej aplikacji. Zadania działają kolejno w tle.
+- **Standardowe uprawnienia Flatpak:** systemowe aktualizacje korzystają z Flatpak/Polkit bez sudo lub haseł przechowywanych przez Hub. Jeśli konfiguracja SteamOS nie przyzna dostępu, zadanie pokaże błąd zamiast zawieszać interfejs.
+- **Testy:** aktualizacja systemowego Firefoksa, deduplikacja zadań według instalacji i bezpieczna obsługa zbiorcza. Działanie na Lenovo wymaga sprawdzenia.
+
 # GameMode Hub 0.5.34 (testowy)
 
 - **Nowy moduł Pobieranie:** osobna kolejka backendu `downloads_manager.py` zamiast trzymania aktualizacji wewnątrz okien Huba. Aktualizacja Flatpak dodawana jest do kolejki i trwa także po zamknięciu okna Huba lub bocznego menu Decky, dopóki działa backend dodatku.

@@ -172,3 +172,31 @@ class FlatpakTaskTests(unittest.TestCase):
                 task.start("org.test.One")
             task.cancel()
             proceed.set()
+
+
+class SystemFlatpakTaskTests(unittest.TestCase):
+    def test_system_update_uses_polkit_not_sudo(self):
+        import threading
+        import time
+        done = threading.Event()
+        class Proc:
+            pid = 5678
+            returncode = 0
+            def communicate(self, timeout=None):
+                done.set()
+                return b"", None
+        task = fm.FlatpakUpdateTask()
+        with patch.object(fm.os, "geteuid", return_value=1000), \
+             patch.object(fm, "_installed", return_value=[
+                 {"id": "org.mozilla.firefox", "installation": "system"}]), \
+             patch.object(fm.subprocess, "Popen", return_value=Proc()) as popen:
+            task.start("org.mozilla.firefox", scope="system")
+            self.assertTrue(done.wait(2))
+            for _ in range(50):
+                if task.status()["state"] == "success":
+                    break
+                time.sleep(0.01)
+        self.assertEqual(popen.call_args.args[0],
+            ["flatpak", "--system", "update", "--noninteractive",
+             "--assumeyes", "org.mozilla.firefox"])
+        self.assertNotIn("sudo", repr(popen.call_args))

@@ -119,6 +119,7 @@ class FlatpakUpdateTask:
         self._serial = 0
         self._state = "idle"
         self._target = ""
+        self._scope = "user"
         self._message = ""
         self._start_time = 0.0
         self._end_time = 0.0
@@ -132,6 +133,7 @@ class FlatpakUpdateTask:
             "id": self._serial,
             "state": self._state,
             "target": self._target,
+            "scope": self._scope,
             "message": self._message,
             "elapsed": elapsed,
         }
@@ -166,7 +168,9 @@ class FlatpakUpdateTask:
             self._signal_process(process, signal.SIGTERM)
         return result
 
-    def start(self, target=None):
+    def start(self, target=None, scope="user"):
+        if scope not in ("user", "system"):
+            raise ValueError("Nieprawidłowy rodzaj instalacji.")
         if os.geteuid() == 0:
             raise PermissionError("Aktualizacja w Hubie nie używa konta root.")
         if target is not None and (not isinstance(target, str) or
@@ -179,30 +183,35 @@ class FlatpakUpdateTask:
             serial = self._serial
             self._state = "preparing"
             self._target = target or ""
+            self._scope = scope
             self._message = "Przygotowywanie aktualizacji…"
             self._start_time = time.monotonic()
             self._end_time = 0.0
             self._process = None
             self._cancel_requested = False
-        threading.Thread(target=self._worker, args=(serial, target),
+        threading.Thread(target=self._worker, args=(serial, target, scope),
                          name="GameModeHub-Flatpak", daemon=True).start()
         return self.status()
 
-    def _worker(self, serial, target):
+    def _worker(self, serial, target, scope):
         proc = None
         final = "failed"
         text = "Aktualizacja Flatpak nie powiodła się."
         try:
             apps = _installed()
             if target is not None:
-                if not any(a["id"] == target and a["installation"] == "user" for a in apps):
-                    raise PermissionError("To nie jest Flatpak z instalacji użytkownika.")
-            elif not any(a["installation"] == "user" for a in apps):
-                raise RuntimeError("Brak zainstalowanych Flatpaków użytkownika.")
+                if not any(a["id"] == target and
+                           (a["installation"] == scope or
+                            (scope == "system" and a["installation"] == "default"))
+                           for a in apps):
+                    raise PermissionError("Nie znaleziono aplikacji w tej instalacji Flatpak.")
+            elif not any(a["installation"] == scope or
+                         (scope == "system" and a["installation"] == "default")
+                         for a in apps):
+                raise RuntimeError("Brak Flatpaków w wybranej instalacji.")
 
-            # One batch command for ALL user applications and runtimes,
-            # not a slow re-launch of flatpak for every app.
-            args = ["flatpak", "--user", "update", "--noninteractive", "--assumeyes"]
+            # Standard Flatpak helper/Polkit permissions, never sudo or setuid.
+            args = ["flatpak", "--" + scope, "update", "--noninteractive", "--assumeyes"]
             if target:
                 args.append(target)
             with self._lock:
@@ -216,7 +225,8 @@ class FlatpakUpdateTask:
                     self._process = proc
                     self._state = "running"
                     self._message = ("Aktualizowanie " + target + "…" if target
-                                     else "Aktualizowanie wszystkich Flatpaków użytkownika…")
+                                     else "Aktualizowanie wszystkich Flatpaków " +
+                                          ("systemowych…" if scope == "system" else "użytkownika…"))
             if proc is not None:
                 try:
                     output, _ = proc.communicate(timeout=600)
@@ -233,7 +243,12 @@ class FlatpakUpdateTask:
                 else:
                     # Errors may contain terminal escapes; never echo command output
                     # or other possibly private system data into the public UI.
-                    final, text = "failed", "Flatpak zakończył się błędem (kod " + str(proc.returncode) + ")."
+                    final, text = "failed", (
+                        "Błąd aktualizacji systemowego Flatpaka (kod " +
+                        str(proc.returncode) + "). Może być wymagana autoryzacja Polkit."
+                        if scope == "system" else
+                        "Flatpak zakończył się błędem (kod " + str(proc.returncode) + ")."
+                    )
         except (FileNotFoundError, OSError, subprocess.SubprocessError,
                 PermissionError, RuntimeError, TimeoutError) as exc:
             final, text = "failed", str(exc)[:180]

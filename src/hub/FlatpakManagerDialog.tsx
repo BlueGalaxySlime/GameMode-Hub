@@ -33,7 +33,7 @@ export function FlatpakManagerDialog({ selectedId, bulkRequested = false, onUpda
   const { jobs, active } = useDownloads();
   const task = jobs.find(job => isDownloadActive(job)) ?? jobs[0] ?? null;
   const [message, setMessage] = useState("");
-  const [confirm, setConfirm] = useState<string | null>(null);
+  const [confirm, setConfirm] = useState<{ id: string; scope: "user" | "system" } | null>(null);
   const [confirmAll, setConfirmAll] = useState(bulkRequested);
   const mounted = useRef(false);
   const checkInFlight = useRef(false);
@@ -68,17 +68,37 @@ export function FlatpakManagerDialog({ selectedId, bulkRequested = false, onUpda
     void refresh();
   }, [task?.id, task?.state]);
 
-  async function start(target: string | null) {
-    if (startedTask.current || checking || active > 0) return;
+  async function start(target: string | null, scope: "user" | "system") {
+    if (startedTask.current || checking) return;
     startedTask.current = true;
     setConfirm(null);
     setConfirmAll(false);
     setMessage("");
     try {
-      await enqueueFlatpakDownload(target);
+      await enqueueFlatpakDownload(target, scope);
       setMessage("Dodano do Pobierania. Możesz zamknąć okno lub przejść do gry.");
     } catch {
       setMessage("Nie udało się dodać zadania do Pobierania.");
+    } finally {
+      startedTask.current = false;
+    }
+  }
+
+  async function startAll() {
+    if (startedTask.current || checking || !data || data.error) return;
+    const pending = data.apps.filter(item => item.updateable);
+    if (!pending.length) return;
+    startedTask.current = true;
+    setConfirmAll(false);
+    setMessage("");
+    try {
+      const scopes: ("user" | "system")[] = [];
+      if (pending.some(item => item.installation === "user")) scopes.push("user");
+      if (pending.some(item => item.installation !== "user")) scopes.push("system");
+      for (const scope of scopes) await enqueueFlatpakDownload(null, scope);
+      setMessage("Dodano aktualizacje do Pobierania. Możesz zamknąć okno.");
+    } catch {
+      setMessage("Nie dodano wszystkich zadań. Sprawdź zakładkę Pobieranie.");
     } finally {
       startedTask.current = false;
     }
@@ -90,6 +110,8 @@ export function FlatpakManagerDialog({ selectedId, bulkRequested = false, onUpda
   const total = apps.filter(item => item.updateable).length;
   const userUpdates = apps.filter(item =>
     item.updateable && item.installation === "user").length;
+  const systemUpdates = apps.filter(item =>
+    item.updateable && item.installation !== "user").length;
   const updating = active > 0;
 
   return <ModalRoot onCancel={() => closeModal?.()}>
@@ -97,8 +119,8 @@ export function FlatpakManagerDialog({ selectedId, bulkRequested = false, onUpda
       width: "min(88vw, 570px)", maxWidth: "100%", boxSizing: "border-box" }}>
       <strong>Flatpak — aktualizacje</strong>
       <div style={{ fontSize: 12 }}>
-        Systemowe Flatpaki tylko do podglądu. Aktualizacja wszystkich użytkownika
-        obejmuje również ich środowiska uruchomieniowe, bez roota.
+        Aktualizacje użytkownika i systemowe są uruchamiane w tle.
+        Systemowe korzystają z autoryzacji Flatpak/Polkit; bez sudo i hasła w Hubie.
       </div>
       <div role="status" style={{ fontSize: 12 }}>
         {updating
@@ -117,41 +139,50 @@ export function FlatpakManagerDialog({ selectedId, bulkRequested = false, onUpda
             {item.updateable ? " Dostępna aktualizacja" : " Brak wykrytej aktualizacji"}
             {item.version ? " · " + item.version : ""}
           </div>
-          {item.updateable && item.installation === "user" && !confirm &&
-            <DialogButton disabled={updating || checking}
-              onClick={() => setConfirm(item.id)}>
+          {item.updateable && !confirm && !confirmAll &&
+            <DialogButton disabled={checking}
+              onClick={() => setConfirm({
+                id: item.id, scope: item.installation === "user" ? "user" : "system"
+              })}>
               Aktualizuj tę aplikację
             </DialogButton>}
         </div>)}
         {!visible.length && !checking &&
           <div style={{ fontSize: 12 }}>Brak dostępnych aktualizacji aplikacji.</div>}
       </Focusable>
-      {confirm && !updating &&
+      {confirm &&
         <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-          <strong>Aktualizować {confirm}?</strong>
+          <strong>Aktualizować {confirm.id}?</strong>
+          {confirm.scope === "system" && <div style={{ fontSize: 12 }}>
+            System może wymagać autoryzacji Polkit. Hub nie prosi o hasło roota.
+          </div>}
           <Focusable flow-children="row"
             navEntryPreferPosition={NavEntryPositionPreferences.MAINTAIN_X}
             style={{ display: "flex", flexDirection: "row", gap: 8 }}>
             <DialogButton preferredFocus onClick={() => setConfirm(null)}>Anuluj</DialogButton>
-            <DialogButton onClick={() => { void start(confirm); }}>
+            <DialogButton onClick={() => { void start(confirm.id, confirm.scope); }}>
               Potwierdź aktualizację
             </DialogButton>
           </Focusable>
         </div>}
-      {!selectedId && !confirmAll && userUpdates > 0 &&
-        <DialogButton disabled={updating || checking}
+      {!selectedId && !confirmAll && total > 0 &&
+        <DialogButton disabled={checking}
           onClick={() => setConfirmAll(true)}>
-          Aktualizuj wszystkie Flatpaki użytkownika ({userUpdates})
-        </DialogButton>}
-      {confirmAll && !updating && !checking &&
+          Aktualizuj wszystkie dostępne ({total})
+        </DialogButton>
+      {confirmAll && !checking &&
         <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-          <strong>Aktualizować wszystkie Flatpaki użytkownika?</strong>
+          <strong>Aktualizować wszystkie dostępne Flatpaki?</strong>
+          <div style={{ fontSize: 12 }}>
+            Użytkownika: {userUpdates}. Systemowe: {systemUpdates}.
+            Systemowe mogą wymagać autoryzacji Polkit.
+          </div>
           <Focusable flow-children="row"
             navEntryPreferPosition={NavEntryPositionPreferences.MAINTAIN_X}
             style={{ display: "flex", flexDirection: "row", gap: 8 }}>
             <DialogButton preferredFocus onClick={() => setConfirmAll(false)}>Anuluj</DialogButton>
-            <DialogButton disabled={!data || !!data.error || userUpdates === 0}
-              onClick={() => { void start(null); }}>Potwierdź wszystkie</DialogButton>
+            <DialogButton disabled={!data || !!data.error || total === 0}
+              onClick={() => { void startAll(); }}>Potwierdź wszystkie</DialogButton>
           </Focusable>
         </div>}
       {!!message && <div role="status" style={{ fontSize: 12 }}>{message}</div>}

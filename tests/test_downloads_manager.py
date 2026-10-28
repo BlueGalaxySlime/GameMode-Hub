@@ -15,8 +15,8 @@ class FakeTask:
         self.cancelled = False
         self.state = "idle"
 
-    def start(self, target=None):
-        self.started.append(target)
+    def start(self, target=None, scope="user"):
+        self.started.append((scope, target))
         self.state = "running"
         return self.status()
 
@@ -51,7 +51,7 @@ class DownloadManagerTests(unittest.TestCase):
     def test_ui_can_close_without_stopping_background_task(self):
         job = self.manager.enqueue_flatpak("com.microsoft.Edge")
         self.wait_for("running")
-        self.assertEqual(self.task.started, ["com.microsoft.Edge"])
+        self.assertEqual(self.task.started, [("user", "com.microsoft.Edge")])
         self.assertEqual(self.manager.enqueue_flatpak("com.microsoft.Edge")["id"], job["id"])
         self.assertEqual(self.manager.list()["active"], 1)
         self.task.state = "success"
@@ -65,7 +65,7 @@ class DownloadManagerTests(unittest.TestCase):
         self.wait_for("running")
         b = self.manager.enqueue_flatpak("org.test.Two")
         self.assertNotEqual(a["id"], b["id"])
-        self.assertEqual(self.task.started, ["org.test.One"])
+        self.assertEqual(self.task.started, [("user", "org.test.One")])
         self.manager.cancel(b["id"])
         self.assertEqual(self.manager.list()["jobs"][0]["state"], "cancelled")
         self.task.state = "success"
@@ -73,7 +73,7 @@ class DownloadManagerTests(unittest.TestCase):
             if next(job for job in self.manager.list()["jobs"] if job["id"] == a["id"])["state"] == "success":
                 break
             time.sleep(0.02)
-        self.assertEqual(self.task.started, ["org.test.One"])
+        self.assertEqual(self.task.started, [("user", "org.test.One")])
 
     def test_restart_marks_active_interrupted_no_auto_retry(self):
         self.path.write_text('{"version":1,"next_id":7,"jobs":['
@@ -89,3 +89,40 @@ class DownloadManagerTests(unittest.TestCase):
         with patch("downloads_manager.os.geteuid", return_value=0):
             with self.assertRaises(PermissionError):
                 self.manager.enqueue_flatpak()
+
+
+class SystemScopeTests(unittest.TestCase):
+    def test_system_firefox_can_join_queue_and_is_distinct_from_user(self):
+        import tempfile
+        import time
+        from pathlib import Path
+        class Fake:
+            def __init__(self):
+                self.started = []
+                self.state = "idle"
+            def start(self, target=None, scope="user"):
+                self.started.append((scope, target))
+                self.state = "running"
+            def status(self):
+                return {"state": self.state, "message": self.state, "elapsed": 1}
+            def cancel(self):
+                self.state = "cancelled"
+        with tempfile.TemporaryDirectory() as temp, patch(
+            "downloads_manager.os.geteuid", return_value=1000
+        ):
+            task = Fake()
+            manager = DownloadManager(task, Path(temp) / "state.json")
+            try:
+                system = manager.enqueue_flatpak("org.mozilla.firefox", "system")
+                for _ in range(80):
+                    if task.started:
+                        break
+                    time.sleep(0.01)
+                self.assertEqual(task.started, [("system", "org.mozilla.firefox")])
+                self.assertEqual(system["scope"], "system")
+                self.assertEqual(manager.enqueue_flatpak(
+                    "org.mozilla.firefox", "system")["id"], system["id"])
+                self.assertNotEqual(manager.enqueue_flatpak(
+                    "org.mozilla.firefox", "user")["id"], system["id"])
+            finally:
+                manager.shutdown()
