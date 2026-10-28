@@ -10,7 +10,7 @@ const CSS = `
 .steamhub-terminal .xterm .xterm-helper-textarea { position: absolute; opacity: 0; left: -9999em; top: 0; padding: 0; margin: 0; border: 0; width: 0; height: 0; white-space: nowrap; overflow: hidden; resize: none; }
 .steamhub-terminal .xterm .composition-view { background: #000; color: #fff; display: none; position: absolute; white-space: nowrap; z-index: 1; }
 .steamhub-terminal .xterm .composition-view.active { display: block; }
-.steamhub-terminal .xterm .xterm-viewport { background-color: #111923; position: absolute; overflow-y: scroll; cursor: default; inset: 0; }
+.steamhub-terminal .xterm .xterm-viewport { background-color: #111923; position: absolute; overflow-y: auto; cursor: default; inset: 0; }
 .steamhub-terminal .xterm .xterm-screen { position: relative; }
 .steamhub-terminal .xterm .xterm-screen canvas { position: absolute; left: 0; top: 0; }
 .steamhub-terminal .xterm-char-measure-element { display: inline-block; visibility: hidden; position: absolute; top: 0; left: -9999em; }

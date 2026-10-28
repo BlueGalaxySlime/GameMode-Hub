@@ -28,9 +28,10 @@ export interface TerminalLayoutState {
 }
 
 /** A Linux desktop frontend can provide its own presentation renderer. */
-export function TerminalView({ bridge, render }: {
+export function TerminalView({ bridge, render, fontSize = 15 }: {
   bridge: TerminalBridge;
   render?: (state: TerminalLayoutState) => ReactNode;
+  fontSize?: number;
 }) {
   const host = useRef<HTMLDivElement>(null);
   const term = useRef<Terminal | null>(null);
@@ -70,7 +71,7 @@ export function TerminalView({ bridge, render }: {
     if (!container) return;
     const instance = new Terminal({
       convertEol: true, cursorBlink: true, scrollback: 3000,
-      fontFamily: "monospace", fontSize: 15, lineHeight: 1.15,
+      fontFamily: "monospace", fontSize, lineHeight: 1.15,
       theme: { background: "#111923", foreground: "#e5edf8", cursor: "#c9d8f2" }
     });
     const addon = new FitAddon();
@@ -130,8 +131,19 @@ export function TerminalView({ bridge, render }: {
       term.current = null;
       fit.current = null;
     };
-    // The bridge is stable and owned by the host adapter.
+    // Only mount/unmount owns session lifetime. Font changes must not restart it.
   }, [bridge]);
+
+  useEffect(() => {
+    const instance = term.current;
+    if (!instance) return;
+    instance.options.fontSize = fontSize;
+    try {
+      fit.current?.fit();
+      const id = session.current;
+      if (id) void bridge.resize(id, instance.cols, instance.rows).catch(() => undefined);
+    } catch { /* Window may temporarily be hidden by Steam. */ }
+  }, [fontSize, bridge]);
 
   async function openSession() {
     if (pending) return;
@@ -143,10 +155,30 @@ export function TerminalView({ bridge, render }: {
       const instance = term.current;
       if (!instance) throw new Error("Terminal nie jest gotowy");
       fit.current?.fit();
-      const result = await bridge.start(
+      setStatus("Uruchamianie sesji Linuksa…");
+      let expired = false;
+      let timeout: ReturnType<typeof setTimeout> | undefined;
+      const request = bridge.start(
         Math.max(20, Math.min(500, instance.cols || 80)),
         Math.max(5, Math.min(200, instance.rows || 24))
       );
+      // If Decky's backend does not answer, release UI focus and allow retry.
+      // Late responses must close their PTY to avoid orphaned shells.
+      void request.then(result => {
+        if (expired || !mounted.current) void bridge.close(result.id).catch(() => undefined);
+      }).catch(() => undefined);
+      const timeoutPromise = new Promise<never>((_, reject) => {
+        timeout = setTimeout(() => {
+          expired = true;
+          reject(new Error("Przekroczono 12 sekund oczekiwania na Decky. Sprawdź backend i spróbuj ponownie."));
+        }, 12000);
+      });
+      let result: { id: string };
+      try {
+        result = await Promise.race([request, timeoutPromise]);
+      } finally {
+        if (timeout) clearTimeout(timeout);
+      }
       if (!mounted.current) {
         await bridge.close(result.id);
         return;
@@ -190,7 +222,7 @@ export function TerminalView({ bridge, render }: {
     status, active, pending, hasSession: session.current !== null,
     command, advanced,
     terminalElement: <div className="steamhub-terminal"
-      style={{ width: "100%", height: 400, padding: 10 }}>
+      style={{ width: "100%", height: "100%", minHeight: 0, overflow: "hidden", padding: 8 }}>
       <div ref={host} style={{ width: "100%", height: "100%" }} />
     </div>,
     start: () => { void openSession(); },

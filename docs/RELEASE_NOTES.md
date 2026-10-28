@@ -1,3 +1,13 @@
+# SteamHub 0.4.8
+
+- Naprawiono dostępność klawiatury ekranowej: przycisk „Pokaż klawiaturę” działa również bez uruchomionej sesji i podczas oczekiwania na backend.
+- Terminal na górze panelu i tylko jego zawartość jest przewijana. Ekran terminala ma stały obszar, a klawiatura pojawia się pod nim, we własnym przewijanym obszarze.
+- Opcje terminala (m.in. czcionka i klawisze dodatkowe) są przeniesione do lewej nawigacji, oddzielone separatorami SteamOS.
+- Usunięto podwójne nagłówki „Terminal” i nadmiar wierszy nad ekranem terminala.
+- Dodano 12-sekundowy limit oczekiwania na rozpoczęcie sesji; późne odpowiedzi są sprzątane, aby nie pozostawiać osieroconych procesów.
+- Terminal nadal korzysta z niezależnego silnika Linux PTY oraz natywnych przycisków SteamOS.
+- Wymaga weryfikacji na urządzeniu Legion Go S.
+
 # SteamHub 0.4.7
 
 - W terminalu dodano klawiaturę ekranową obsługiwaną przyciskami kontrolera SteamOS.

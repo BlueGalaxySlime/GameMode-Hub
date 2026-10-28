@@ -5,10 +5,10 @@ import {
   DialogControlsSectionHeader, Field, Navigation, SidebarNavigation, Toggle
 } from "@decky/ui";
 import { callable } from "@decky/api";
-import { FaFolderOpen, FaHeart, FaHome, FaPlug, FaPuzzlePiece, FaSyncAlt, FaTerminal } from "react-icons/fa";
+import { FaCog, FaFolderOpen, FaHeart, FaHome, FaPlug, FaPuzzlePiece, FaSyncAlt, FaTerminal } from "react-icons/fa";
 import { withTimeout } from "../utils/withTimeout";
 import { UpdaterPage } from "./UpdaterPage";
-import { DeckyTerminalPage } from "./DeckyTerminalAdapter";
+import { DeckyTerminalPage, TerminalOptionsPage } from "./DeckyTerminalAdapter";
 import { CreditsPage } from "./CreditsPage";
 
 type InstalledAddon = {
@@ -191,6 +191,8 @@ export function HubPage() {
   const [installed, setInstalled] = useState<InstalledAddon[]>([]);
   const [busy, setBusy] = useState(true);
   const [error, setError] = useState("");
+  const [terminalFontSize, setTerminalFontSize] = useState(15);
+  const [showTerminalExtraKeys, setShowTerminalExtraKeys] = useState(true);
 
   async function refresh() {
     setBusy(true);
@@ -238,7 +240,13 @@ export function HubPage() {
       content: <AddonSelector installed={installed} selected={selected} pending={busy}
         error={error} toggle={toggle} reload={() => { void refresh(); }} /> },
     { title: "Terminal", route: "/steamhub/terminal", icon: <FaTerminal />,
-      content: <DeckyTerminalPage /> },
+      hideTitle: true, padding: "none" as const,
+      content: <DeckyTerminalPage fontSize={terminalFontSize} showExtraKeys={showTerminalExtraKeys} /> },
+    "separator" as const,
+    { title: "Opcje terminala", route: "/steamhub/terminal/options", icon: <FaCog />,
+      content: <TerminalOptionsPage fontSize={terminalFontSize} showExtraKeys={showTerminalExtraKeys}
+        setFontSize={setTerminalFontSize} setShowExtraKeys={setShowTerminalExtraKeys} /> },
+    "separator" as const,
     { title: "Aktualizacje", route: "/steamhub/updates", icon: <FaSyncAlt />,
       content: <UpdaterPage /> },
     { title: "Podziękowania", route: "/steamhub/credits", icon: <FaHeart />,
