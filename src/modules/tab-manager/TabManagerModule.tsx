@@ -16,6 +16,8 @@ export function TabManagerModule() {
   const [conflict, setConflict] = useState(false);
   const [tabs, setTabs] = useState<TabDefinition[]>([]);
   const [name, setName] = useState("");
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editingTitle, setEditingTitle] = useState("");
   const [error, setError] = useState("");
 
   useEffect(() => {
@@ -52,6 +54,14 @@ export function TabManagerModule() {
     setName("");
   }
 
+  function rename(id: string) {
+    const title = editingTitle.trim();
+    if (!title) return;
+    void persist(tabs.map(tab => tab.id === id ? { ...tab, title } : tab));
+    setEditingId(null);
+    setEditingTitle("");
+  }
+
   function move(index: number, offset: number) {
     const target = index + offset;
     if (target < 0 || target >= tabs.length) return;
@@ -69,7 +79,14 @@ export function TabManagerModule() {
       <PanelSectionRow><TextField label="Nazwa zakładki" value={name} onChange={event => setName(event.target.value)} /></PanelSectionRow>
       <PanelSectionRow><ButtonItem disabled={busy || !name.trim()} onClick={add}>Dodaj zakładkę</ButtonItem></PanelSectionRow>
       {tabs.map((tab, index) => <PanelSectionRow key={tab.id}>
-        <div>{tab.title}</div>
+        {editingId === tab.id ? <>
+          <TextField label="Nowa nazwa" value={editingTitle} onChange={event => setEditingTitle(event.target.value)} />
+          <ButtonItem disabled={busy || !editingTitle.trim()} onClick={() => rename(tab.id)}>Zapisz nazwę</ButtonItem>
+          <ButtonItem disabled={busy} onClick={() => setEditingId(null)}>Anuluj</ButtonItem>
+        </> : <>
+          <div>{tab.title}</div>
+          <ButtonItem disabled={busy} onClick={() => { setEditingId(tab.id); setEditingTitle(tab.title); }}>Zmień nazwę</ButtonItem>
+        </>}
         <ToggleField label="Widoczna" checked={!tab.hidden} disabled={busy} onChange={visible => void persist(tabs.map(t => t.id === tab.id ? { ...t, hidden: !visible } : t))} />
         <ButtonItem disabled={busy || index === 0} onClick={() => move(index, -1)}>W górę</ButtonItem>
         <ButtonItem disabled={busy || index === tabs.length - 1} onClick={() => move(index, 1)}>W dół</ButtonItem>
