@@ -46,6 +46,39 @@ def _desktop_command(entry, name, path):
     return command[0], shlex.join(command[1:])
 
 
+
+def _safe_flatpak_export_link(path):
+    """Accept Flatpak's exported .desktop links, not arbitrary user symlinks.
+
+    Flatpak normally exports links to each installation's app tree. The old
+    scanner discarded every symlink, hiding installed apps such as Firefox
+    while leaving SteamOS's separate "Install Firefox" placeholder visible.
+    Resolve only links from the two known export directories and require the
+    target to remain inside that installation's app export tree.
+    """
+    home = Path(os.environ.get("DECKY_USER_HOME") or Path.home()).resolve()
+    roots = (
+        (home / ".local/share/flatpak/exports/share/applications",
+         home / ".local/share/flatpak/app"),
+        (Path("/var/lib/flatpak/exports/share/applications"),
+         Path("/var/lib/flatpak/app")),
+    )
+    for export_dir, app_dir in roots:
+        if path.parent != export_dir:
+            continue
+        try:
+            target = path.resolve(strict=True)
+            # Resolving "active" Flatpak symlinks may land on a versioned
+            # checkout. It must still be a regular exported desktop file.
+            return (target.is_file() and target.name == path.name and
+                    target.is_relative_to(app_dir.resolve(strict=True)) and
+                    target.parent.name == "applications" and
+                    target.parent.parent.name == "share" and
+                    target.parent.parent.parent.name == "export")
+        except (OSError, RuntimeError):
+            return False
+    return False
+
 def list_desktop_apps():
     results = {}
     for directory in application_directories():
@@ -57,7 +90,7 @@ def list_desktop_apps():
         for path in paths:
             if len(results) >= MAX_APPS:
                 break
-            if path.is_symlink() or not path.is_file():
+            if (path.is_symlink() and not _safe_flatpak_export_link(path)) or not path.is_file():
                 continue
             app_id = "-".join(path.relative_to(directory).with_suffix("").parts)
             if not (0 < len(app_id) <= MAX_ID) or app_id in results:

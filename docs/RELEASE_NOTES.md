@@ -1,3 +1,10 @@
+# GameMode Hub 0.5.43 (testowy)
+
+- **Pulpit / Flatpak:** naprawiono wykrywanie rzeczywistych aplikacji Flatpak, których eksportowane pliki .desktop są dowiązaniami symbolicznymi. Wcześniej Hub pomijał takie skróty, przez co Firefox mógł być widoczny jako „Install Firefox”, ale nie jako zainstalowana aplikacja.
+- **Kategorie:** każda wykryta aplikacja należy automatycznie do Flatpak lub Systemowe, lecz widoki Wszystkie i Ulubione nadal obejmują obie kategorie. Poprawiono źródło danych, nie zmieniono reguł ręcznego przypisania ani ustawień Ulubionych.
+- **Bezpieczeństwo:** akceptowane są wyłącznie poprawne dowiązania z oficjalnych katalogów eksportu Flatpak do plików w odpowiednim drzewie instalacyjnym. Dowolne, uszkodzone lub prowadzące poza drzewo aplikacji linki pozostają odrzucone.
+- **Testy:** dodano regresje dla zainstalowanego Firefoksa Flatpak, złośliwych/dowolnych dowiązań i nieistniejących celów. Sprawdzić na Lenovo, czy Pulpit → Flatpak pokazuje Firefoksa po aktualizacji i odświeżeniu. „Install Firefox” jest osobnym systemowym skrótem instalatora i może pozostać w Systemowe.
+
 # GameMode Hub 0.5.42 (testowy)
 
 - **Konta — lista wyboru:** zamiast stałego nagłówka Epic wprowadzono natywną listę rozwijaną w dół, sterowaną padem i przyciskiem A. W tej fazie dostępny jest tylko Epic Games; bez pozornych integracji innych sklepów.
