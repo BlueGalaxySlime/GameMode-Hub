@@ -1,3 +1,12 @@
+# GameMode Hub 0.5.11
+
+- **Opcje Huba** w głównym menu: Zachowuj stan kart (domyślnie włączone) oraz Podział drzewa plików (domyślnie wyłączony). Ustawienia przeżywają ponowną instalację wtyczki.
+- **Sesja:** przy zmianie karty zapamiętywane są katalog, edytowany adres, sortowanie, ukryte pliki, zaznaczenie, schowek i operacja zmiany nazwy. Analogicznie zachowywany jest stan aktualizatora, wybrana sesja w bezpiecznym terminalu i ustawienia paneli. Dane sesji tylko w RAM; terminal PTY pozostaje wyłączony.
+- Wyłączenie zachowywania sesji natychmiast czyści zapamiętane stany. Stan panelu wraca do domyślnego po jego ponownym otwarciu.
+- **Podział pionowy dotyczy wyłącznie obszaru drzewa i listy plików**: foldery z lewej, pliki z prawej; nawigacja kontrolerem góra/dół w kolumnach oraz prawo/lewo między kolumnami. Pasek ścieżki, opcje i reszta Huba pozostają pełnej szerokości.
+- W poziomych rzędach używany jest układ nawigacyjny Decky `flow-children="right"` (ten sam mechanizm co w natywnej przeglądarce plików Decky).
+- Zachowano natywne menu Y oraz nakładkę sortowania. Brak zmian w terminalu i kanałach aktualizacji.
+
 # GameMode Hub 0.5.10
 
 - Menedżer plików: **Y** przy wskazanym pliku lub folderze otwiera natywne menu SteamOS na wierzchu listy, bez rozciągania wiersza i bez dodawania wysokości.

@@ -43,6 +43,18 @@ class HubSelectionTests(unittest.TestCase):
             with self.assertRaises(ValueError):
                 hub_settings.set_update_channel("nightly")
 
+    def test_hub_options_defaults_persist_and_validate(self):
+        with patch.object(hub_settings, "HUB_PREFERENCES_FILE", Path(self.root.name) / "prefs.json"):
+            self.assertEqual(hub_settings.get_hub_preferences(),
+                             {"saveSession": True, "splitFileTree": False})
+            chosen = {"saveSession": False, "splitFileTree": True}
+            self.assertEqual(hub_settings.set_hub_preferences(chosen), chosen)
+            self.assertEqual(hub_settings.get_hub_preferences(), chosen)
+            for bad in ({}, {"saveSession": "false", "splitFileTree": True},
+                        {"saveSession": True, "splitFileTree": False, "extra": 1}):
+                with self.subTest(bad=bad), self.assertRaises(ValueError):
+                    hub_settings.set_hub_preferences(bad)
+
     def test_reject_invalid_input(self):
         for invalid in ("a", {}, [8], [""], ["x" * 101]):
             with self.subTest(invalid=invalid), self.assertRaises(ValueError):

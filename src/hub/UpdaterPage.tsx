@@ -7,8 +7,9 @@ import {
 import { RequestTimeoutError, withTimeout } from "../utils/withTimeout";
 import { APP_NAME, DECKY_PLUGIN_NAME } from "../core/identity";
 import { ReleaseEntry, UpdateChannel, selectReleases } from "../core/releaseCatalog";
+import { useHubSessionState } from "./useHubSessionState";
 
-const VERSION = "0.5.10";
+const VERSION = "0.5.11";
 const URL = "https://api.github.com/repos/BlueGalaxySlime/GameMode-Hub/releases?per_page=50";
 const getChannel = callable<[], UpdateChannel>("get_update_channel");
 const saveChannel = callable<[UpdateChannel], UpdateChannel>("set_update_channel");
@@ -35,14 +36,14 @@ async function fetchVersions(channel: UpdateChannel): Promise<ReleaseEntry[]> {
 }
 
 export function UpdaterPage() {
-  const [channel, setChannel] = useState<UpdateChannel>("test");
-  const [entries, setEntries] = useState<ReleaseEntry[]>([]);
-  const [selected, setSelected] = useState<ReleaseEntry | null>(null);
-  const [confirmDowngrade, setConfirmDowngrade] = useState(false);
-  const [message, setMessage] = useState("Wybierz kanał i sprawdź dostępne wersje.");
+  const [channel, setChannel] = useHubSessionState<UpdateChannel>("updates.channel","test");
+  const [entries, setEntries] = useHubSessionState<ReleaseEntry[]>("updates.entries",[]);
+  const [selected, setSelected] = useHubSessionState<ReleaseEntry | null>("updates.selected",null);
+  const [confirmDowngrade, setConfirmDowngrade] = useHubSessionState("updates.confirmDowngrade",false);
+  const [message, setMessage] = useHubSessionState("updates.message","Wybierz kanał i sprawdź dostępne wersje.");
   const [checking, setChecking] = useState(false);
-  const [checked, setChecked] = useState(false);
-  const [lastChecked, setLastChecked] = useState<string | null>(null);
+  const [checked, setChecked] = useHubSessionState("updates.checked",false);
+  const [lastChecked, setLastChecked] = useHubSessionState<string | null>("updates.lastChecked",null);
   const busy = useRef(false);
 
   useEffect(() => {

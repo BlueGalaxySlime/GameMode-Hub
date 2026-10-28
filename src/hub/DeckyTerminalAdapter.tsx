@@ -1,5 +1,5 @@
-import { useState } from "react";
 import { DialogBody, DialogButton, DialogControlsSection, DialogControlsSectionHeader, Field, SliderField } from "@decky/ui";
+import { useHubSessionState } from "./useHubSessionState";
 
 /**
  * Emergency safe mode. Do not mount xterm, query Decky RPC or create PTYs.
@@ -9,7 +9,7 @@ import { DialogBody, DialogButton, DialogControlsSection, DialogControlsSectionH
  * but do not execute it until the crash has been isolated.
  */
 export function DeckyTerminalPage({ fontSize: _fontSize }: { fontSize: number }) {
-  const [selected, setSelected] = useState(0);
+  const [selected, setSelected] = useHubSessionState("terminal.selected",0);
   return <DialogBody>
     <DialogControlsSection>
       <DialogControlsSectionHeader>Terminal — tryb bezpieczny</DialogControlsSectionHeader>

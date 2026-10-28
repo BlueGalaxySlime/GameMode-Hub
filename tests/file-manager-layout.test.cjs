@@ -46,3 +46,27 @@ test("no redundant command UI; path tags are constrained", () => {
   assert.deepEqual(Array.from(path, x => x.path), ["/home/deck","/home/deck/Downloads","/home/deck/Downloads/sub"]);
   assert.equal(breadcrumbs("/etc", [{name:"Dom",path:"/home/deck"}]).length, 0);
 });
+
+test("horizontal focus matches physical left/right controls", () => {
+  assert.ok(ui.includes('flow-children="right"'));
+  assert.ok(ui.includes('flow-children="down"'));
+  assert.ok(ui.includes("NavEntryPositionPreferences.MAINTAIN_X"));
+  assert.ok(ui.includes("NavEntryPositionPreferences.MAINTAIN_Y"));
+});
+test("split is limited to the directory browser below the toolbar", () => {
+  const split = ui.indexOf('Only this directory-browser area is split');
+  const toolbar = ui.indexOf('Same compact toolbar as SteamOS settings');
+  const address = ui.indexOf('aria-label="Ścieżka katalogu"');
+  assert.ok(address >= 0 && toolbar > address && split > toolbar);
+  assert.ok(ui.includes("const splitTree = options.splitFileTree"));
+  assert.ok(ui.includes('splitTree ? "row" : "column"'));
+  assert.ok(ui.includes("page.items.filter(entry => entry.directory)"));
+  assert.ok(ui.includes("page.items.filter(entry => !entry.directory)"));
+  assert.ok(ui.includes('maxHeight: "56vh"'));
+});
+test("file view session survives tab switches without reinitializing the path", () => {
+  for(const key of ["files.page", "files.pathDraft", "files.hidden", "files.sortMode",
+      "files.selected", "files.clipboard", "files.action", "files.name"])
+    assert.ok(ui.includes(key), key);
+  assert.ok(ui.includes('if (!page) void load(null, hidden, 0, sortBy, descending);'));
+});

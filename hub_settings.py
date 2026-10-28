@@ -59,3 +59,33 @@ def set_update_channel(channel):
     tmp.write_text(json.dumps({"channel": channel}), encoding="utf-8")
     tmp.replace(UPDATE_CHANNEL_FILE)
     return channel
+
+# Generic settings used by independent frontend modules. Do not persist open
+# file lists or clipboard on disk: only explicit user preferences.
+HUB_PREFERENCES_FILE = SELECTION_FILE.parent / "hub_preferences.json"
+DEFAULT_HUB_PREFERENCES = {"saveSession": True, "splitFileTree": False}
+
+
+def validate_hub_preferences(value):
+    if not isinstance(value, dict) or set(value) != set(DEFAULT_HUB_PREFERENCES):
+        raise ValueError("Nieprawidlowe opcje Huba.")
+    if any(not isinstance(value[key], bool) for key in DEFAULT_HUB_PREFERENCES):
+        raise ValueError("Opcje Huba musza miec wartosc wlacz/wylacz.")
+    return {key: value[key] for key in DEFAULT_HUB_PREFERENCES}
+
+
+def get_hub_preferences():
+    try:
+        data = json.loads(HUB_PREFERENCES_FILE.read_text(encoding="utf-8"))
+        return validate_hub_preferences(data)
+    except (OSError, ValueError, TypeError):
+        return dict(DEFAULT_HUB_PREFERENCES)
+
+
+def set_hub_preferences(value):
+    options = validate_hub_preferences(value)
+    HUB_PREFERENCES_FILE.parent.mkdir(parents=True, exist_ok=True)
+    temp = HUB_PREFERENCES_FILE.with_suffix(".tmp")
+    temp.write_text(json.dumps(options), encoding="utf-8")
+    temp.replace(HUB_PREFERENCES_FILE)
+    return options

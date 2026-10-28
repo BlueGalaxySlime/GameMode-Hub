@@ -9,6 +9,8 @@ import { FaCog, FaFolderOpen, FaHeart, FaHome, FaPlug, FaPuzzlePiece, FaSyncAlt,
 import { withTimeout } from "../utils/withTimeout";
 import { UpdaterPage } from "./UpdaterPage";
 import { FileManagerPage } from "./FileManagerPage";
+import { HubOptionsPage, initializeHubOptions } from "./HubOptionsPage";
+import { useHubSessionState } from "./useHubSessionState";
 import { DeckyTerminalPage, TerminalOptionsPage } from "./DeckyTerminalAdapter";
 import { CreditsPage } from "./CreditsPage";
 import { APP_NAME, DECKY_PLUGIN_NAME, HUB_ROUTE } from "../core/identity";
@@ -140,8 +142,8 @@ function AddonOptions({ name, addon, selected, remove }: {
   selected: boolean;
   remove: () => void;
 }) {
-  const [advanced, setAdvanced] = useState(false);
-  const [manualPanelOpen, setManualPanelOpen] = useState(false);
+  const [advanced, setAdvanced] = useHubSessionState("addon.advanced." + name, false);
+  const [manualPanelOpen, setManualPanelOpen] = useHubSessionState("addon.panel." + name, false);
   const integrated = name === "Decky Manager";
   const originalContent = loadedPluginContent(name);
   const active = !!addon && !addon.disabled;
@@ -191,11 +193,11 @@ function AddonOptions({ name, addon, selected, remove }: {
 }
 
 export function HubPage() {
-  const [selected, setSelected] = useState<string[]>([]);
-  const [installed, setInstalled] = useState<InstalledAddon[]>([]);
+  const [selected, setSelected] = useHubSessionState<string[]>("hub.selected", []);
+  const [installed, setInstalled] = useHubSessionState<InstalledAddon[]>("hub.installed", []);
   const [busy, setBusy] = useState(true);
   const [error, setError] = useState("");
-  const [terminalFontSize, setTerminalFontSize] = useState(15);
+  const [terminalFontSize, setTerminalFontSize] = useHubSessionState("terminal.fontSize", 15);
 
   async function refresh() {
     setBusy(true);
@@ -211,6 +213,7 @@ export function HubPage() {
   }
 
   useEffect(() => {
+    void initializeHubOptions().catch(() => {});
     let mounted = true;
     Promise.allSettled([getSelection(), listInstalledAddons()]).then(([saved, discovery]) => {
       if (!mounted) return;
@@ -247,6 +250,8 @@ export function HubPage() {
         error={error} toggle={toggle} reload={() => { void refresh(); }} /> },
     { title: "Pliki", route: HUB_ROUTE + "/files", icon: <FaFolderOpen />,
       content: <FileManagerPage /> },
+    { title: "Opcje Huba", route: HUB_ROUTE + "/options", icon: <FaCog />,
+      content: <HubOptionsPage /> },
     { title: "Terminal", route: HUB_ROUTE + "/terminal", icon: <FaTerminal />,
       hideTitle: true, padding: "none" as const,
       content: <DeckyTerminalPage fontSize={terminalFontSize} /> },

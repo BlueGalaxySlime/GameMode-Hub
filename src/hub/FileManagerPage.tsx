@@ -1,8 +1,10 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, useSyncExternalStore } from "react";
 import { callable } from "@decky/api";
-import { DialogBody, DialogButton, DialogControlsSection, Focusable, Menu, MenuItem, showContextMenu, TextField, Toggle } from "@decky/ui";
+import { DialogBody, DialogButton, DialogControlsSection, Focusable, Menu, MenuItem, NavEntryPositionPreferences, showContextMenu, TextField, Toggle } from "@decky/ui";
 import { withTimeout } from "../utils/withTimeout";
 import { breadcrumbs } from "../core/filePath";
+import { getHubPreferences, subscribeHubPreferences } from "../core/hubSession";
+import { useHubSessionState } from "./useHubSessionState";
 
 type SortBy = "name" | "type" | "size" | "date";
 type Entry = {
@@ -43,16 +45,20 @@ function readableSize(size: number | null) {
 }
 
 export function FileManagerPage() {
-  const [page, setPage] = useState<DirectoryPage | null>(null);
-  const [pathDraft, setPathDraft] = useState("");
-  const [hidden, setHidden] = useState(false);
-  const [sortBy, setSortBy] = useState<SortBy>("name");
-  const [descending, setDescending] = useState(false);
-  const [sortMode, setSortMode] = useState("name-asc");
-  const [selected, setSelected] = useState<Entry | null>(null);
-  const [clipboard, setClipboard] = useState<Clipboard | null>(null);
-  const [name, setName] = useState("");
-  const [action, setAction] = useState<"folder" | "rename" | null>(null);
+  // Remember the whole browser state across SidebarNavigation tab unmounts.
+  // Clipboard and selection are RAM-only, never serialized to disk.
+  const [page, setPage] = useHubSessionState<DirectoryPage | null>("files.page", null);
+  const [pathDraft, setPathDraft] = useHubSessionState("files.pathDraft", "");
+  const [hidden, setHidden] = useHubSessionState("files.hidden", false);
+  const [sortBy, setSortBy] = useHubSessionState<SortBy>("files.sortBy", "name");
+  const [descending, setDescending] = useHubSessionState("files.descending", false);
+  const [sortMode, setSortMode] = useHubSessionState("files.sortMode", "name-asc");
+  const [selected, setSelected] = useHubSessionState<Entry | null>("files.selected", null);
+  const [clipboard, setClipboard] = useHubSessionState<Clipboard | null>("files.clipboard", null);
+  const [name, setName] = useHubSessionState("files.name", "");
+  const [action, setAction] = useHubSessionState<"folder" | "rename" | null>("files.action", null);
+  const options = useSyncExternalStore(subscribeHubPreferences, getHubPreferences);
+  const splitTree = options.splitFileTree;
   const [message, setMessage] = useState("");
   const [busy, setBusy] = useState(false);
   const request = useRef(0);
@@ -88,7 +94,9 @@ export function FileManagerPage() {
   }
 
   useEffect(() => {
-    void load(null, false);
+    // A restored page already contains its exact path, view mode, selection,
+    // pending edit and clipboard. Do not overwrite it with HOME on tab entry.
+    if (!page) void load(null, hidden, 0, sortBy, descending);
     return () => { request.current++; };
   }, []);
 
@@ -223,8 +231,10 @@ export function FileManagerPage() {
         </div>}
 
         {/* Same compact toolbar as SteamOS settings. Native controller dropdown. */}
-        <div style={{ display: "flex", flexWrap: "wrap", alignItems: "center",
-          gap: 5, width: "100%", minWidth: 0 }}>
+        <Focusable flow-children="right"
+          navEntryPreferPosition={NavEntryPositionPreferences.MAINTAIN_X}
+          style={{ display: "flex", flexWrap: "wrap", alignItems: "center",
+            gap: 5, width: "100%", minWidth: 0 }}>
           {page?.roots.filter(root => !breadcrumbs(page.path, page.roots)
             .some(part => part.path === root.path)).map(root =>
             <div key={root.path} style={{ flex: "0 0 auto", width: "auto" }}>
@@ -255,7 +265,7 @@ export function FileManagerPage() {
               Sortuj: {sortOptions.find(option => option.data === sortMode)?.label ?? "Nazwa A–Z"} ▾
             </DialogButton>
           </div>
-        </div>
+        </Focusable>
 
         {action === "folder" && <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
           <TextField value={name} placeholder="Nazwa folderu"
@@ -278,70 +288,127 @@ export function FileManagerPage() {
           </DialogButton>
         </div>}
 
-        {/* A opens folders or marks a file. Y opens SteamOS popup options.
-            The list never expands when selecting a file. */}
-        {page && <div style={{ display: "flex", flexDirection: "column", gap: 3,
-          width: "100%", minWidth: 0 }}>
-          {page.items.map(entry =>
-            <div key={entry.path} style={{ width: "100%", minWidth: 0 }}>
-              {selected?.path === entry.path && action === "rename" ? (
-                <div style={{ display: "flex", alignItems: "center", gap: 5, minWidth: 0 }}>
-                  <div style={{ flex: "1 1 0", minWidth: 0 }}>
-                    <TextField value={name} aria-label="Nowa nazwa"
-                      onChange={event => setName(event.target.value)}
-                      onKeyDown={event => {
-                        if (event.key === "Enter" && name.trim()) {
-                          event.preventDefault();
-                          void operate("rename");
-                        }
-                        if (event.key === "Escape") setAction(null);
-                      }} />
-                  </div>
-                  <div style={{ flex: "0 0 auto" }}>
+        {/* Only this directory-browser area is split, never the toolbar or Hub. */}
+        {page && <Focusable flow-children={splitTree ? "right" : undefined}
+          navEntryPreferPosition={NavEntryPositionPreferences.MAINTAIN_Y}
+          style={{ display: "flex", flexDirection: splitTree ? "row" : "column",
+            alignItems: "stretch", gap: splitTree ? 8 : 0,
+            width: "100%", minWidth: 0 }}>
+          {splitTree && <Focusable flow-children="down"
+            navEntryPreferPosition={NavEntryPositionPreferences.MAINTAIN_Y}
+            style={{ width: "34%", minWidth: 125, flex: "0 0 34%",
+              paddingRight: 7, borderRight: "1px solid #444",
+              maxHeight: "56vh", overflowY: "auto", display: "flex",
+              flexDirection: "column", gap: 3 }}>
+            <DialogButton disabled={busy || !page.parent}
+              onOKActionDescription="W górę"
+              style={{ width: "100%", minWidth: 0, textAlign: "left", padding: "6px 8px" }}
+              onClick={() => { if (page.parent) void load(page.parent, hidden); }}>..</DialogButton>
+            {page.items.filter(entry => entry.directory).map(entry =>
+              selected?.path === entry.path && action === "rename"
+                ? <Focusable key={entry.path} flow-children="right"
+                    navEntryPreferPosition={NavEntryPositionPreferences.MAINTAIN_X}
+                    style={{ display: "flex", gap: 3, alignItems: "center" }}>
+                    <div style={{ flex: "1 1 0", minWidth: 0 }}>
+                      <TextField value={name} aria-label="Nowa nazwa katalogu"
+                        onChange={event => setName(event.target.value)}
+                        onKeyDown={event => {
+                          if (event.key === "Enter" && name.trim()) {
+                            event.preventDefault();
+                            void operate("rename");
+                          }
+                          if (event.key === "Escape") setAction(null);
+                        }} />
+                    </div>
                     <DialogButton disabled={busy || !name.trim()}
-                      style={{ minWidth: 0, width: "auto", padding: "5px 9px" }}
-                      aria-label="Zapisz nazwę" onClick={() => void operate("rename")}>✓</DialogButton>
-                  </div>
-                  <div style={{ flex: "0 0 auto" }}>
-                    <DialogButton disabled={busy}
-                      style={{ minWidth: 0, width: "auto", padding: "5px 9px" }}
-                      aria-label="Anuluj zmianę nazwy" onClick={() => setAction(null)}>×</DialogButton>
-                  </div>
-                </div>
-              ) : (
-                <DialogButton disabled={busy || entry.symlink}
-                  onOKActionDescription={entry.directory ? "Otwórz" : "Zaznacz"}
-                  onOptionsActionDescription="Opcje"
-                  onOptionsButton={event => openFileMenu(entry, event.currentTarget ?? window)}
-                  style={{ width: "100%", minWidth: 0, textAlign: "left",
-                    padding: "7px 9px",
-                    background: selected?.path === entry.path ? "#426b99" : undefined }}
-                  onClick={() => {
-                    if (entry.directory) void load(entry.path, hidden);
-                    else {
-                      setSelected(entry);
-                      setAction(null);
-                      setName(entry.name);
-                    }
-                  }}>
-                  <span style={{ display: "flex", gap: 7, alignItems: "center",
-                    width: "100%", minWidth: 0 }}>
-                    <span aria-hidden="true">{entry.directory ? "📁" :
-                      entry.symlink ? "🔗" : "📄"}</span>
-                    <span style={{ flex: 1, minWidth: 0, textAlign: "left",
-                      overflow: "hidden", whiteSpace: "nowrap",
-                      textOverflow: "ellipsis" }}>{entry.name}</span>
-                    {!entry.directory && !entry.symlink &&
-                      <span style={{ fontSize: 11, opacity: 0.7, flexShrink: 0 }}>
-                        {readableSize(entry.size)}
-                      </span>}
-                  </span>
-                </DialogButton>
-              )}
-            </div>)}
-          {page.items.length === 0 && !busy &&
-            <div style={{ opacity: 0.7, padding: 6 }}>Pusty folder</div>}
-        </div>}
+                      style={{ minWidth: 0, width: "auto", padding: "5px" }}
+                      onClick={() => void operate("rename")}>✓</DialogButton>
+                  </Focusable>
+                : <DialogButton key={entry.path} disabled={busy || entry.symlink}
+                    onOKActionDescription="Otwórz"
+                    onOptionsActionDescription="Opcje"
+                    onOptionsButton={event => openFileMenu(entry, event.currentTarget ?? window)}
+                    style={{ width: "100%", minWidth: 0, textAlign: "left", padding: "6px 7px",
+                      background: selected?.path === entry.path ? "#426b99" : undefined }}
+                    onClick={() => void load(entry.path, hidden)}>
+                    <span style={{ display: "flex", minWidth: 0, gap: 5, alignItems: "center" }}>
+                      <span aria-hidden="true">📁</span>
+                      <span style={{ overflow: "hidden", textOverflow: "ellipsis",
+                        whiteSpace: "nowrap" }}>{entry.name}</span>
+                    </span>
+                  </DialogButton>)}
+          </Focusable>}
+          <Focusable flow-children="down"
+            navEntryPreferPosition={NavEntryPositionPreferences.MAINTAIN_Y}
+            style={{ display: "flex", flexDirection: "column", gap: 3,
+              flex: "1 1 0", minWidth: 0,
+              maxHeight: splitTree ? "56vh" : undefined,
+              overflowY: splitTree ? "auto" : undefined }}>
+            {(splitTree ? page.items.filter(entry => !entry.directory) : page.items)
+              .map(entry =>
+              <div key={entry.path} style={{ width: "100%", minWidth: 0 }}>
+                {selected?.path === entry.path && action === "rename" ? (
+                  <Focusable flow-children="right"
+                    navEntryPreferPosition={NavEntryPositionPreferences.MAINTAIN_X}
+                    style={{ display: "flex", alignItems: "center", gap: 5, minWidth: 0 }}>
+                    <div style={{ flex: "1 1 0", minWidth: 0 }}>
+                      <TextField value={name} aria-label="Nowa nazwa"
+                        onChange={event => setName(event.target.value)}
+                        onKeyDown={event => {
+                          if (event.key === "Enter" && name.trim()) {
+                            event.preventDefault();
+                            void operate("rename");
+                          }
+                          if (event.key === "Escape") setAction(null);
+                        }} />
+                    </div>
+                    <div style={{ flex: "0 0 auto" }}>
+                      <DialogButton disabled={busy || !name.trim()}
+                        style={{ minWidth: 0, width: "auto", padding: "5px 9px" }}
+                        aria-label="Zapisz nazwę" onClick={() => void operate("rename")}>✓</DialogButton>
+                    </div>
+                    <div style={{ flex: "0 0 auto" }}>
+                      <DialogButton disabled={busy}
+                        style={{ minWidth: 0, width: "auto", padding: "5px 9px" }}
+                        aria-label="Anuluj zmianę nazwy"
+                        onClick={() => setAction(null)}>×</DialogButton>
+                    </div>
+                  </Focusable>
+                ) : (
+                  <DialogButton disabled={busy || entry.symlink}
+                    onOKActionDescription={entry.directory ? "Otwórz" : "Zaznacz"}
+                    onOptionsActionDescription="Opcje"
+                    onOptionsButton={event => openFileMenu(entry, event.currentTarget ?? window)}
+                    style={{ width: "100%", minWidth: 0, textAlign: "left",
+                      padding: "7px 9px",
+                      background: selected?.path === entry.path ? "#426b99" : undefined }}
+                    onClick={() => {
+                      if (entry.directory) void load(entry.path, hidden);
+                      else {
+                        setSelected(entry);
+                        setAction(null);
+                        setName(entry.name);
+                      }
+                    }}>
+                    <span style={{ display: "flex", gap: 7, alignItems: "center",
+                      width: "100%", minWidth: 0 }}>
+                      <span aria-hidden="true">{entry.directory ? "📁" :
+                        entry.symlink ? "🔗" : "📄"}</span>
+                      <span style={{ flex: 1, minWidth: 0, textAlign: "left",
+                        overflow: "hidden", whiteSpace: "nowrap",
+                        textOverflow: "ellipsis" }}>{entry.name}</span>
+                      {!entry.directory && !entry.symlink &&
+                        <span style={{ fontSize: 11, opacity: 0.7, flexShrink: 0 }}>
+                          {readableSize(entry.size)}
+                        </span>}
+                    </span>
+                  </DialogButton>
+                )}
+              </div>)}
+            {page.items.length === 0 && !busy &&
+              <div style={{ opacity: 0.7, padding: 6 }}>Pusty folder</div>}
+          </Focusable>
+        </Focusable>}
 
         {page && page.total > page.limit &&
           <div style={{ display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap" }}>
