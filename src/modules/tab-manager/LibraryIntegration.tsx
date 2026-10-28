@@ -206,19 +206,6 @@ function virtualCollection(tab: TabDefinition) {
   };
 }
 
-function nativeHubTab(): SteamTab {
-  return {
-    id: "GameModeHub",
-    title: "GameMode Hub",
-    content: <div style={{ padding: "24px", maxWidth: "860px" }}>
-      <h2>GameMode Hub</h2>
-      <p>Zarządzanie modułami GameMode Hub jest dostępne w menu Decky.</p>
-      <p>Tab Manager · Biblioteka SteamOS</p>
-    </div>,
-    renderTabAddon: () => null
-  };
-}
-
 /** Uses Steam's original grid component rather than constructing a separate collection tab. */
 function mergeLibraryTabs(tabs: SteamTab[], deps: any[]): SteamTab[] {
   // Recheck at render time in case TabMaster was enabled after this patch.
@@ -227,7 +214,6 @@ function mergeLibraryTabs(tabs: SteamTab[], deps: any[]): SteamTab[] {
   if (!template) return tabs;
   // Never replace Steam's own tabs or objects; TabManager only appends additions.
   const result = [...tabs];
-  if (!result.some(tab => tab.id === "SteamHub")) result.push(nativeHubTab());
 
   const configured = definitions.filter(tab => !tab.hidden);
   if (!configured.length) return result;
