@@ -109,7 +109,7 @@ export function FileManagerPage() {
     if (!enabled) {
       activePaneRef.current = "left";
       setActivePane("left");
-      setPathDraft(currentPage?.path ?? "");
+      setPathDraft(page?.path ?? "");
       setEditingPath(false);
     }
     const previous = getHubPreferences();
@@ -182,7 +182,7 @@ export function FileManagerPage() {
     }
   }
 
-    async function operate(operation: "mkdir" | "rename" | "paste") {
+  async function operate(operation: "mkdir" | "rename" | "paste") {
     if (!currentPage || locked.current) return;
     const directory = currentPage;
     const pane = currentPane;
