@@ -47,7 +47,7 @@ class DesktopAppsTests(unittest.TestCase):
         self.assertEqual(desktop_apps.list_desktop_apps(), [])
 
     def test_saved_favorites_shortcuts_and_stale_cleanup(self):
-        self.assertEqual(desktop_apps.get_desktop_state(), {"apps": {}, "temporary": []})
+        self.assertEqual(desktop_apps.get_desktop_state(), {"apps": {}, "temporary": [], "views": []})
         desktop_apps.set_desktop_setting("org.test.App", "favorite", True)
         desktop_apps.set_desktop_setting("org.test.App", "shortcut", 123)
         desktop_apps.remember_temporary_shortcut(456)
