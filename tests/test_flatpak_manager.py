@@ -200,3 +200,34 @@ class SystemFlatpakTaskTests(unittest.TestCase):
             ["flatpak", "--system", "update", "--noninteractive",
              "--assumeyes", "org.mozilla.firefox"])
         self.assertNotIn("sudo", repr(popen.call_args))
+
+
+class HeroicDetectionTests(unittest.TestCase):
+    def test_detects_existing_heroic_in_user_or_system_flatpaks(self):
+        for installation in ("user", "system", "default"):
+            with self.subTest(installation=installation), \
+                 patch.object(fm.os, "geteuid", return_value=1000), \
+                 patch.object(fm, "_installed", return_value=[
+                     {"id": fm.HEROIC_ID, "installation": installation}]):
+                status = fm.heroic_installed()
+                self.assertTrue(status["installed"])
+                self.assertEqual(status["installations"], [installation])
+
+    def test_does_not_mistake_other_flatpaks_for_heroic(self):
+        with patch.object(fm.os, "geteuid", return_value=1000), \
+             patch.object(fm, "_installed", return_value=[
+                 {"id": "org.mozilla.firefox", "installation": "user"}]):
+            status = fm.heroic_installed()
+        self.assertFalse(status["installed"])
+        self.assertEqual(status["installations"], [])
+
+    def test_detects_both_installation_scopes_without_installing(self):
+        with patch.object(fm.os, "geteuid", return_value=1000), \
+             patch.object(fm, "_installed", return_value=[
+                 {"id": fm.HEROIC_ID, "installation": "system"},
+                 {"id": fm.HEROIC_ID, "installation": "user"}]), \
+             patch.object(fm.subprocess, "Popen") as install:
+            status = fm.heroic_installed()
+        self.assertEqual(status["installations"], ["system", "user"])
+        install.assert_not_called()
+
