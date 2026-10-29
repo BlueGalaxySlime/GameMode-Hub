@@ -10,7 +10,7 @@ import os
 import tempfile
 import unittest
 
-import lan_transfer
+from backend.files import lan_transfer
 
 
 class TransferTests(unittest.TestCase):

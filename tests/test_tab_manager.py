@@ -6,7 +6,7 @@ import unittest
 from pathlib import Path
 from unittest.mock import patch
 
-import tab_manager
+from backend.library import tab_manager
 import main
 
 

@@ -4,7 +4,7 @@ import unittest
 from pathlib import Path
 from unittest.mock import patch
 
-import desktop_apps
+from backend.apps import desktop_apps
 
 
 class DesktopAppsTests(unittest.TestCase):

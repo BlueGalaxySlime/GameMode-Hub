@@ -16,7 +16,7 @@ import stat
 from urllib.parse import quote, unquote
 from uuid import uuid4
 
-from file_manager import _allowed_roots, _guard_write
+from backend.files.file_manager import _allowed_roots, _guard_write
 
 MAX_TRASH_ITEMS = 100
 _TRASH_ID = re.compile(r"^gmh-[a-f0-9]{32}-.{1,200}$", re.DOTALL)

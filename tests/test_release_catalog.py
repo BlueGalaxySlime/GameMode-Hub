@@ -1,6 +1,6 @@
 """No hardware access required: update channels and downgrade validation."""
 import unittest
-import release_catalog
+from backend.core import release_catalog
 
 
 def entry(tag, prerelease=True):

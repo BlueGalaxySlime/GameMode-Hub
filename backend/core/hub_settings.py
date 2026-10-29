@@ -106,7 +106,7 @@ MAX_FAVORITES = 32
 def validate_favorites(paths):
     if not isinstance(paths, list) or len(paths) > MAX_FAVORITES:
         raise ValueError("Nieprawidłowa lista ulubionych folderów.")
-    from file_manager import _normalize
+    from backend.files.file_manager import _normalize
     result = []
     for path in paths:
         if not isinstance(path, str) or len(path) > 4096:
@@ -126,7 +126,7 @@ def get_favorite_folders():
         if not isinstance(data, list):
             return []
         # A removed disk/mounted drive may temporarily be inaccessible.
-        from file_manager import _normalize
+        from backend.files.file_manager import _normalize
         result = []
         for value in data[:MAX_FAVORITES]:
             try:

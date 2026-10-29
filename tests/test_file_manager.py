@@ -4,7 +4,7 @@ import tempfile
 import unittest
 from pathlib import Path
 from unittest.mock import patch
-import file_manager
+from backend.files import file_manager
 
 
 class FileManagerTests(unittest.TestCase):

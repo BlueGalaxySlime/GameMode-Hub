@@ -11,7 +11,7 @@ import threading
 import time
 from pathlib import Path
 
-from flatpak_manager import UPDATE_TASK, HEROIC_INSTALL_TASK, HEROIC_ID, APP_ID
+from backend.apps.flatpak_manager import UPDATE_TASK, HEROIC_INSTALL_TASK, HEROIC_ID, APP_ID
 
 STATE_FILE = Path.home() / ".config" / "gamemodehub" / "downloads.json"
 ACTIVE_STATES = ("queued", "preparing", "running", "cancelling")
@@ -211,7 +211,7 @@ class DownloadManager:
                         if status["state"] == "success":
                             # Mark the cached status stale; don't run network
                             # calls as a side effect of installing an update.
-                            from update_checks import UPDATE_CHECKS
+                            from backend.downloads.update_checks import UPDATE_CHECKS
                             UPDATE_CHECKS.invalidate("flatpak")
                         break
                     time.sleep(1)

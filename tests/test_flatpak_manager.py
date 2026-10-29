@@ -1,7 +1,7 @@
 """Flatpak safety: no root, no shell, no system update, no arbitrary refs."""
 import unittest
 from unittest.mock import patch, Mock
-import flatpak_manager as fm
+from backend.apps import flatpak_manager as fm
 
 
 class FlatpakTests(unittest.TestCase):

@@ -24,7 +24,7 @@ test("apps are detected by backend and launched using Steam shortcuts", () => {
     "desktop_remember_temporary", "desktop_forget_temporary"]) {
     assert.ok(backend.includes("async def " + rpc + "("), rpc);
   }
-  assert.ok(bundle.includes('"desktop_apps.py"'));
+  assert.ok(bundle.includes('rglob("*.py")') && fs.existsSync('backend/apps/desktop_apps.py'));
   assert.ok(page.includes('createSteamDesktopShortcut(app, "system", stored.apps[app.id]?.display_profile ?? "default")'));
   assert.ok(launch.includes('SteamClient.Apps.RunGame('));
   assert.ok(launch.includes('RegisterForAppLifetimeNotifications'));
@@ -181,7 +181,7 @@ test("Desktop View exposes readable auto rules and per-app category overrides", 
 
 test("Desktop Rules View offers confirmation before reset to auto", () => {
   const rules = fs.readFileSync("src/hub/DesktopRulesDialog.tsx", "utf8");
-  const data = fs.readFileSync("desktop_apps.py", "utf8");
+  const data = fs.readFileSync("backend/apps/desktop_apps.py", "utf8");
   assert.ok(page.includes('Resetuj do automatycznych'));
   assert.ok(page.includes('onSelected={openResetRules}'));
   assert.ok(page.includes('disabled={busy || !!working || !hasManualOverrides}'));
@@ -210,7 +210,7 @@ test("Reset modal uses left/right gamepad navigation and opens only once", () =>
 
 test("Flatpak actions are in Desktop Y menus; system update remains read-only", () => {
   const flatpak = fs.readFileSync("src/hub/FlatpakManagerDialog.tsx", "utf8");
-  const backend = fs.readFileSync("flatpak_manager.py", "utf8");
+  const backend = fs.readFileSync("backend/apps/flatpak_manager.py", "utf8");
   assert.ok(page.includes('<MenuGroup label="Flatpak">'));
   assert.ok(page.includes('openFlatpakManager(app.id)'));
   const menu = page.slice(page.indexOf('function openDesktopMenu('), page.indexOf('const activeCategory ='));
@@ -267,7 +267,7 @@ test("Report fields are native focusable Steam rows with A editing, B exiting", 
 });
 test("Flatpak checks keep their status and global updates live in the separate module", () => {
   const flatpak = fs.readFileSync("src/hub/FlatpakManagerDialog.tsx", "utf8");
-  const py = fs.readFileSync("flatpak_manager.py", "utf8");
+  const py = fs.readFileSync("backend/apps/flatpak_manager.py", "utf8");
   assert.ok(page.includes('useFlatpakChecks()'));
   assert.ok(page.includes('Dostępne aktualizacje: '));
   assert.ok(page.includes('Brak aktualizacji'));
@@ -284,7 +284,7 @@ test("Flatpak checks keep their status and global updates live in the separate m
 
 test("Flatpak task does not lock modal and all user updates run in one process", () => {
   const dialog = fs.readFileSync("src/hub/FlatpakManagerDialog.tsx", "utf8");
-  const svc = fs.readFileSync("flatpak_manager.py", "utf8");
+  const svc = fs.readFileSync("backend/apps/flatpak_manager.py", "utf8");
   assert.ok(dialog.includes('onCancel={() => closeModal?.()}'));
   assert.ok(dialog.includes('<DialogButton onClick={() => closeModal?.()}>Zamknij</DialogButton>'));
   assert.ok(dialog.includes('enqueueFlatpakDownload(target, scope)'));
@@ -298,7 +298,7 @@ test("Flatpak task does not lock modal and all user updates run in one process",
 
 test("Downloads is a separate Decky/Hub screen backed by nonblocking queue", () => {
   const quick = fs.readFileSync("src/index.tsx", "utf8");
-  const manager = fs.readFileSync("downloads_manager.py", "utf8");
+  const manager = fs.readFileSync("backend/downloads/downloads_manager.py", "utf8");
   const downloads = fs.readFileSync("src/hub/DownloadsPage.tsx", "utf8");
   const flatpak = fs.readFileSync("src/hub/FlatpakManagerDialog.tsx", "utf8");
   assert.ok(quick.includes('<PanelSection title="Pobieranie">'));
@@ -313,13 +313,13 @@ test("Downloads is a separate Decky/Hub screen backed by nonblocking queue", () 
   assert.ok(manager.includes('STATE_FILE = Path.home()'));
   assert.ok(manager.includes('threading.Thread('));
   assert.ok(manager.includes('if existing is not None:'));
-  assert.ok(bundle.includes('"downloads_manager.py"'));
+  assert.ok(bundle.includes('rglob("*.py")') && fs.existsSync('backend/downloads/downloads_manager.py'));
 });
  
 test("System Firefox can be updated and bulk includes all installations", () => {
   const ui = fs.readFileSync("src/hub/FlatpakManagerDialog.tsx", "utf8");
-  const backend = fs.readFileSync("flatpak_manager.py", "utf8");
-  const queue = fs.readFileSync("downloads_manager.py", "utf8");
+  const backend = fs.readFileSync("backend/apps/flatpak_manager.py", "utf8");
+  const queue = fs.readFileSync("backend/downloads/downloads_manager.py", "utf8");
   assert.ok(ui.includes('Aktualizuj wszystkie dostępne ({total})'));
   assert.ok(ui.includes('Systemowe: {systemUpdates}'));
   assert.ok(ui.includes('scope: item.installation === "user" ? "user" : "system"'));
@@ -346,7 +346,7 @@ test("Desktop returns X focus after editing while leaving B at root to SteamOS",
 test("Updates groups Hub hotfix, Flatpak and future independent sources", () => {
   const tabs = fs.readFileSync("src/hub/UpdatesPage.tsx", "utf8");
   const hook = fs.readFileSync("src/hub/flatpakChecks.ts", "utf8");
-  const checks = fs.readFileSync("update_checks.py", "utf8");
+  const checks = fs.readFileSync("backend/downloads/update_checks.py", "utf8");
   assert.ok(hub.includes('content: <UpdatesPage />'));
   assert.ok(tabs.includes('<UpdaterPage />')); // no changes to hotfix installer
   assert.ok(tabs.includes('>Flatpak</DialogButton>'));
@@ -357,12 +357,12 @@ test("Updates groups Hub hotfix, Flatpak and future independent sources", () => 
   assert.ok(checks.includes('CHECK_INTERVALS = {"flatpak": 24 * 60 * 60}'));
   assert.ok(checks.includes('"checked_at":'));
   assert.ok(checks.includes('"next_check_at":'));
-  assert.ok(bundle.includes('"update_checks.py"'));
+  assert.ok(bundle.includes('rglob("*.py")') && fs.existsSync('backend/downloads/update_checks.py'));
 });
 test("Three runtime states and opt-in DEV are independent of the UI", () => {
   const opts = fs.readFileSync("src/hub/HubOptionsPage.tsx", "utf8");
-  const runtime = fs.readFileSync("runtime_state.py", "utf8");
-  const prefs = fs.readFileSync("hub_settings.py", "utf8");
+  const runtime = fs.readFileSync("backend/core/runtime_state.py", "utf8");
+  const prefs = fs.readFileSync("backend/core/hub_settings.py", "utf8");
   assert.ok(opts.includes('label="Tryb DEV"'));
   assert.ok(opts.includes('options.developerMode'));
   assert.ok(runtime.includes('"active" if ui_open else "background" if active_downloads else "sleeping"'));
@@ -400,7 +400,7 @@ test("Reports title has a visible live counter without new custom boxes", () => 
 });
 test("ProtonDB is independent and retrieves badges only on explicit user action", () => {
   const page = fs.readFileSync("src/hub/ProtonDBPage.tsx", "utf8");
-  const badges = fs.readFileSync("protondb_badges.py", "utf8");
+  const badges = fs.readFileSync("backend/library/protondb_badges.py", "utf8");
   assert.ok(hub.includes('title: "Optymalizacja"'));
   assert.ok(fs.readFileSync("src/hub/UiPage.tsx", "utf8").includes('<ProtonDBPage />'));
   assert.ok(page.includes('Client = "auto" | "steam" | "gog" | "epic" | "heroic" | "lutris" | "bottles"'));
@@ -415,11 +415,11 @@ test("ProtonDB is independent and retrieves badges only on explicit user action"
   assert.ok(badges.includes('www.protondb.com/api/v1/reports/summaries/'));
   assert.ok(!badges.includes('shell=True'));
   assert.ok(backend.includes('async def protondb_get_badge('));
-  assert.ok(bundle.includes('"protondb_badges.py"'));
+  assert.ok(bundle.includes('rglob("*.py")') && fs.existsSync('backend/library/protondb_badges.py'));
 });
 
 test("built-in desktop views cannot be renamed or deleted, custom ones can", () => {
-  const python = fs.readFileSync("desktop_apps.py", "utf8");
+  const python = fs.readFileSync("backend/apps/desktop_apps.py", "utf8");
   const dialog = fs.readFileSync("src/hub/DesktopViewDialog.tsx", "utf8");
   assert.ok(page.includes('const categories: { key: Category; label: string }[]'));
   assert.ok(page.includes('<MenuGroup label="Własne">'));
@@ -435,8 +435,8 @@ test("built-in desktop views cannot be renamed or deleted, custom ones can", () 
 
 test("Heroic is the only Add-ons module and install is confirmed before background download", () => {
   const addons = fs.readFileSync("src/hub/HubAddonsPage.tsx", "utf8");
-  const python = fs.readFileSync("flatpak_manager.py", "utf8");
-  const downloads = fs.readFileSync("downloads_manager.py", "utf8");
+  const python = fs.readFileSync("backend/apps/flatpak_manager.py", "utf8");
+  const downloads = fs.readFileSync("backend/downloads/downloads_manager.py", "utf8");
   assert.ok(hub.includes('content: <HubAddonsPage />'));
   assert.ok(hub.indexOf('title: "Dodatki"') > hub.indexOf('title: "Zgłoszenia"'));
   assert.ok(!hub.includes('...selected.map(name => ({'));

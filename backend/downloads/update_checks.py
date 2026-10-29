@@ -8,7 +8,7 @@ import threading
 import time
 from pathlib import Path
 
-from flatpak_manager import flatpak_overview
+from backend.apps.flatpak_manager import flatpak_overview
 
 CHECK_STATE_FILE = Path.home() / ".config" / "gamemodehub" / "update_checks.json"
 CHECK_INTERVALS = {"flatpak": 24 * 60 * 60}

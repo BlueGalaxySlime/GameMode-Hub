@@ -4,7 +4,7 @@ import unittest
 from pathlib import Path
 from unittest.mock import patch
 
-import game_view_settings as settings
+from backend.library import game_view_settings as settings
 
 
 class UnifiedUiTests(unittest.TestCase):

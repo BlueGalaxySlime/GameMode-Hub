@@ -3,7 +3,7 @@ import unittest
 from pathlib import Path
 from urllib.error import HTTPError
 
-from protondb_badges import ProtonDBBadgeCache, validate_app_id
+from backend.library.protondb_badges import ProtonDBBadgeCache, validate_app_id
 
 
 class ProtonDBTests(unittest.TestCase):

@@ -5,7 +5,7 @@ import time
 import unittest
 from pathlib import Path
 
-from update_checks import UpdateChecks
+from backend.downloads.update_checks import UpdateChecks
 
 
 class UpdateChecksTests(unittest.TestCase):
@@ -21,7 +21,7 @@ class UpdateChecksTests(unittest.TestCase):
             self.finished.set()
             return {"apps": [{"id": "org.mozilla.firefox", "updateable": True}], "error": ""}
 
-        self.path = Path(self.temp.name) / "update_checks.json"
+        self.path = Path(self.temp.name) / "backend.downloads.update_checks.json"
         self.checker = UpdateChecks({"flatpak": fake}, self.path, clock=lambda: self.t[0])
 
     def await_status(self, state):

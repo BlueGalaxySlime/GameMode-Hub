@@ -1,6 +1,6 @@
 """The three states add no background sampler."""
 import unittest
-import runtime_state
+from backend.core import runtime_state
 
 
 class RuntimeStateTests(unittest.TestCase):

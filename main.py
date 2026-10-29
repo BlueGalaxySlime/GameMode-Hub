@@ -16,34 +16,34 @@ _PLUGIN_ROOT = str(Path(__file__).resolve().parent)
 if _PLUGIN_ROOT not in sys.path:
     sys.path.insert(0, _PLUGIN_ROOT)
 
-from hub_settings import (
+from backend.core.hub_settings import (
     get_selected_addons, set_selected_addons, get_update_channel, set_update_channel,
     get_hub_preferences, set_hub_preferences,
     get_favorite_folders, set_favorite_folders,
 )
-from release_catalog import RELEASES_API as RELEASE_CATALOG_API, catalog, validate_channel
-from file_manager import listing as list_files, create_folder, rename_entry, paste_entry, paste_entries
-from desktop_apps import (list_desktop_apps, get_desktop_state, set_desktop_setting,
+from backend.core.release_catalog import RELEASES_API as RELEASE_CATALOG_API, catalog, validate_channel
+from backend.files.file_manager import listing as list_files, create_folder, rename_entry, paste_entry, paste_entries
+from backend.apps.desktop_apps import (list_desktop_apps, get_desktop_state, set_desktop_setting,
                           reset_desktop_categories, remember_temporary_shortcut,
                           forget_temporary_shortcut, manage_desktop_view)
-from trash_manager import trash_entry, list_trash, restore_entry
-from lan_transfer import TransferManager
-from flatpak_manager import flatpak_overview, flatpak_update_user, flatpak_update_all_user, heroic_installed
-from downloads_manager import DOWNLOADS
-from update_checks import UPDATE_CHECKS
-from protondb_badges import BADGES
-from game_view_settings import (
+from backend.files.trash_manager import trash_entry, list_trash, restore_entry
+from backend.files.lan_transfer import TransferManager
+from backend.apps.flatpak_manager import flatpak_overview, flatpak_update_user, flatpak_update_all_user, heroic_installed
+from backend.downloads.downloads_manager import DOWNLOADS
+from backend.downloads.update_checks import UPDATE_CHECKS
+from backend.library.protondb_badges import BADGES
+from backend.library.game_view_settings import (
     get_options as game_view_options,
     set_options as game_view_save_options,
     get_mapping as game_view_mapping,
     set_mapping as game_view_save_mapping,
 )
-from runtime_state import set_hub_ui_open, get_runtime_state, diagnostics as runtime_diagnostics
-import tab_manager
-import collection_manager
-import library_backup
+from backend.core.runtime_state import set_hub_ui_open, get_runtime_state, diagnostics as runtime_diagnostics
+from backend.library import tab_manager
+from backend.library import collection_manager
+from backend.library import library_backup
 
-CURRENT_VERSION = "0.5.55"
+CURRENT_VERSION = "0.5.56"
 RELEASES_API = "https://api.github.com/repos/BlueGalaxySlime/GameMode-Hub/releases/latest"
 ASSET_NAME = "GameMode-Hub.zip"
 

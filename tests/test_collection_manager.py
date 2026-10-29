@@ -5,8 +5,8 @@ import unittest
 from pathlib import Path
 from unittest.mock import patch
 
-import collection_manager
-import tab_manager
+from backend.library import collection_manager
+from backend.library import tab_manager
 import main
 
 
