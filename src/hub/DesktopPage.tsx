@@ -10,6 +10,7 @@ import { useHubSessionState } from "./useHubSessionState";
 import { HubTextInput, openHubTextMenu } from "./HubTextInput";
 import { effectiveDesktopCategory, filterDesktopApps } from "../core/desktopCatalog";
 import { DesktopRulesDialog, ResetDesktopRulesDialog } from "./DesktopRulesDialog";
+import { DesktopViewDialog } from "./DesktopViewDialog";
 import { FlatpakManagerDialog } from "./FlatpakManagerDialog";
 import { useFlatpakChecks } from "./flatpakChecks";
 import type { DesktopCategory, DesktopSort } from "../core/desktopCatalog";
@@ -26,13 +27,17 @@ type SavedApp = {
   favorite?: boolean; hidden?: boolean; shortcut?: number | null; lastOpened?: number | null;
   category?: "auto" | "flatpak" | "system"; display_profile?: DesktopDisplayProfile;
 };
-type DesktopState = { apps: Record<string, SavedApp>; temporary: number[] };
-type Category = DesktopCategory;
+type CustomView = { id: string; name: string; appIds: string[] };
+type DesktopState = { apps: Record<string, SavedApp>; temporary: number[]; views?: CustomView[] };
+type Category = DesktopCategory | `custom:${string}`;
+type ViewAction = "create" | "rename" | "delete" | "toggle_app";
 
 const listDesktopApps = callable<[], DesktopApp[]>("desktop_list_apps");
 const readState = callable<[], DesktopState>("desktop_get_state");
 const updateSetting = callable<[string, string, boolean | number | string | null], SavedApp>("desktop_set_setting");
 const resetDesktopCategories = callable<[], { reset: number; state: DesktopState }>("desktop_reset_categories");
+const editView = callable<[ViewAction, string | null, string | null, string | null],
+  { views: CustomView[]; view_id: string }>("desktop_manage_view");
  const rememberTemporary = callable<[number], number[]>("desktop_remember_temporary");
 const forgetTemporary = callable<[number], number[]>("desktop_forget_temporary");
 
@@ -71,6 +76,7 @@ export function DesktopPage() {
   const categorySavingRef = useRef(false);
   const rulesModalOpenRef = useRef(false);
   const flatpakModalOpenRef = useRef(false);
+  const viewModalOpenRef = useRef(false);
   const { data: flatpakStatus, refresh: checkFlatpakUpdates } = useFlatpakChecks();
 
   async function refresh() {
@@ -331,6 +337,44 @@ export function DesktopPage() {
     }, 0);
   }
 
+  async function saveView(action: ViewAction, viewId: string | null = null,
+                          name: string | null = null, appId: string | null = null) {
+    const response = await withTimeout(editView(action, viewId, name, appId), 8000);
+    setStored(old => ({ ...old, views: response.views }));
+    if (action === "create") changeCategory("custom:" + response.view_id);
+    if (action === "delete" && category === "custom:" + viewId) changeCategory("all");
+  }
+
+  function openViewDialog(mode: "create" | "rename" | "delete", view?: CustomView) {
+    if (viewModalOpenRef.current) return;
+    viewModalOpenRef.current = true;
+    window.setTimeout(() => {
+      try {
+        const modal = showModal(<DesktopViewDialog mode={mode} currentName={view?.name ?? ""}
+          onConfirm={name => saveView(mode, view?.id ?? null, name)} />);
+        void modal.ClosedPromise.finally(() => { viewModalOpenRef.current = false; });
+      } catch {
+        viewModalOpenRef.current = false;
+        setMessage("Nie udało się otworzyć edycji widoku.");
+      }
+    }, 0);
+  }
+
+  async function toggleInView(app: DesktopApp, view: CustomView) {
+    if (working) return;
+    setWorking(app.id);
+    try {
+      await saveView("toggle_app", view.id, null, app.id);
+      setMessage(view.appIds.includes(app.id)
+        ? "Usunięto z widoku „" + view.name + "”."
+        : "Dodano do widoku „" + view.name + "”.");
+    } catch (reason) {
+      setMessage("Nie zapisano własnego widoku: " + String(reason));
+    } finally {
+      setWorking(null);
+    }
+  }
+
   function openAppMenu(app: DesktopApp, parent: EventTarget) {
     const prefs = stored.apps[app.id] ?? {};
     showContextMenu(
@@ -348,6 +392,13 @@ export function DesktopPage() {
           <MenuItem onSelected={() => openFlatpakManager(app.id)}>
             Sprawdź / zaktualizuj Flatpak
           </MenuItem>
+        </MenuGroup>}
+        {!!stored.views?.length && <MenuGroup label="Własne widoki">
+          {stored.views.map(view => <MenuItem key={view.id}
+            selected={view.appIds.includes(app.id)}
+            onSelected={() => { void toggleInView(app, view); }}>
+            {view.appIds.includes(app.id) ? "Usuń z: " : "Dodaj do: "}{view.name}
+          </MenuItem>)}
         </MenuGroup>}
         <MenuGroup label="Dopasowanie obrazu">
           {([
@@ -437,6 +488,8 @@ export function DesktopPage() {
     if (scrollRef.current) scrollRef.current.scrollTop = 0;
   }
 
+  const currentCustomView = (stored.views ?? []).find(view => category === "custom:" + view.id);
+
   const hasManualOverrides = Object.values(stored.apps).some(app =>
     app.category === "flatpak" || app.category === "system");
 
@@ -449,19 +502,25 @@ export function DesktopPage() {
               onSelected={() => changeCategory(item.key)}
               onClick={() => changeCategory(item.key)}>{item.label}</MenuItem>)}
         </MenuGroup>
+        <MenuGroup label="Własne">
+          {(stored.views ?? []).map(view => <MenuItem key={view.id}
+            selected={category === "custom:" + view.id}
+            onSelected={() => changeCategory("custom:" + view.id)}>
+            {view.name}
+          </MenuItem>)}
+          <MenuItem onSelected={() => openViewDialog("create")}>Nowy widok</MenuItem>
+          {currentCustomView && <MenuItem onSelected={() => openViewDialog("rename", currentCustomView)}>
+            Zmień nazwę własnego
+          </MenuItem>}
+          {currentCustomView && <MenuItem onSelected={() => openViewDialog("delete", currentCustomView)}>
+            Usuń własny widok
+          </MenuItem>}
+        </MenuGroup>
         <MenuGroup label="Sortowanie">
           {sortOptions.map(item =>
             <MenuItem key={item.key} selected={sortMode === item.key}
               onSelected={() => setSortMode(item.key)}
               onClick={() => setSortMode(item.key)}>{item.label}</MenuItem>)}
-        </MenuGroup>
-        <MenuGroup label="Flatpak">
-          <MenuItem onSelected={() => openFlatpakManager()}>
-            Sprawdź aktualizacje wszystkich
-          </MenuItem>
-          <MenuItem onSelected={() => openFlatpakManager(undefined, true)}>
-            Aktualizuj wszystkie (użytkownika)
-          </MenuItem>
         </MenuGroup>
         <MenuGroup label="Reguły widoku">
           <MenuItem onSelected={openRules}>Pokaż reguły</MenuItem>
@@ -476,8 +535,11 @@ export function DesktopPage() {
     );
   }
 
-  const activeCategory = categories.find(item => item.key === category)?.label ?? "Wszystkie";
-  const visible = filterDesktopApps(apps, stored.apps, category, search, sortMode);
+  const activeCategory = currentCustomView?.name ??
+    categories.find(item => item.key === category)?.label ?? "Wszystkie";
+  const baseCategory: DesktopCategory = category.startsWith("custom:") ? "all" : category as DesktopCategory;
+  const visible = filterDesktopApps(apps, stored.apps, baseCategory, search, sortMode)
+    .filter(app => !currentCustomView || currentCustomView.appIds.includes(app.id));
 
   return <DialogBody>
     <DialogControlsSection>
