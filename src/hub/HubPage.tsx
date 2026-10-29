@@ -18,6 +18,7 @@ import { CreditsPage } from "./CreditsPage";
 import { ReportsPage } from "./ReportsPage";
 import { UiPage } from "./UiPage";
 import { DownloadsPage } from "./DownloadsPage";
+import { HubAddonsPage } from "./HubAddonsPage";
 import { DECKY_PLUGIN_NAME, HUB_ROUTE } from "../core/identity";
 import { CORE_MODULES } from "../core/modules";
 
@@ -237,9 +238,6 @@ export function HubPage() {
       content: <DeckyTerminalPage fontSize={terminalFontSize} /> },
     { title: "Konta", route: HUB_ROUTE + "/accounts", icon: <FaUserCircle />,
       content: <AccountsPage /> },
-    { title: "Dodatki", route: HUB_ROUTE + "/addons", icon: <FaPuzzlePiece />,
-      content: <AddonSelector installed={installed} selected={selected} pending={busy}
-        error={error} toggle={toggle} reload={() => { void refresh(); }} /> },
     { title: "Opcje Huba", route: HUB_ROUTE + "/options", icon: <FaCog />,
       content: <HubOptionsPage terminalFontSize={terminalFontSize}
         setTerminalFontSize={setTerminalFontSize} /> },
@@ -253,13 +251,8 @@ export function HubPage() {
       content: <CreditsPage /> },
     { title: "Zgłoszenia", route: HUB_ROUTE + "/reports", icon: <FaBug />,
       content: <ReportsPage /> },
-    ...selected.map(name => ({
-      title: featureName(name),
-      route: HUB_ROUTE + "/addon/" + encodeURIComponent(name),
-      icon: name === "Decky Manager" ? <FaFolderOpen /> : name === "Decky Terminal" ? <FaTerminal /> : <FaPlug />,
-      content: <AddonOptions name={name} addon={installed.find(x => x.name === name)}
-        selected={selected.includes(name)} remove={() => { void toggle(name, false); }} />
-    }))
+    { title: "Dodatki", route: HUB_ROUTE + "/addons", icon: <FaPuzzlePiece />,
+      content: <HubAddonsPage /> }
   ];
   if (!registered.includes("home")) return null;
   return <SidebarNavigation pages={pages} />;
