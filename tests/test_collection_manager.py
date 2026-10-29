@@ -17,6 +17,7 @@ class CollectionManagerTests(unittest.TestCase):
         root = Path(self.tmp.name)
         for module, attr, path in (
             (collection_manager, "FILE", root / "collections.json"),
+            (collection_manager, "ENABLED_FILE", root / "collections_enabled.json"),
             (tab_manager, "SETTINGS_FILE", root / "modules.json"),
             (tab_manager, "TABS_FILE", root / "tabs.json"),
             (tab_manager, "PROFILES_FILE", root / "profiles.json"),
@@ -62,6 +63,19 @@ class CollectionManagerTests(unittest.TestCase):
             with self.assertRaises(ValueError):
                 collection_manager.save_collections(bad)
 
+    def test_collection_enabled_is_independent_and_persistent(self):
+        self.assertTrue(collection_manager.read_enabled())
+        stored = collection_manager.save_collections([{"id": "x", "title": "Przykład"}])
+        self.assertFalse(collection_manager.write_enabled(False))
+        self.assertFalse(collection_manager.read_enabled())
+        self.assertEqual(collection_manager.read_collections(), stored)
+        self.assertTrue(collection_manager.write_enabled(True))
+        self.assertTrue(collection_manager.read_enabled())
+        self.assertEqual(collection_manager.read_collections(), stored)
+        for invalid in (None, 0, 1, "false"):
+            with self.assertRaises(ValueError):
+                collection_manager.write_enabled(invalid)
+
     def test_invalid_json_is_not_replaced(self):
         collection_manager.FILE.parent.mkdir(parents=True, exist_ok=True)
         collection_manager.FILE.write_text('{"version":2,"collections":[]}', encoding="utf-8")
@@ -73,6 +87,7 @@ class CollectionManagerTests(unittest.TestCase):
         plugin = main.Plugin()
         for name in (
             "get_hub_collections", "save_hub_collections",
+            "get_hub_collections_enabled", "set_hub_collections_enabled",
             "get_tab_manager_enabled", "set_tab_manager_enabled", "get_tab_definitions",
             "save_tab_definitions", "list_tab_profiles", "save_tab_profile",
             "load_tab_profile", "delete_tab_profile"

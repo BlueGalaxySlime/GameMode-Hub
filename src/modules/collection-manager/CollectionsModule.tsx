@@ -1,8 +1,9 @@
 import { useEffect, useState } from "react";
 import { callable } from "@decky/api";
-import { DialogButton, DialogControlsSection, DialogControlsSectionHeader, Field } from "@decky/ui";
+import { DialogButton, DialogControlsSection, DialogControlsSectionHeader, Field,
+  Focusable, ModalRoot, NavEntryPositionPreferences, Toggle, showModal } from "@decky/ui";
 import { HubTextInput } from "../../hub/HubTextInput";
-import { hubCollectionsChanged } from "../tab-manager/LibraryIntegration";
+import { hubCollectionsChanged, hubCollectionsEnabledChanged } from "../tab-manager/LibraryIntegration";
 
 export type CollectionFilter = "manual" | "all" | "installed" | "favorites" | "non_steam";
 export type HubCollection = {
@@ -22,8 +23,10 @@ const FILTER_NAMES: Record<CollectionFilter, string> = {
 };
 const read = callable<[], HubCollection[]>("get_hub_collections");
 const save = callable<[HubCollection[]], HubCollection[]>("save_hub_collections");
+const readEnabled = callable<[], boolean>("get_hub_collections_enabled");
+const saveEnabled = callable<[boolean], boolean>("set_hub_collections_enabled");
 
-export function CollectionsModule() {
+function CollectionsManagerDialog({ closeModal }: { closeModal?: () => void }) {
   const [collections, setCollections] = useState<HubCollection[]>([]);
   const [name, setName] = useState("");
   const [editing, setEditing] = useState<string | null>(null);
@@ -101,8 +104,13 @@ export function CollectionsModule() {
     void persist(next);
   }
 
-  return <DialogControlsSection>
-    <DialogControlsSectionHeader>Kolekcje</DialogControlsSectionHeader>
+  return <ModalRoot onCancel={() => closeModal?.()}>
+    <div style={{ width: "min(88vw, 620px)", maxWidth: "100%", padding: 12,
+      display: "flex", flexDirection: "column", gap: 8 }}>
+      <Focusable flow-children="column" style={{ maxHeight: "min(68vh, 560px)",
+        overflowY: "auto" }}>
+        <DialogControlsSection>
+          <DialogControlsSectionHeader>Zarządzaj kolekcjami</DialogControlsSectionHeader>
     <Field label="Nowa kolekcja">
       <HubTextInput value={name} disabled={busy} placeholder="Nazwa kolekcji"
         onChange={event => setName(event.target.value)} onEditValue={setName} />
@@ -158,6 +166,57 @@ export function CollectionsModule() {
     </div>)}
     {!busy && !collections.length && <Field label="Brak kolekcji"
       description="Dodaj kolekcję, aby przypisywać gry i reguły." />}
+    {error && <Field label="Błąd" description={error} />}
+        </DialogControlsSection>
+      </Focusable>
+      <DialogButton onClick={() => closeModal?.()}>Zamknij</DialogButton>
+    </div>
+  </ModalRoot>;
+}
+
+export function CollectionsModule() {
+  const [enabled, setEnabled] = useState(true);
+  const [busy, setBusy] = useState(true);
+  const [error, setError] = useState("");
+
+  useEffect(() => {
+    let alive = true;
+    readEnabled().then(value => {
+      if (alive) setEnabled(value);
+    }).catch(() => {
+      if (alive) setError("Nie udało się odczytać ustawienia kolekcji.");
+    }).finally(() => { if (alive) setBusy(false); });
+    return () => { alive = false; };
+  }, []);
+
+  async function toggle(value: boolean) {
+    if (busy) return;
+    setBusy(true);
+    setError("");
+    try {
+      const stored = await saveEnabled(value);
+      setEnabled(stored);
+      hubCollectionsEnabledChanged(stored);
+    } catch {
+      setError("Nie udało się zapisać ustawienia kolekcji.");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  return <DialogControlsSection>
+    <DialogControlsSectionHeader>Kolekcje</DialogControlsSectionHeader>
+    <Focusable flow-children="row"
+      navEntryPreferPosition={NavEntryPositionPreferences.MAINTAIN_X}
+      style={{ display: "flex", justifyContent: "space-between", alignItems: "center",
+        gap: 12, padding: "8px 0" }}>
+      <DialogButton style={{ flex: "0 1 auto", minWidth: 150 }}
+        onClick={() => showModal(<CollectionsManagerDialog />)}>
+        Zarządzaj ▾
+      </DialogButton>
+      <Toggle value={enabled} disabled={busy}
+        onChange={value => { void toggle(value); }} />
+    </Focusable>
     {error && <Field label="Błąd" description={error} />}
   </DialogControlsSection>;
 }

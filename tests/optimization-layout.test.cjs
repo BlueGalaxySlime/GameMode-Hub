@@ -48,6 +48,13 @@ test("All Optimization modules are visible in one page without nested tabs", () 
   assert.ok(cards.includes('Zarządzaj ▾'));
   assert.ok(cards.includes('display: "flex"'));
   assert.ok(cards.includes('gap: 12'));
+  assert.ok(cards.includes('justifyContent: "space-between"'));
+  assert.ok(!cards.includes('label="Karty w bibliotece"'));
+  assert.ok(collections.includes('Zarządzaj ▾'));
+  assert.ok(collections.includes('<Toggle value={enabled}'));
+  assert.ok(collections.includes('<CollectionsManagerDialog />'));
+  assert.ok(collections.includes('set_hub_collections_enabled'));
+  assert.ok(integration.includes('if (!hubCollectionsEnabled) return null;'));
   assert.ok(!integration.includes('title: "+"'));
   assert.ok(integration.includes('hiddenSteamTabs.includes(tab.id)'));
   assert.ok(integration.includes('filter === "system_tab"'));

@@ -1,3 +1,11 @@
+# GameMode Hub 0.5.54 (testowy)
+
+- **Pulpit → Y:** menu „Dopasowanie obrazu” ma krótkie nazwy „Automatyczna” i „Natywna”. Mechanizm wyboru pozostał bez zmian.
+- **Optymalizacja → Karty:** tylko nagłówek „Karty” i jeden wiersz: „Zarządzaj ▾” po lewej, ON/OFF po prawej. Bez powtórzonej etykiety „Karty w bibliotece”.
+- **Optymalizacja → Kolekcje:** analogiczny wiersz „Zarządzaj ▾” + ON/OFF. Zarządzanie otwiera odrębny panel, zamiast rozciągać stronę Optymalizacji.
+- **ON/OFF kolekcji:** ustawienie niezależne od kart. OFF ukrywa własne kolekcje Huba powiązane z kartami biblioteki, nie usuwa nazw, przypisanych AppID, kart Steam ani zapisanych ustawień. Przy pierwszej aktualizacji domyślnie ON zachowuje dotychczasowy stan.
+- **Sterowanie padem:** przyciski zarządzania i przełączniki tworzą poziome wiersze nawigacyjne.
+
 # GameMode Hub 0.5.53 (testowy)
 
 - **Korekta problemu poziomego pasa/miniaturyzacji w Gamescope.** Na przykładzie Discover w Gaming Mode stwierdzono, że aplikacja jest zbyt mocno pomniejszona, a nie ucięta. Wyłączono wcześniejszy profil „Kompaktowy interfejs” z 0.5.52 (GDK_DPI_SCALE=0.85, QT_SCALE_FACTOR=0.85, Electron 0.85); użycie tej opcji nie zmniejsza już GUI.

@@ -349,10 +349,10 @@ export function DesktopPage() {
             Sprawdź / zaktualizuj Flatpak
           </MenuItem>
         </MenuGroup>}
-        <MenuGroup label="Dopasowanie obrazu w Gaming Mode">
+        <MenuGroup label="Dopasowanie obrazu">
           {([
-            { key: "default", label: "Automatyczne (Steam)" },
-            { key: "native", label: "Natywna rozdzielczość aplikacji (test)" }
+            { key: "default", label: "Automatyczna" },
+            { key: "native", label: "Natywna" }
           ] as const).map(item => <MenuItem key={item.key}
             selected={(prefs.display_profile ?? "default") === item.key}
             onSelected={() => { void setDisplayProfile(app, item.key); }}>

@@ -43,6 +43,7 @@ type HubCollection = {
   app_ids: string[];
 };
 const readHubCollections = callable<[], HubCollection[]>("get_hub_collections");
+const readHubCollectionsEnabled = callable<[], boolean>("get_hub_collections_enabled");
 /**
  * Checks Decky's currently loaded plugin list, not the plugins installed
  * on disk. TabMaster being disabled is therefore not a conflict.
@@ -60,6 +61,7 @@ let statusDetail: string = "Inicjalizacja";
 let conflict = true; // Fail closed until backend checks the other plugin.
 let definitions: TabDefinition[] = [];
 let hubCollections: HubCollection[] = [];
+let hubCollectionsEnabled = true;
 let hiddenSteamTabs: string[] = [];
 let steamTabCatalog: { id: string; title: string }[] = [];
 let currentPatch: RoutePatch | undefined;
@@ -91,12 +93,13 @@ export async function refreshTabManagerConflict(): Promise<TabMasterActivity> {
 export async function startTabManager() {
   const request = ++generation;
   try {
-    const [savedEnabled, savedTabs, savedCollections, savedHidden] = await Promise.all([
-      readEnabled(), readTabs(), readHubCollections(), readHiddenSteamTabs()
+    const [savedEnabled, savedTabs, savedCollections, savedCollectionsEnabled, savedHidden] = await Promise.all([
+      readEnabled(), readTabs(), readHubCollections(), readHubCollectionsEnabled(), readHiddenSteamTabs()
     ]);
     if (request !== generation) return;
     definitions = savedTabs;
     hubCollections = savedCollections;
+    hubCollectionsEnabled = savedCollectionsEnabled;
     hiddenSteamTabs = savedHidden;
     // Honor the user's saved ON/OFF setting at plugin startup.
     // No need to open Optimization after enabling the module once.
@@ -156,7 +159,13 @@ export async function setSystemTabHidden(id: string, hide: boolean) {
 }
 
 export function availableHubCollections(): { id: string; title: string }[] {
-  return hubCollections.map(({ id, title }) => ({ id, title }));
+  return hubCollectionsEnabled ? hubCollections.map(({ id, title }) => ({ id, title })) : [];
+}
+
+export function hubCollectionsEnabledChanged(value: boolean) {
+  hubCollectionsEnabled = value;
+  ++revision;
+  renderLibrary?.();
 }
 
 export function hubCollectionsChanged(value: HubCollection[]) {
@@ -226,6 +235,7 @@ function sourceCollection(tab: TabDefinition): any {
 function virtualCollection(tab: TabDefinition) {
   let apps: any[];
   if (tab.filter === "hub_collection") {
+    if (!hubCollectionsEnabled) return null;
     const selected = hubCollections.find(item => item.id === tab.collection_id);
     if (!selected) return null;
     const sourceTab: TabDefinition = { ...tab, filter: selected.filter === "manual" ? "all" : selected.filter };

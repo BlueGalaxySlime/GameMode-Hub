@@ -43,7 +43,7 @@ import tab_manager
 import collection_manager
 import library_backup
 
-CURRENT_VERSION = "0.5.53"
+CURRENT_VERSION = "0.5.54"
 RELEASES_API = "https://api.github.com/repos/BlueGalaxySlime/GameMode-Hub/releases/latest"
 ASSET_NAME = "GameMode-Hub.zip"
 
@@ -214,6 +214,12 @@ class Plugin:
 
     async def save_hub_collections(self, collections):
         return await asyncio.to_thread(collection_manager.save_collections, collections)
+
+    async def get_hub_collections_enabled(self):
+        return await asyncio.to_thread(collection_manager.read_enabled)
+
+    async def set_hub_collections_enabled(self, enabled):
+        return await asyncio.to_thread(collection_manager.write_enabled, enabled)
 
     async def get_hub_library_backups(self):
         return await asyncio.to_thread(library_backup.list_backups)

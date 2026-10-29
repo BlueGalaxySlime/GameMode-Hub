@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { callable } from "@decky/api";
 import {
   DialogButton, DialogControlsSection, DialogControlsSectionHeader,
-  Field, Toggle, showContextMenu
+  Field, Focusable, NavEntryPositionPreferences, Toggle, showContextMenu
 } from "@decky/ui";
 import {
   tabManagerEnabledChanged, refreshTabManagerConflict, tabManagerStatus
@@ -63,16 +63,17 @@ export function TabManagerModule() {
 
   return <DialogControlsSection>
     <DialogControlsSectionHeader>Karty</DialogControlsSectionHeader>
-    <Field label="Karty w bibliotece" description="Menu ☰ KARTY na dolnej belce biblioteki Steam Gaming Mode.">
-      <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-        <Toggle value={enabled} disabled={busy}
-          onChange={value => { void toggle(value); }} />
-        <DialogButton disabled={busy}
-          onClick={event => openManageMenu(event.currentTarget)}>
-          Zarządzaj ▾
-        </DialogButton>
-      </div>
-    </Field>
+    <Focusable flow-children="row"
+      navEntryPreferPosition={NavEntryPositionPreferences.MAINTAIN_X}
+      style={{ display: "flex", justifyContent: "space-between", alignItems: "center",
+        gap: 12, padding: "8px 0" }}>
+      <DialogButton disabled={busy} style={{ flex: "0 1 auto", minWidth: 150 }}
+        onClick={event => openManageMenu(event.currentTarget)}>
+        Zarządzaj ▾
+      </DialogButton>
+      <Toggle value={enabled} disabled={busy}
+        onChange={value => { void toggle(value); }} />
+    </Focusable>
     {enabled && activity === "active" && <Field label="Konflikt"
       description="Aktywny TabMaster blokuje menu Huba w bibliotece. Wyłącz go w Decky." />}
     {enabled && activity === "unknown" && <Field label="Stan modułu"

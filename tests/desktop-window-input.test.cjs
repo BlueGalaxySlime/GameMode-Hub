@@ -40,9 +40,9 @@ test("native display override is per Steam shortcut, not global display", () => 
 test("Desktop retains Steam Input controls, with reversible native display option", () => {
   const page = fs.readFileSync("src/hub/DesktopPage.tsx", "utf8");
   const launcher = fs.readFileSync("src/hub/desktopLaunch.ts", "utf8");
-  assert.match(page, /Dopasowanie obrazu w Gaming Mode/);
-  assert.match(page, /Automatyczne \(Steam\)/);
-  assert.match(page, /Natywna rozdzielczość aplikacji \(test\)/);
+  assert.match(page, /label="Dopasowanie obrazu"/);
+  assert.match(page, /label: "Automatyczna"/);
+  assert.match(page, /label: "Natywna"/);
   assert.match(page, /Sterowanie padem/);
   assert.match(page, /Steam Input: szablony \/ inne gry/);
   assert.match(page, /createSteamDesktopShortcut\(app, "system", stored.apps\[app.id\]/);

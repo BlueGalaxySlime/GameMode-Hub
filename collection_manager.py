@@ -5,6 +5,7 @@ import threading
 from pathlib import Path
 
 FILE = Path.home() / ".config" / "gamemodehub" / "collections.json"
+ENABLED_FILE = Path.home() / ".config" / "gamemodehub" / "collections_enabled.json"
 LOCK = threading.RLock()
 MAX_COLLECTIONS = 64
 MAX_APP_IDS = 1024
@@ -72,3 +73,26 @@ def save_collections(collections):
                                         ensure_ascii=False), encoding="utf-8")
         temporary.replace(FILE)
     return clean
+
+
+def read_enabled():
+    """Enabled by default to preserve existing collection visibility on upgrade."""
+    with LOCK:
+        try:
+            data = json.loads(ENABLED_FILE.read_text(encoding="utf-8"))
+        except FileNotFoundError:
+            return True
+        if not isinstance(data, dict) or data.get("version") != 1 or type(data.get("enabled")) is not bool:
+            raise ValueError("Nieprawidłowe ustawienia kolekcji.")
+        return data["enabled"]
+
+
+def write_enabled(enabled):
+    if type(enabled) is not bool:
+        raise ValueError("Nieprawidłowe ustawienie kolekcji.")
+    with LOCK:
+        ENABLED_FILE.parent.mkdir(parents=True, exist_ok=True)
+        temporary = ENABLED_FILE.with_suffix(".tmp")
+        temporary.write_text(json.dumps({"version": 1, "enabled": enabled}), encoding="utf-8")
+        temporary.replace(ENABLED_FILE)
+    return enabled
