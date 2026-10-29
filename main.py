@@ -25,7 +25,7 @@ from release_catalog import RELEASES_API as RELEASE_CATALOG_API, catalog, valida
 from file_manager import listing as list_files, create_folder, rename_entry, paste_entry, paste_entries
 from desktop_apps import (list_desktop_apps, get_desktop_state, set_desktop_setting,
                           reset_desktop_categories, remember_temporary_shortcut,
-                          forget_temporary_shortcut)
+                          forget_temporary_shortcut, manage_desktop_view)
 from trash_manager import trash_entry, list_trash, restore_entry
 from lan_transfer import TransferManager
 from flatpak_manager import flatpak_overview, flatpak_update_user, flatpak_update_all_user
@@ -329,6 +329,9 @@ class Plugin:
 
     async def desktop_get_state(self):
         return await asyncio.to_thread(get_desktop_state)
+
+    async def desktop_manage_view(self, action, view_id=None, name=None, app_id=None):
+        return await asyncio.to_thread(manage_desktop_view, action, view_id, name, app_id)
 
     async def desktop_set_setting(self, app_id, key, value):
         return await asyncio.to_thread(set_desktop_setting, app_id, key, value)
