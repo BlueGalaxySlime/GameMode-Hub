@@ -1,3 +1,12 @@
+# GameMode Hub 0.5.53 (testowy)
+
+- **Korekta problemu poziomego pasa/miniaturyzacji w Gamescope.** Na przykładzie Discover w Gaming Mode stwierdzono, że aplikacja jest zbyt mocno pomniejszona, a nie ucięta. Wyłączono wcześniejszy profil „Kompaktowy interfejs” z 0.5.52 (GDK_DPI_SCALE=0.85, QT_SCALE_FACTOR=0.85, Electron 0.85); użycie tej opcji nie zmniejsza już GUI.
+- **Pulpit → Y → Dopasowanie obrazu w Gaming Mode:** teraz **Automatyczne (Steam)** albo **Natywna rozdzielczość aplikacji (test)**, stosowane *wyłącznie do skrótu danej aplikacji* przez Steam. Nie zmieniamy trybu całego ekranu, nie uruchamiamy drugiego Gamescope, nie modyfikujemy systemowych ustawień wyświetlacza. Domyślnie pozostaje Auto.
+- **Bezpieczny powrót:** wybór Automatyczne przywraca Steam „Default”, jeśli wcześniej użytkownik wybrał Native. Starsze ustawienie „compact” w danych jest automatycznie ignorowane; zapis ulubionych, uruchomień, Steam Input i pozostałych ustawień pozostaje.
+- **Steam Input** — w dalszym ciągu jest dostępny z Pulpitu, a skróty zachowują własne konfiguracje pada.
+- **Diagnoza:** podobny błąd Gamescope (zawartość pomniejszona i otoczona czarnymi pasami) został zgłoszony w SteamOS 3.7.20 i według zgłoszenia naprawiony w 3.7.21. To nie dowodzi, że każdy przypadek na Lenovo ma tę samą przyczynę. Opcja Native jest testowa i może nie pomóc — nie wybieramy jej automatycznie.
+- **Menu kart Steam** — wcześniejszy problem braku podpowiedzi ☰ KARTY na dolnej belce nie jest objęty tą korektą. Test na Lenovo nadal niezbędny.
+
 # GameMode Hub 0.5.52 (testowy)
 
 - **Pulpit → menu Y aplikacji → Okno w Gaming Mode:** dodane dwie zachowywane osobno dla każdej aplikacji opcje: domyślny profil okna oraz kompaktowe skalowanie GUI (eksperymentalne). Nie zmieniamy rozdzielczości monitora, rozdzielczości Steam ani ustawień globalnych Gamescope.
