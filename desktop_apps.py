@@ -23,7 +23,27 @@ def application_directories():
         home / ".local/share", home / ".local/share/flatpak/exports/share",
         Path("/var/lib/flatpak/exports/share"), Path("/usr/local/share"), Path("/usr/share"),
     ]
-    return [base / "applications" for base in bases]
+    directories = [base / "applications" for base in bases]
+    # KDE Desktop icons may be outside XDG application directories. Include
+    # the active user's Desktop/Pulpit folder, but never walk arbitrary paths.
+    desktop_dirs = [home / "Desktop", home / "Pulpit"]
+    try:
+        config = (home / ".config/user-dirs.dirs").read_text(encoding="utf-8")
+        match = re.search(r'^XDG_DESKTOP_DIR="([^"\\n]+)"', config, re.MULTILINE)
+        if match:
+            raw = match.group(1)
+            if raw.startswith("$HOME/"):
+                desktop_dirs.insert(0, home / raw[len("$HOME/"):])
+    except (OSError, UnicodeError):
+        pass
+    for folder in desktop_dirs:
+        try:
+            resolved = folder.resolve()
+            if resolved.is_relative_to(home) and resolved not in directories:
+                directories.append(resolved)
+        except (OSError, RuntimeError):
+            continue
+    return directories
 
 
 def _desktop_command(entry, name, path):
@@ -80,9 +100,21 @@ def _safe_flatpak_export_link(path):
             return False
     return False
 
+def _safe_desktop_shortcut_link(path, directories):
+    """Accept desktop shortcuts only when they link to a known app directory."""
+    try:
+        target = path.resolve(strict=True)
+        return (target.is_file() and target.suffix == ".desktop" and
+                any(target.is_relative_to(folder.resolve()) for folder in directories))
+    except (OSError, RuntimeError):
+        return False
+
+
 def list_desktop_apps():
     results = {}
-    for directory in application_directories():
+    directories = application_directories()
+    application_roots = directories[:5]
+    for directory in directories:
         if not directory.is_dir():
             continue
         # User entries are first so they override system-wide .desktop files.
@@ -91,7 +123,9 @@ def list_desktop_apps():
         for path in paths:
             if len(results) >= MAX_APPS:
                 break
-            if (path.is_symlink() and not _safe_flatpak_export_link(path)) or not path.is_file():
+            if (path.is_symlink() and not (
+                    _safe_flatpak_export_link(path) or
+                    _safe_desktop_shortcut_link(path, application_roots))) or not path.is_file():
                 continue
             app_id = "-".join(path.relative_to(directory).with_suffix("").parts)
             if not (0 < len(app_id) <= MAX_ID) or app_id in results:
