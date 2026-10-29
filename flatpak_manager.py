@@ -272,8 +272,9 @@ def heroic_installed():
     if os.geteuid() == 0:
         raise PermissionError("Nie sprawdzamy Flatpaków jako root.")
     apps = _installed()
-    return {"installed": any(a["id"] == HEROIC_ID for a in apps),
-            "app_id": HEROIC_ID}
+    installations = sorted({a["installation"] for a in apps if a["id"] == HEROIC_ID})
+    return {"installed": bool(installations), "app_id": HEROIC_ID,
+            "installations": installations}
 
 
 class HeroicInstallTask(FlatpakUpdateTask):
