@@ -21,6 +21,10 @@
 
 **Optymalizacja** jest prostą stroną ustawień: Gaming Mode, Karty, Kolekcje i Kopia zapasowa bez dodatkowych przełączanych ekranów. Dodawanie i edycja kart odbywają się **z poziomu biblioteki Gaming Mode** przez natywne menu **☰** zaznaczonej karty. W Optymalizacji jest jeden wiersz z **ON/OFF** oraz sąsiadującą listą **Zarządzaj ▾**, używającą tego samego menu co w bibliotece. Kolekcje Huba i karty są niezależne. Kopie zapasowe kart, kolekcji i profili można zapisać i przywrócić, bez plików gier i haseł. Nie trzeba instalować TabMastera; integracja z biblioteką respektuje zapisany przełącznik ON/OFF przy uruchomieniu Huba i jest eksperymentalna. **☰ KARTY** pokazuje się na dolnej belce biblioteki launchera Steam, nie wewnątrz opcji Huba. Osobny aktywny TabMaster musi być wyłączony; stan można odświeżyć w Optymalizacja → Karty. Szczegóły w [dokumentacji](docs/TAB_MANAGER.md).
 
+## Okna i sterowanie programów Pulpitu
+
+W **Pulpit → Y na aplikacji** dostępne są profile skalowania okna (domyślne lub eksperymentalnie kompaktowe) oraz wejście do natywnego konfiguratora **Steam Input** dla programu: szablony Valve, własne szablony i układy z innych gier. Jeśli programu nie ma jeszcze w bibliotece Steam, wybór Steam Input utworzy trwały skrót. Ustawienia mają zasięg jednej aplikacji; Hub nie zmienia rozdzielczości całej konsoli, nie instaluje nowego menedżera okien i nie nadpisuje plików kontrolera.
+
 ## Pliki
 
 W Quick Access → GameMode Hub → **Pliki** lista zajmuje całą szerokość panelu. Na górze jest edytowalny adres folderu (Enter lub Przejdź), niżej klikalne segmenty ścieżki oraz zwarty pasek z ukrytymi plikami i sortowaniem według nazwy, rozmiaru lub daty. Możesz tworzyć foldery, zmieniać nazwy i kopiować/przenosić pliki; usuwanie pozostaje wyłączone, dopóki nie dodamy bezpiecznego kosza. Systemowe katalogi są niedostępne.
