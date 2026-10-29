@@ -197,20 +197,17 @@ export function DesktopPage() {
     if (working) return;
     setWorking(app.id);
     setMessage("");
-    let createdId: number | null = null;
     try {
       let id = stored.apps[app.id]?.shortcut;
       if (!id) {
         // Explicit menu action says a persistent Steam shortcut will be
         // created; a temporary shortcut would discard the Steam Input layout.
         const shortcut = await createSteamDesktopShortcut(app, stored.apps[app.id]?.window_profile ?? "system");
-        createdId = shortcut.appId;
         id = shortcut.appId;
         try {
           await save(app, "shortcut", id);
         } catch (error) {
           removeSteamDesktopShortcut(id);
-          createdId = null;
           throw error;
         }
       }
