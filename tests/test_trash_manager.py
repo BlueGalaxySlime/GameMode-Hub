@@ -4,7 +4,7 @@ import unittest
 from pathlib import Path
 from unittest.mock import patch
 
-import trash_manager
+from backend.files import trash_manager
 
 
 class TrashTests(unittest.TestCase):
