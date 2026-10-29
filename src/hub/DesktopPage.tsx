@@ -341,7 +341,7 @@ export function DesktopPage() {
                           name: string | null = null, appId: string | null = null) {
     const response = await withTimeout(editView(action, viewId, name, appId), 8000);
     setStored(old => ({ ...old, views: response.views }));
-    if (action === "create") changeCategory("custom:" + response.view_id);
+    if (action === "create") changeCategory(`custom:${response.view_id}`);
     if (action === "delete" && category === "custom:" + viewId) changeCategory("all");
   }
 
@@ -505,7 +505,7 @@ export function DesktopPage() {
         <MenuGroup label="Własne">
           {(stored.views ?? []).map(view => <MenuItem key={view.id}
             selected={category === "custom:" + view.id}
-            onSelected={() => changeCategory("custom:" + view.id)}>
+            onSelected={() => changeCategory(`custom:${view.id}`)}>
             {view.name}
           </MenuItem>)}
           <MenuItem onSelected={() => openViewDialog("create")}>Nowy widok</MenuItem>
