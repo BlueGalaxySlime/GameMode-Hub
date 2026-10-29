@@ -262,3 +262,86 @@ class FlatpakUpdateTask:
 
 
 UPDATE_TASK = FlatpakUpdateTask()
+
+
+HEROIC_ID = "com.heroicgameslauncher.hgl"
+
+
+def heroic_installed():
+    """Read-only local status; do not contact network or touch credentials."""
+    if os.geteuid() == 0:
+        raise PermissionError("Nie sprawdzamy Flatpaków jako root.")
+    apps = _installed()
+    installations = sorted({a["installation"] for a in apps if a["id"] == HEROIC_ID})
+    return {"installed": bool(installations), "app_id": HEROIC_ID,
+            "installations": installations}
+
+
+class HeroicInstallTask(FlatpakUpdateTask):
+    """Explicit, single-app Flatpak installer with the same cancellation API.
+
+    Uses a fixed Flathub URL and application ID; never accepts shell input,
+    sudo, root permissions, or application IDs from the UI.
+    """
+
+    def _worker(self, serial, target, scope):
+        final, message = "failed", "Instalacja Heroic nie powiodła się."
+        try:
+            if target != HEROIC_ID or scope != "user":
+                raise ValueError("Nieobsługiwana instalacja.")
+            if heroic_installed()["installed"]:
+                final, message = "success", "Heroic jest już zainstalowany."
+            else:
+                commands = [
+                    (["flatpak", "remote-add", "--user", "--if-not-exists",
+                      "flathub", "https://flathub.org/repo/flathub.flatpakrepo"],
+                     "Konfigurowanie repozytorium Flathub…", 60),
+                    (["flatpak", "install", "--user", "--noninteractive",
+                      "--assumeyes", "flathub", HEROIC_ID],
+                     "Instalowanie Heroic Games Launcher…", 900),
+                ]
+                for args, progress, limit in commands:
+                    with self._lock:
+                        if self._cancel_requested or serial != self._serial:
+                            final, message = "cancelled", "Instalacja anulowana."
+                            break
+                        proc = subprocess.Popen(
+                            args, stdin=subprocess.DEVNULL, stdout=subprocess.PIPE,
+                            stderr=subprocess.STDOUT, start_new_session=True)
+                        self._process = proc
+                        self._state = "running"
+                        self._message = progress
+                    try:
+                        proc.communicate(timeout=limit)
+                    except subprocess.TimeoutExpired:
+                        self._signal_process(proc, signal.SIGTERM)
+                        try:
+                            proc.communicate(timeout=5)
+                        except subprocess.TimeoutExpired:
+                            self._signal_process(proc, signal.SIGKILL)
+                            proc.communicate()
+                        raise TimeoutError("Przekroczono limit instalacji Heroic.")
+                    finally:
+                        with self._lock:
+                            self._process = None
+                    if proc.returncode:
+                        final, message = "failed", (
+                            "Instalacja Heroic zakończyła się błędem Flatpak (kod "
+                            + str(proc.returncode) + ").")
+                        break
+                else:
+                    final, message = "success", "Zainstalowano Heroic Games Launcher."
+        except (FileNotFoundError, OSError, subprocess.SubprocessError,
+                PermissionError, ValueError, RuntimeError, TimeoutError) as error:
+            final, message = "failed", str(error)[:180]
+        finally:
+            with self._lock:
+                if serial == self._serial:
+                    self._state = "cancelled" if self._cancel_requested else final
+                    self._message = ("Instalacja anulowana."
+                                     if self._cancel_requested else message)
+                    self._end_time = time.monotonic()
+                    self._process = None
+
+
+HEROIC_INSTALL_TASK = HeroicInstallTask()

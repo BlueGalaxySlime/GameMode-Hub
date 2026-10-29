@@ -50,7 +50,7 @@ test("A on the search bar edits text through the shared SteamOS keyboard input",
   assert.ok(page.includes('setSearch(event.target.value)'));
   assert.ok(page.includes('finishSearch()'));
   assert.ok(page.includes('searchControlRef.current?.querySelector<HTMLElement>'));
-  assert.ok(page.includes('filterDesktopApps(apps, stored.apps, category, search, sortMode)'));
+  assert.ok(page.includes('filterDesktopApps(apps, stored.apps, baseCategory, search, sortMode)'));
   assert.ok(!page.includes('aria-label="Kategorie aplikacji — lewo i prawo"'));
 });
 
@@ -67,7 +67,7 @@ test("Y on the search bar opens View and Sort submenus, without a category butto
   assert.ok(page.includes('selected={sortMode === item.key}'));
   assert.ok(page.includes('onSelected={() => changeCategory(item.key)}'));
   assert.ok(page.includes('const [sortMode, setSortMode] = useHubSessionState<DesktopSort>'));
-  assert.ok(page.includes('const activeCategory = categories.find('));
+  assert.ok(page.includes('const activeCategory = currentCustomView?.name ??'));
   assert.ok(!page.includes('onClick={() => changeCategory("all")}'));
   assert.ok(page.includes('<span>Pulpit</span><span aria-hidden="true">›</span>'));
   assert.ok(page.includes('aria-label="Ścieżka pulpitu"'));
@@ -76,7 +76,7 @@ test("Y on the search bar opens View and Sort submenus, without a category butto
 
 test("sidebar starts with Pulpit / Pliki / Terminal; terminal settings live in Hub Options", () => {
   const order = [...hub.matchAll(/title: "(Pulpit|Pliki|Terminal|Konta|Dodatki|Opcje Huba)"/g)].map(m => m[1]);
-  assert.deepEqual(order, ["Pulpit", "Pliki", "Terminal", "Konta", "Dodatki", "Opcje Huba"]);
+  assert.deepEqual(order, ["Pulpit", "Pliki", "Terminal", "Konta", "Opcje Huba", "Dodatki"]);
   assert.ok(!hub.includes('title: "Opcje terminala"'));
   assert.ok(hub.includes('setTerminalFontSize={setTerminalFontSize}'));
   const options = fs.readFileSync("src/hub/HubOptionsPage.tsx", "utf8");
@@ -111,7 +111,7 @@ test("all View categories have their own selectable menu actions and visible lab
   assert.ok(page.includes('onSelected={() => changeCategory(item.key)}'));
   assert.ok(page.includes('onClick={() => changeCategory(item.key)}'));
   assert.ok(page.includes('selected={category === item.key}'));
-  assert.ok(page.includes('const activeCategory = categories.find('));
+  assert.ok(page.includes('const activeCategory = currentCustomView?.name ??'));
   assert.ok(page.includes('{activeCategory}'));
   assert.ok(!page.includes('<DialogButton onClick={() => changeCategory("all")}'));
   assert.ok(!page.includes('aria-label="Kategorie aplikacji — lewo i prawo"'));
@@ -122,8 +122,8 @@ test("all sidebar tabs form one contiguous controller-navigation list", () => {
   assert.ok(!pages.includes('"separator" as const'));
   const names = [...pages.matchAll(/title: "(Pulpit|Pliki|Terminal|Konta|Dodatki|Opcje Huba|Aktualizacje|Pobieranie|Optymalizacja|Podziękowania|Zgłoszenia)"/g)]
     .map(match => match[1]);
-  assert.deepEqual(names, ["Pulpit", "Pliki", "Terminal", "Konta", "Dodatki",
-    "Opcje Huba", "Aktualizacje", "Pobieranie", "Optymalizacja", "Podziękowania", "Zgłoszenia"]);
+  assert.deepEqual(names, ["Pulpit", "Pliki", "Terminal", "Konta",
+    "Opcje Huba", "Aktualizacje", "Pobieranie", "Optymalizacja", "Podziękowania", "Zgłoszenia", "Dodatki"]);
 });
 
 test("B on Desktop backs out of edit and filters, then releases SteamOS Back", () => {
@@ -213,7 +213,9 @@ test("Flatpak actions are in Desktop Y menus; system update remains read-only", 
   const backend = fs.readFileSync("flatpak_manager.py", "utf8");
   assert.ok(page.includes('<MenuGroup label="Flatpak">'));
   assert.ok(page.includes('openFlatpakManager(app.id)'));
-  assert.ok(page.includes('Sprawdź aktualizacje wszystkich'));
+  const menu = page.slice(page.indexOf('function openDesktopMenu('), page.indexOf('const activeCategory ='));
+  assert.ok(!menu.includes('Sprawdź aktualizacje wszystkich'));
+  assert.ok(!menu.includes('Aktualizuj wszystkie (użytkownika)'));
   assert.ok(page.includes('FlatpakManagerDialog'));
   assert.ok(flatpak.includes('item.installation === "user"'));
   assert.ok(flatpak.includes('Potwierdź aktualizację'));
@@ -263,15 +265,15 @@ test("Report fields are native focusable Steam rows with A editing, B exiting", 
   assert.ok(!inputs.slice(inputs.indexOf("export function HubTextArea(")).includes('"#68748a"'));
   assert.ok(!inputs.slice(inputs.indexOf("export function HubTextArea(")).includes('borderRadius: 4'));
 });
-test("Flatpak checks display an accurate nonzero status and Y can update all user apps", () => {
+test("Flatpak checks keep their status and global updates live in the separate module", () => {
   const flatpak = fs.readFileSync("src/hub/FlatpakManagerDialog.tsx", "utf8");
   const py = fs.readFileSync("flatpak_manager.py", "utf8");
   assert.ok(page.includes('useFlatpakChecks()'));
   assert.ok(page.includes('Dostępne aktualizacje: '));
   assert.ok(page.includes('Brak aktualizacji'));
   assert.ok(page.includes('Nie udało się sprawdzić aktualizacji'));
-  assert.ok(page.includes('onSelected={() => openFlatpakManager(undefined, true)}'));
-  assert.ok(page.includes('Aktualizuj wszystkie (użytkownika)'));
+  assert.ok(!page.includes('onSelected={() => openFlatpakManager(undefined, true)}'));
+  assert.ok(!page.includes('Aktualizuj wszystkie (użytkownika)'));
   assert.ok(flatpak.includes('Potwierdź wszystkie'));
   assert.ok(flatpak.includes('onUpdated?.()'));
   assert.ok(backend.includes('async def flatpak_update_all_user('));
@@ -414,4 +416,37 @@ test("ProtonDB is independent and retrieves badges only on explicit user action"
   assert.ok(!badges.includes('shell=True'));
   assert.ok(backend.includes('async def protondb_get_badge('));
   assert.ok(bundle.includes('"protondb_badges.py"'));
+});
+
+test("built-in desktop views cannot be renamed or deleted, custom ones can", () => {
+  const python = fs.readFileSync("desktop_apps.py", "utf8");
+  const dialog = fs.readFileSync("src/hub/DesktopViewDialog.tsx", "utf8");
+  assert.ok(page.includes('const categories: { key: Category; label: string }[]'));
+  assert.ok(page.includes('<MenuGroup label="Własne">'));
+  assert.ok(page.includes('Nowy widok'));
+  assert.ok(page.includes('Zmień nazwę własnego'));
+  assert.ok(page.includes('Usuń własny widok'));
+  assert.ok(page.includes('view.appIds.includes(app.id)'));
+  assert.ok(python.includes('def manage_desktop_view('));
+  assert.ok(python.includes('view = next((item for item in views if item["id"] == view_id), None)'));
+  assert.ok(dialog.includes('onConfirm: (name: string) => Promise<void>'));
+  assert.ok(page.includes('const baseCategory: DesktopCategory = category.startsWith("custom:")'));
+});
+
+test("Heroic is the only Add-ons module and install is confirmed before background download", () => {
+  const addons = fs.readFileSync("src/hub/HubAddonsPage.tsx", "utf8");
+  const python = fs.readFileSync("flatpak_manager.py", "utf8");
+  const downloads = fs.readFileSync("downloads_manager.py", "utf8");
+  assert.ok(hub.includes('content: <HubAddonsPage />'));
+  assert.ok(hub.indexOf('title: "Dodatki"') > hub.indexOf('title: "Zgłoszenia"'));
+  assert.ok(!hub.includes('...selected.map(name => ({'));
+  assert.ok(addons.includes('ConfirmHeroicInstall'));
+  assert.ok(addons.includes('downloads_install_heroic'));
+  assert.ok(addons.includes('showModal('));
+  assert.ok(python.includes('HEROIC_ID = "com.heroicgameslauncher.hgl"'));
+  assert.ok(python.includes('"remote-add", "--user", "--if-not-exists"'));
+  assert.ok(python.includes('"install", "--user", "--noninteractive"'));
+  assert.ok(downloads.includes('def enqueue_heroic(self):'));
+  assert.ok(backend.includes('async def downloads_install_heroic('));
+  assert.ok(!addons.includes('sudo'));
 });

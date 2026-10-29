@@ -25,10 +25,10 @@ from release_catalog import RELEASES_API as RELEASE_CATALOG_API, catalog, valida
 from file_manager import listing as list_files, create_folder, rename_entry, paste_entry, paste_entries
 from desktop_apps import (list_desktop_apps, get_desktop_state, set_desktop_setting,
                           reset_desktop_categories, remember_temporary_shortcut,
-                          forget_temporary_shortcut)
+                          forget_temporary_shortcut, manage_desktop_view)
 from trash_manager import trash_entry, list_trash, restore_entry
 from lan_transfer import TransferManager
-from flatpak_manager import flatpak_overview, flatpak_update_user, flatpak_update_all_user
+from flatpak_manager import flatpak_overview, flatpak_update_user, flatpak_update_all_user, heroic_installed
 from downloads_manager import DOWNLOADS
 from update_checks import UPDATE_CHECKS
 from protondb_badges import BADGES
@@ -43,7 +43,7 @@ import tab_manager
 import collection_manager
 import library_backup
 
-CURRENT_VERSION = "0.5.54"
+CURRENT_VERSION = "0.5.55"
 RELEASES_API = "https://api.github.com/repos/BlueGalaxySlime/GameMode-Hub/releases/latest"
 ASSET_NAME = "GameMode-Hub.zip"
 
@@ -305,6 +305,12 @@ class Plugin:
     async def downloads_enqueue_flatpak(self, app_id=None, scope="user"):
         return DOWNLOADS.enqueue_flatpak(app_id, scope)
 
+    async def heroic_get_status(self):
+        return await asyncio.to_thread(heroic_installed)
+
+    async def downloads_install_heroic(self):
+        return DOWNLOADS.enqueue_heroic()
+
     async def downloads_cancel(self, job_id):
         return DOWNLOADS.cancel(job_id)
 
@@ -329,6 +335,9 @@ class Plugin:
 
     async def desktop_get_state(self):
         return await asyncio.to_thread(get_desktop_state)
+
+    async def desktop_manage_view(self, action, view_id=None, name=None, app_id=None):
+        return await asyncio.to_thread(manage_desktop_view, action, view_id, name, app_id)
 
     async def desktop_set_setting(self, app_id, key, value):
         return await asyncio.to_thread(set_desktop_setting, app_id, key, value)

@@ -1,3 +1,12 @@
+# GameMode Hub 0.5.55 (testowy)
+
+- **Pulpit → Y → Widok:** zachowane stałe widoki Wszystkie, Ulubione, Flatpak, Systemowe i Ukryte. Nie można ich usuwać ani zmieniać nazw. Dodano osobne **Własne**: tworzenie, zmiana nazwy i usuwanie widoków oraz przypisywanie aplikacji. Dotychczasowe Ukryj/Pokaż i Pokaż ukryte pozostają bez zmian.
+- **Pulpit:** wykrywanie skrótów aplikacji z katalogu Desktop/Pulpit KDE, również z lokalizacji wskazanej przez XDG. Dodatki z folderów użytkownika nie zastępują programów systemowych.
+- **Pulpit → Y:** usunięte zbiorcze akcje aktualizacji Flatpak spod Sortowania. Aktualizacjami nadal zarządza osobny moduł Aktualizacje, a szczegóły zadań widoczne są w Pobieraniu.
+- **Dodatki:** przeniesione na koniec nawigacji. Na razie zawierają Heroic Games Launcher, bez dotychczasowych paneli zewnętrznych wtyczek Decky.
+- **Heroic Games Launcher:** rozpoznaje już zainstalowany Flatpak użytkownika lub systemowy i pokazuje **Zainstalowany** bez proponowania ponownej instalacji. Gdy aplikacji nie ma, można świadomie potwierdzić instalację z Flathub dla użytkownika bez roota; postęp i anulowanie w Pobieraniu.
+- **Testy:** dodano pokrycie własnych widoków, ochrony domyślnych filtrów i wykrywania Heroic w obu zakresach Flatpak.
+
 # GameMode Hub 0.5.54 (testowy)
 
 - **Pulpit → Y:** menu „Dopasowanie obrazu” ma krótkie nazwy „Automatyczna” i „Natywna”. Mechanizm wyboru pozostał bez zmian.

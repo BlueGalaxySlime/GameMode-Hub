@@ -11,7 +11,7 @@ import threading
 import time
 from pathlib import Path
 
-from flatpak_manager import UPDATE_TASK, APP_ID
+from flatpak_manager import UPDATE_TASK, HEROIC_INSTALL_TASK, HEROIC_ID, APP_ID
 
 STATE_FILE = Path.home() / ".config" / "gamemodehub" / "downloads.json"
 ACTIVE_STATES = ("queued", "preparing", "running", "cancelling")
@@ -22,6 +22,8 @@ MAX_HISTORY = 30
 class DownloadManager:
     def __init__(self, task=None, state_file=None):
         self._task = task if task is not None else UPDATE_TASK
+        self._install_task = HEROIC_INSTALL_TASK
+        self._active_task = None
         self._path = state_file if state_file is not None else STATE_FILE
         self._lock = threading.RLock()
         self._jobs = []
@@ -60,13 +62,15 @@ class DownloadManager:
                 if (not isinstance(target, str) or len(target) > 200 or
                     scope not in ("user", "system")):
                     continue
+                kind = "heroic" if item.get("kind") == "heroic" and target == HEROIC_ID else "flatpak"
                 self._jobs.append({
                     "id": item["id"],
-                    "kind": "flatpak",
+                    "kind": kind,
                     "target": target,
                     "scope": scope,
-                    "label": "Flatpak " + ("systemowy" if scope == "system" else "użytkownika")
-                             + ": " + (target or "wszystkie"),
+                    "label": ("Instalacja Heroic Games Launcher" if kind == "heroic" else
+                              "Flatpak " + ("systemowy" if scope == "system" else "użytkownika")
+                              + ": " + (target or "wszystkie")),
                     "state": "interrupted" if state in ACTIVE_STATES else state,
                     "message": "Przerwane przez restart backendu; uruchom ponownie ręcznie."
                                if state in ACTIVE_STATES else str(item.get("message", ""))[:180],
@@ -95,7 +99,8 @@ class DownloadManager:
                 raise RuntimeError("Moduł pobierania jest wyłączany.")
             # A repeated click or stale frontend must not enqueue duplicates.
             existing = next((x for x in self._jobs if
-                             x["state"] in ACTIVE_STATES and x["target"] == (target or "") and
+                             x["state"] in ACTIVE_STATES and x["kind"] == "flatpak" and
+                             x["target"] == (target or "") and
                              x.get("scope", "user") == scope), None)
             if existing is not None:
                 return dict(existing)
@@ -104,6 +109,30 @@ class DownloadManager:
                    "scope": scope,
                    "label": "Flatpak " + ("systemowy" if scope == "system" else "użytkownika")
                             + ": " + (target or "wszystkie"),
+                   "state": "queued", "message": "W kolejce", "elapsed": 0}
+            self._jobs.append(job)
+            self._jobs = self._jobs[-MAX_HISTORY:]
+            self._save_locked()
+            if self._worker is None or not self._worker.is_alive():
+                self._worker = threading.Thread(target=self._run_queue,
+                                                name="GameModeHub-Downloads", daemon=True)
+                self._worker.start()
+            return dict(job)
+
+    def enqueue_heroic(self):
+        """Request the only supported add-on installation, per-user with no root."""
+        if os.geteuid() == 0:
+            raise PermissionError("Instalowanie Heroic nie używa roota.")
+        with self._lock:
+            if self._closed:
+                raise RuntimeError("Moduł pobierania jest wyłączany.")
+            existing = next((x for x in self._jobs if x["state"] in ACTIVE_STATES
+                             and x["kind"] == "heroic"), None)
+            if existing is not None:
+                return dict(existing)
+            self._serial += 1
+            job = {"id": self._serial, "kind": "heroic", "target": HEROIC_ID,
+                   "scope": "user", "label": "Instalacja Heroic Games Launcher",
                    "state": "queued", "message": "W kolejce", "elapsed": 0}
             self._jobs.append(job)
             self._jobs = self._jobs[-MAX_HISTORY:]
@@ -130,7 +159,8 @@ class DownloadManager:
                 active = self._active_id == job_id
                 self._save_locked()
         if active:
-            self._task.cancel()
+            if self._active_task:
+                self._active_task.cancel()
         return self.list()
 
     def shutdown(self):
@@ -144,6 +174,7 @@ class DownloadManager:
                                message="Przerwane przez ponowne uruchomienie dodatku.")
             self._save_locked()
         self._task.cancel()
+        self._install_task.cancel()
 
     def _run_queue(self):
         while True:
@@ -159,11 +190,13 @@ class DownloadManager:
                 self._save_locked()
                 target = job["target"] or None
                 scope = job.get("scope", "user")
+                task = self._install_task if job["kind"] == "heroic" else self._task
+                self._active_task = task
             try:
-                self._task.start(target, scope=scope)
+                task.start(target, scope=scope)
                 last_state = ""
                 while True:
-                    status = self._task.status()
+                    status = task.status()
                     with self._lock:
                         if self._closed:
                             return
@@ -190,6 +223,7 @@ class DownloadManager:
             finally:
                 with self._lock:
                     self._active_id = None
+                    self._active_task = None
 
 
 DOWNLOADS = DownloadManager()

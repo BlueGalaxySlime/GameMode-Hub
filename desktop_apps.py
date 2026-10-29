@@ -9,6 +9,7 @@ import os
 from pathlib import Path
 import re
 import shlex
+import uuid
 
 STATE_FILE = Path.home() / ".config" / "gamemodehub" / "desktop_apps.json"
 MAX_APPS = 512
@@ -22,7 +23,27 @@ def application_directories():
         home / ".local/share", home / ".local/share/flatpak/exports/share",
         Path("/var/lib/flatpak/exports/share"), Path("/usr/local/share"), Path("/usr/share"),
     ]
-    return [base / "applications" for base in bases]
+    directories = [base / "applications" for base in bases]
+    # KDE Desktop icons may be outside XDG application directories. Include
+    # the active user's Desktop/Pulpit folder, but never walk arbitrary paths.
+    desktop_dirs = [home / "Desktop", home / "Pulpit"]
+    try:
+        config = (home / ".config/user-dirs.dirs").read_text(encoding="utf-8")
+        match = re.search(r'^XDG_DESKTOP_DIR="([^"]+)"', config, re.MULTILINE)
+        if match:
+            raw = match.group(1)
+            if raw.startswith("$HOME/"):
+                desktop_dirs.insert(0, home / raw[len("$HOME/"):])
+    except (OSError, UnicodeError):
+        pass
+    for folder in desktop_dirs:
+        try:
+            resolved = folder.resolve()
+            if resolved.is_relative_to(home) and resolved not in directories:
+                directories.append(resolved)
+        except (OSError, RuntimeError):
+            continue
+    return directories
 
 
 def _desktop_command(entry, name, path):
@@ -79,9 +100,21 @@ def _safe_flatpak_export_link(path):
             return False
     return False
 
+def _safe_desktop_shortcut_link(path, directories):
+    """Accept desktop shortcuts only when they link to a known app directory."""
+    try:
+        target = path.resolve(strict=True)
+        return (target.is_file() and target.suffix == ".desktop" and
+                any(target.is_relative_to(folder.resolve()) for folder in directories))
+    except (OSError, RuntimeError):
+        return False
+
+
 def list_desktop_apps():
     results = {}
-    for directory in application_directories():
+    directories = application_directories()
+    application_roots = directories[:5]
+    for directory in directories:
         if not directory.is_dir():
             continue
         # User entries are first so they override system-wide .desktop files.
@@ -90,7 +123,9 @@ def list_desktop_apps():
         for path in paths:
             if len(results) >= MAX_APPS:
                 break
-            if (path.is_symlink() and not _safe_flatpak_export_link(path)) or not path.is_file():
+            if (path.is_symlink() and not (
+                    _safe_flatpak_export_link(path) or
+                    _safe_desktop_shortcut_link(path, application_roots))) or not path.is_file():
                 continue
             app_id = "-".join(path.relative_to(directory).with_suffix("").parts)
             if not (0 < len(app_id) <= MAX_ID) or app_id in results:
@@ -128,7 +163,7 @@ def list_desktop_apps():
 
 
 def _empty_state():
-    return {"apps": {}, "temporary": []}
+    return {"apps": {}, "temporary": [], "views": []}
 
 
 def _app_id(value):
@@ -150,6 +185,7 @@ def get_desktop_state():
             return _empty_state()
         apps = value.get("apps", {})
         pending = value.get("temporary", [])
+        views = value.get("views", [])
         if not isinstance(apps, dict) or not isinstance(pending, list):
             return _empty_state()
         valid_apps = {}
@@ -180,7 +216,31 @@ def get_desktop_state():
                     valid_pending.append(shortcut)
             except ValueError:
                 continue
-        return {"apps": valid_apps, "temporary": valid_pending}
+        valid_views = []
+        if isinstance(views, list):
+            for view in views[:32]:
+                if not isinstance(view, dict):
+                    continue
+                view_id, name = view.get("id"), view.get("name")
+                members = view.get("appIds", [])
+                if (not isinstance(view_id, str) or
+                        not re.fullmatch(r"[0-9a-f]{32}", view_id) or
+                        not isinstance(name, str) or
+                        not (1 <= len(name.strip()) <= 50) or
+                        not isinstance(members, list) or
+                        any(saved["id"] == view_id or saved["name"].casefold() == name.strip().casefold()
+                            for saved in valid_views)):
+                    continue
+                safe_members = []
+                for member in members[:MAX_APPS]:
+                    try:
+                        _app_id(member)
+                        if member not in safe_members:
+                            safe_members.append(member)
+                    except ValueError:
+                        continue
+                valid_views.append({"id": view_id, "name": name.strip(), "appIds": safe_members})
+        return {"apps": valid_apps, "temporary": valid_pending, "views": valid_views}
     except (OSError, ValueError, TypeError):
         return _empty_state()
 
@@ -248,3 +308,45 @@ def forget_temporary_shortcut(shortcut):
         state["temporary"].remove(shortcut)
         _save(state)
     return state["temporary"]
+
+
+def manage_desktop_view(action, view_id=None, name=None, app_id=None):
+    """Manage only user-created views. Fixed views are not stored or mutable."""
+    state = get_desktop_state()
+    views = state["views"]
+    if action == "create":
+        if len(views) >= 32:
+            raise ValueError("Osiągnięto limit własnych widoków.")
+        if not isinstance(name, str) or not (1 <= len(name.strip()) <= 50):
+            raise ValueError("Podaj nazwę widoku (maksymalnie 50 znaków).")
+        name = name.strip()
+        if any(view["name"].casefold() == name.casefold() for view in views):
+            raise ValueError("Widok o tej nazwie już istnieje.")
+        view_id = uuid.uuid4().hex
+        views.append({"id": view_id, "name": name, "appIds": []})
+    else:
+        view = next((item for item in views if item["id"] == view_id), None)
+        if view is None:
+            raise ValueError("Nie znaleziono własnego widoku.")
+        if action == "rename":
+            if not isinstance(name, str) or not (1 <= len(name.strip()) <= 50):
+                raise ValueError("Podaj nazwę widoku (maksymalnie 50 znaków).")
+            name = name.strip()
+            if any(item["id"] != view_id and item["name"].casefold() == name.casefold()
+                   for item in views):
+                raise ValueError("Widok o tej nazwie już istnieje.")
+            view["name"] = name
+        elif action == "delete":
+            views.remove(view)
+        elif action == "toggle_app":
+            app_id = _app_id(app_id)
+            if app_id in view["appIds"]:
+                view["appIds"].remove(app_id)
+            elif len(view["appIds"]) < MAX_APPS:
+                view["appIds"].append(app_id)
+            else:
+                raise ValueError("Osiągnięto limit aplikacji w widoku.")
+        else:
+            raise ValueError("Nieznana operacja na widoku.")
+    _save(state)
+    return {"views": views, "view_id": view_id}
