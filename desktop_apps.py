@@ -164,8 +164,9 @@ def get_desktop_state():
                     "category": stored.get("category") if stored.get("category") in
                         ("auto", "flatpak", "system") else "auto",
                     "shortcut": _shortcut_id(stored["shortcut"]) if stored.get("shortcut") is not None else None,
-                    "window_profile": stored.get("window_profile") if stored.get("window_profile") in
-                        ("system", "compact") else "system",
+                    "window_profile": "system",  # old 0.5.52 compact scale is disabled
+                    "display_profile": stored.get("display_profile") if stored.get("display_profile") in
+                        ("default", "native") else "default",
                     "lastOpened": stored.get("lastOpened") if type(stored.get("lastOpened")) is int and
                         0 <= stored["lastOpened"] < 10**16 else None,
                 }
@@ -193,10 +194,13 @@ def _save(value):
 
 def set_desktop_setting(app_id, key, value):
     app_id = _app_id(app_id)
-    if key not in ("favorite", "hidden", "shortcut", "lastOpened", "category", "window_profile"):
+    if key not in ("favorite", "hidden", "shortcut", "lastOpened", "category", "window_profile", "display_profile"):
         raise ValueError("Nieznane ustawienie aplikacji.")
-    if key == "window_profile" and value not in ("system", "compact"):
-        raise ValueError("Nieprawidłowy profil okna.")
+    if key == "window_profile":
+        # Keep old clients compatible, but don't persist a harmful scale factor.
+        value = "system"
+    if key == "display_profile" and value not in ("default", "native"):
+        raise ValueError("Nieprawidłowy profil wyświetlania.")
     if key == "category" and value not in ("auto", "flatpak", "system"):
         raise ValueError("Nieznane przypisanie kategorii.")
     if key in ("favorite", "hidden") and type(value) is not bool:
