@@ -25,7 +25,7 @@ test("apps are detected by backend and launched using Steam shortcuts", () => {
     assert.ok(backend.includes("async def " + rpc + "("), rpc);
   }
   assert.ok(bundle.includes('"desktop_apps.py"'));
-  assert.ok(page.includes('createSteamDesktopShortcut(app, stored.apps[app.id]?.window_profile ?? "system")'));
+  assert.ok(page.includes('createSteamDesktopShortcut(app, "system", stored.apps[app.id]?.display_profile ?? "default")'));
   assert.ok(launch.includes('SteamClient.Apps.RunGame('));
   assert.ok(launch.includes('RegisterForAppLifetimeNotifications'));
   assert.ok(page.includes('removeSteamDesktopShortcut(temporary.appId)'));

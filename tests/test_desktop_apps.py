@@ -57,16 +57,21 @@ class DesktopAppsTests(unittest.TestCase):
         desktop_apps.forget_temporary_shortcut(456)
         self.assertEqual(desktop_apps.get_desktop_state()["temporary"], [])
 
-    def test_window_profile_is_saved_and_reversible(self):
+    def test_display_profile_is_saved_and_reversible(self):
         app_id = "org.mozilla.firefox"
-        saved = desktop_apps.set_desktop_setting(app_id, "window_profile", "compact")
-        self.assertEqual(saved["window_profile"], "compact")
-        self.assertEqual(desktop_apps.get_desktop_state()["apps"][app_id]["window_profile"], "compact")
-        desktop_apps.set_desktop_setting(app_id, "window_profile", "system")
-        self.assertEqual(desktop_apps.get_desktop_state()["apps"][app_id]["window_profile"], "system")
+        saved = desktop_apps.set_desktop_setting(app_id, "display_profile", "native")
+        self.assertEqual(saved["display_profile"], "native")
+        self.assertEqual(desktop_apps.get_desktop_state()["apps"][app_id]["display_profile"], "native")
+        desktop_apps.set_desktop_setting(app_id, "display_profile", "default")
+        self.assertEqual(desktop_apps.get_desktop_state()["apps"][app_id]["display_profile"], "default")
         for bad in ("1280x800", "fullscreen", "auto", None, True):
             with self.assertRaises(ValueError):
-                desktop_apps.set_desktop_setting(app_id, "window_profile", bad)
+                desktop_apps.set_desktop_setting(app_id, "display_profile", bad)
+
+    def test_legacy_compact_mode_is_safely_retired(self):
+        app_id = "org.mozilla.firefox"
+        desktop_apps.set_desktop_setting(app_id, "window_profile", "compact")
+        self.assertEqual(desktop_apps.get_desktop_state()["apps"][app_id]["window_profile"], "system")
 
     def test_auto_classifies_flatpak_run_without_x_flatpak_marker(self):
         self.desktop_file("flat.desktop", "Type=Application\nName=Flat Test\n"

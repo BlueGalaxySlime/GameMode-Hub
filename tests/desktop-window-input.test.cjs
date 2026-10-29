@@ -12,40 +12,39 @@ const scope = { exports: {} };
 vm.runInNewContext(compiled, scope);
 const { desktopLaunchProfile } = scope.exports;
 
-test("system profile does not alter command or display resolution", () => {
-  const app = { bin: "/usr/bin/flatpak", cmd: "run org.mozilla.firefox", flatpak: true };
+test("legacy compact profile no longer shrinks Flatpak graphical interface", () => {
+  const app = { bin: "/usr/bin/flatpak", cmd: "run --branch=stable org.mozilla.firefox", flatpak: true };
+  for (const profile of ["system", "compact"]) {
+    assert.deepEqual(
+      JSON.parse(JSON.stringify(desktopLaunchProfile(app, profile))),
+      { bin: app.bin, cmd: app.cmd }
+    );
+  }
+  assert.doesNotMatch(source, /GDK_DPI_SCALE=0\.85|QT_SCALE_FACTOR=0\.85/);
+});
+
+test("legacy compact profile no longer wraps executables", () => {
+  const app = { bin: "/opt/My App/start", cmd: "--data test", flatpak: false };
   assert.deepEqual(
-    JSON.parse(JSON.stringify(desktopLaunchProfile(app))),
-    { bin: "/usr/bin/flatpak", cmd: "run org.mozilla.firefox" }
+    JSON.parse(JSON.stringify(desktopLaunchProfile(app, "compact"))),
+    { bin: app.bin, cmd: app.cmd }
   );
 });
 
-test("compact Flatpak scales only the app inside its sandbox", () => {
-  const result = desktopLaunchProfile({
-    bin: "/usr/bin/flatpak", cmd: "run --branch=stable org.mozilla.firefox", flatpak: true
-  }, "compact");
-  assert.equal(result.bin, "/usr/bin/flatpak");
-  assert.match(result.cmd, /run --env=GDK_SCALE=1 --env=GDK_DPI_SCALE=0.85/);
-  assert.match(result.cmd, /--branch=stable org.mozilla.firefox$/);
-  assert.doesNotMatch(result.cmd, /gamescope|xrandr|--force-resolution/);
+test("native display override is per Steam shortcut, not global display", () => {
+  const launcher = fs.readFileSync("src/hub/desktopLaunch.ts", "utf8");
+  assert.match(launcher, /SetAppResolutionOverride\(appId, profile === "native" \? "Native" : "Default"\)/);
+  assert.doesNotMatch(launcher, /gamescope|xrandr|--force-resolution/);
 });
 
-test("non-Flatpak compact mode uses no shell and quotes executable", () => {
-  const result = desktopLaunchProfile({
-    bin: "/opt/My App/start", cmd: "--data test", flatpak: false
-  }, "compact");
-  assert.equal(result.bin, "/usr/bin/env");
-  assert.match(result.cmd, /QT_SCALE_FACTOR=0.85/);
-  assert.match(result.cmd, /"\/opt\/My App\/start" --data test$/);
-});
-
-test("Desktop has Steam Input selection for permanent shortcuts", () => {
+test("Desktop retains Steam Input controls, with reversible native display option", () => {
   const page = fs.readFileSync("src/hub/DesktopPage.tsx", "utf8");
   const launcher = fs.readFileSync("src/hub/desktopLaunch.ts", "utf8");
-  assert.match(page, /Okno w Gaming Mode/);
+  assert.match(page, /Dopasowanie obrazu w Gaming Mode/);
+  assert.match(page, /Automatyczne \(Steam\)/);
+  assert.match(page, /Natywna rozdzielczość aplikacji \(test\)/);
   assert.match(page, /Sterowanie padem/);
   assert.match(page, /Steam Input: szablony \/ inne gry/);
-  assert.match(page, /createSteamDesktopShortcut\(app, stored.apps\[app.id\]/);
+  assert.match(page, /createSteamDesktopShortcut\(app, "system", stored.apps\[app.id\]/);
   assert.match(launcher, /ShowControllerConfigurator\(appId\)/);
-  assert.doesNotMatch(launcher, /SetAppResolutionOverride/);
 });

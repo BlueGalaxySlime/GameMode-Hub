@@ -1,6 +1,7 @@
 import type { DesktopApp } from "./DesktopPage";
 import { desktopLaunchProfile, type DesktopWindowProfile } from "../core/desktopLaunchProfile";
 
+export type DesktopDisplayProfile = "default" | "native";
 type SteamAppInfo = { display_name?: string; m_gameid: string };
 type SteamHost = {
   SteamClient?: {
@@ -13,6 +14,7 @@ type SteamHost = {
       SetShortcutLaunchOptions: (id: number, opts: string) => void;
       RunGame: (id: string, args: string, a: number, b: number) => void;
       ShowControllerConfigurator?: (appId: number) => void;
+      SetAppResolutionOverride?: (appId: number, resolution: string) => void;
     };
     GameSessions: {
       RegisterForAppLifetimeNotifications: (cb: (event: { unAppID: number; bRunning: boolean }) => void) =>
@@ -32,7 +34,21 @@ function host(): Required<SteamHost> {
 
 function delay(ms: number) { return new Promise<void>(resolve => window.setTimeout(resolve, ms)); }
 
-export async function createSteamDesktopShortcut(app: DesktopApp, windowProfile: DesktopWindowProfile = "system") {
+/** Steam owns the viewport per shortcut; the physical display is unchanged. */
+export function setSteamShortcutDisplayProfile(
+  appId: number, profile: DesktopDisplayProfile
+) {
+  const apps = host().SteamClient.Apps;
+  if (typeof apps.SetAppResolutionOverride !== "function") {
+    throw new Error("Ta wersja Steam nie obsługuje ustawienia rozdzielczości skrótu.");
+  }
+  apps.SetAppResolutionOverride(appId, profile === "native" ? "Native" : "Default");
+}
+
+export async function createSteamDesktopShortcut(
+  app: DesktopApp, windowProfile: DesktopWindowProfile = "system",
+  displayProfile: DesktopDisplayProfile = "default"
+) {
   const client = host();
   // Create the shortcut first, then populate its launch fields; Steam may
   // ignore some properties passed directly to AddShortcut.
@@ -48,6 +64,7 @@ export async function createSteamDesktopShortcut(app: DesktopApp, windowProfile:
       await delay(120);
       const info = client.appStore.GetAppOverviewByAppID(appId);
       if (info?.display_name === app.name && info.m_gameid) {
+        if (displayProfile === "native") setSteamShortcutDisplayProfile(appId, "native");
         return { appId, gameId: info.m_gameid };
       }
     }
@@ -60,12 +77,14 @@ export async function createSteamDesktopShortcut(app: DesktopApp, windowProfile:
 
 /** Reapply the selected UI-scale profile for persistent shortcuts before launching. */
 export function configureSteamDesktopShortcut(
-  app: DesktopApp, appId: number, profile: DesktopWindowProfile = "system"
+  app: DesktopApp, appId: number, profile: DesktopWindowProfile = "system",
+  displayProfile: DesktopDisplayProfile = "default"
 ) {
   const client = host();
   const launch = desktopLaunchProfile(app, profile);
   client.SteamClient.Apps.SetShortcutExe(appId, launch.bin);
   client.SteamClient.Apps.SetShortcutLaunchOptions(appId, launch.cmd);
+  if (displayProfile === "native") setSteamShortcutDisplayProfile(appId, "native");
 }
 
 /** Opens Steam's own layout chooser; templates from other games stay in Steam. */
