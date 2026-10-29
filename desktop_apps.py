@@ -29,7 +29,8 @@ def application_directories():
     desktop_dirs = [home / "Desktop", home / "Pulpit"]
     try:
         config = (home / ".config/user-dirs.dirs").read_text(encoding="utf-8")
-        match = re.search(r'^XDG_DESKTOP_DIR="([^"]+)"        if match:
+        match = re.search(r'^XDG_DESKTOP_DIR="([^"]+)"', config, re.MULTILINE)
+        if match:
             raw = match.group(1)
             if raw.startswith("$HOME/"):
                 desktop_dirs.insert(0, home / raw[len("$HOME/"):])
