@@ -28,7 +28,7 @@ from desktop_apps import (list_desktop_apps, get_desktop_state, set_desktop_sett
                           forget_temporary_shortcut, manage_desktop_view)
 from trash_manager import trash_entry, list_trash, restore_entry
 from lan_transfer import TransferManager
-from flatpak_manager import flatpak_overview, flatpak_update_user, flatpak_update_all_user
+from flatpak_manager import flatpak_overview, flatpak_update_user, flatpak_update_all_user, heroic_installed
 from downloads_manager import DOWNLOADS
 from update_checks import UPDATE_CHECKS
 from protondb_badges import BADGES
@@ -304,6 +304,12 @@ class Plugin:
 
     async def downloads_enqueue_flatpak(self, app_id=None, scope="user"):
         return DOWNLOADS.enqueue_flatpak(app_id, scope)
+
+    async def heroic_get_status(self):
+        return await asyncio.to_thread(heroic_installed)
+
+    async def downloads_install_heroic(self):
+        return DOWNLOADS.enqueue_heroic()
 
     async def downloads_cancel(self, job_id):
         return DOWNLOADS.cancel(job_id)
