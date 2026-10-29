@@ -23,7 +23,7 @@
 
 ## Okna i sterowanie programów Pulpitu
 
-W **Pulpit → Y na aplikacji** dostępne są profile skalowania okna (domyślne lub eksperymentalnie kompaktowe) oraz wejście do natywnego konfiguratora **Steam Input** dla programu: szablony Valve, własne szablony i układy z innych gier. Jeśli programu nie ma jeszcze w bibliotece Steam, wybór Steam Input utworzy trwały skrót. Ustawienia mają zasięg jednej aplikacji; Hub nie zmienia rozdzielczości całej konsoli, nie instaluje nowego menedżera okien i nie nadpisuje plików kontrolera.
+W **Pulpit → Y na aplikacji** są dwa profile **Dopasowania obrazu w Gaming Mode**: automatyczny (Steam, domyślny) i eksperymentalny Native, działający wyłącznie na ustawienie wyświetlania *skrótu danej aplikacji* w Steam. Nie zmienia to rozdzielczości całej konsoli. Dawny „Kompaktowy interfejs” został wyłączony — mógł pogorszyć poziome miniaturyzowanie okien w Gamescope. Obok pozostaje natywny konfigurator **Steam Input** z szablonami i układami z innych gier. Jeśli programu nie ma jeszcze w bibliotece Steam, wybranie Steam Input utworzy trwały skrót, dzięki któremu profil pada nie zniknie.
 
 ## Pliki
 
