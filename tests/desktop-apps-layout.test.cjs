@@ -50,7 +50,7 @@ test("A on the search bar edits text through the shared SteamOS keyboard input",
   assert.ok(page.includes('setSearch(event.target.value)'));
   assert.ok(page.includes('finishSearch()'));
   assert.ok(page.includes('searchControlRef.current?.querySelector<HTMLElement>'));
-  assert.ok(page.includes('filterDesktopApps(apps, stored.apps, category, search, sortMode)'));
+  assert.ok(page.includes('filterDesktopApps(apps, stored.apps, baseCategory, search, sortMode)'));
   assert.ok(!page.includes('aria-label="Kategorie aplikacji — lewo i prawo"'));
 });
 
@@ -67,7 +67,7 @@ test("Y on the search bar opens View and Sort submenus, without a category butto
   assert.ok(page.includes('selected={sortMode === item.key}'));
   assert.ok(page.includes('onSelected={() => changeCategory(item.key)}'));
   assert.ok(page.includes('const [sortMode, setSortMode] = useHubSessionState<DesktopSort>'));
-  assert.ok(page.includes('const activeCategory = categories.find('));
+  assert.ok(page.includes('const activeCategory = currentCustomView?.name ??'));
   assert.ok(!page.includes('onClick={() => changeCategory("all")}'));
   assert.ok(page.includes('<span>Pulpit</span><span aria-hidden="true">›</span>'));
   assert.ok(page.includes('aria-label="Ścieżka pulpitu"'));
@@ -111,7 +111,7 @@ test("all View categories have their own selectable menu actions and visible lab
   assert.ok(page.includes('onSelected={() => changeCategory(item.key)}'));
   assert.ok(page.includes('onClick={() => changeCategory(item.key)}'));
   assert.ok(page.includes('selected={category === item.key}'));
-  assert.ok(page.includes('const activeCategory = categories.find('));
+  assert.ok(page.includes('const activeCategory = currentCustomView?.name ??'));
   assert.ok(page.includes('{activeCategory}'));
   assert.ok(!page.includes('<DialogButton onClick={() => changeCategory("all")}'));
   assert.ok(!page.includes('aria-label="Kategorie aplikacji — lewo i prawo"'));
@@ -265,15 +265,15 @@ test("Report fields are native focusable Steam rows with A editing, B exiting", 
   assert.ok(!inputs.slice(inputs.indexOf("export function HubTextArea(")).includes('"#68748a"'));
   assert.ok(!inputs.slice(inputs.indexOf("export function HubTextArea(")).includes('borderRadius: 4'));
 });
-test("Flatpak checks display an accurate nonzero status and Y can update all user apps", () => {
+test("Flatpak checks keep their status and global updates live in the separate module", () => {
   const flatpak = fs.readFileSync("src/hub/FlatpakManagerDialog.tsx", "utf8");
   const py = fs.readFileSync("flatpak_manager.py", "utf8");
   assert.ok(page.includes('useFlatpakChecks()'));
   assert.ok(page.includes('Dostępne aktualizacje: '));
   assert.ok(page.includes('Brak aktualizacji'));
   assert.ok(page.includes('Nie udało się sprawdzić aktualizacji'));
-  assert.ok(page.includes('onSelected={() => openFlatpakManager(undefined, true)}'));
-  assert.ok(page.includes('Aktualizuj wszystkie (użytkownika)'));
+  assert.ok(!page.includes('onSelected={() => openFlatpakManager(undefined, true)}'));
+  assert.ok(!page.includes('Aktualizuj wszystkie (użytkownika)'));
   assert.ok(flatpak.includes('Potwierdź wszystkie'));
   assert.ok(flatpak.includes('onUpdated?.()'));
   assert.ok(backend.includes('async def flatpak_update_all_user('));
