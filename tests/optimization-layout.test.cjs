@@ -39,6 +39,12 @@ test("All Optimization modules are visible in one page without nested tabs", () 
   assert.ok(integration.includes('createElement(LibraryCardsContextMenu'));
   assert.ok(integration.includes('onMenuActionDescription: "Karty"'));
   assert.ok(integration.includes('onMenuButton: () =>'));
+  assert.ok(integration.includes('active = true;'));
+  assert.ok(integration.includes('await refreshTabManagerConflict()'));
+  assert.ok(integration.includes('onMenuActionDescription: "Karty"'));
+  assert.ok(!integration.includes('active = savedEnabled;'));
+  assert.ok(cards.includes('Navigation.Navigate("/library")'));
+  assert.ok(cards.includes("Otwórz bibliotekę Steam"));
   assert.ok(!integration.includes('title: "+"'));
   assert.ok(integration.includes('hiddenSteamTabs.includes(tab.id)'));
   assert.ok(integration.includes('filter === "system_tab"'));

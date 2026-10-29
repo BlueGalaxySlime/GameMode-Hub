@@ -1,3 +1,11 @@
+# GameMode Hub 0.5.50 (testowy)
+
+- **Poprawka menu kart launchera Steam.** W 0.5.49 integracja była domyślnie nieaktywna po uruchomieniu dodatku: kod oczekiwał starszego przełącznika w ustawieniach. Teraz karta Steam otrzymuje natywny skrót **☰ KARTY** na dolnej czarnej belce, bez wcześniejszego wejścia do Opcji/Optymalizacji Huba.
+- **Pewniejsze sprawdzanie konfliktów.** Obsługa wykrywania aktywnego TabMastera przez `DeckyPluginLoader.hasPlugin`, listę załadowanych dodatków oraz bezpieczne sprawdzenie `loader/get_plugins`. Nie zmienia ustawień ani nie wyłącza automatycznie innych wtyczek.
+- **Optymalizacja → Karty:** „Zarządzaj” prowadzi do biblioteki prawdziwego launchera Steam, a pole stanu integracji pozwala ponownie sprawdzić konflikt. Nie ma przełącznika włącz/wyłącz ani drugiego ekranu biblioteki w Hubie.
+- **Karty Steam** nadal można wyłącznie ukrywać. Własne karty Huba można tworzyć, edytować i usuwać; backup i kolekcje pozostają bez zmian.
+- **Test na Lenovo nadal wymagany.** Integracja z paskiem biblioteki używa niepublicznej struktury UI SteamOS; jej faktyczne zachowanie należy potwierdzić na urządzeniu.
+
 # GameMode Hub 0.5.49 (testowy)
 
 - **Karty bezpośrednio z biblioteki.** Na zaznaczonej karcie w Gaming Mode przycisk ☰ otwiera natywne menu SteamOS: Dodaj kartę, Szybkie karty, Profile, Kolejność, Ukryj/Pokaż. Nie ma już dodatkowej karty „+” ani formularza edycji w Optymalizacji.
