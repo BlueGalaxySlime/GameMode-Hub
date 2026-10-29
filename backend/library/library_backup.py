@@ -10,8 +10,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 from uuid import uuid4
 
-import tab_manager
-import collection_manager
+from backend.library import tab_manager, collection_manager
 
 BACKUP_DIR = Path.home() / ".config" / "gamemodehub" / "backups" / "library"
 LOCK = threading.RLock()
