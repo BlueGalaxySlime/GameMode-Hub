@@ -248,7 +248,7 @@ test("Y offers a reversible Trash action with explicit confirmation and recovery
   for (const name of ["files_trash", "files_trash_list", "files_trash_restore"]) {
     assert.ok(backend.includes("async def " + name + "("));
   }
-  assert.ok(packageCode.includes('"trash_manager.py"'));
+  assert.ok(packageCode.includes('rglob("*.py")') && fs.existsSync('backend/files/trash_manager.py'));
 });
 
 test("X returns focus to the address bar without navigating, B keeps parent/Back", () => {
@@ -270,7 +270,7 @@ test("X returns focus to the address bar without navigating, B keeps parent/Back
 test("Local Wi-Fi transfer is available via Y in Files without root credentials", () => {
   const transferUi = fs.readFileSync("src/hub/TransferDialog.tsx", "utf8");
   const backend = fs.readFileSync("main.py", "utf8");
-  const transport = fs.readFileSync("lan_transfer.py", "utf8");
+  const transport = fs.readFileSync("backend/files/lan_transfer.py", "utf8");
   assert.ok(ui.includes('onSelected={() => openTransferDialog()}>Transfer Wi-Fi...'));
   assert.ok(ui.includes('onSelected={() => openTransferDialog(entry.path)}'));
   assert.ok(ui.includes('Udostępnij przez Wi-Fi'));
@@ -292,5 +292,5 @@ test("Local Wi-Fi transfer is available via Y in Files without root credentials"
   assert.ok(!transport.includes('subprocess.'));
   assert.ok(!transport.includes('sudo '));
   const pkg = fs.readFileSync('scripts/package.py', 'utf8');
-  assert.ok(pkg.includes('"lan_transfer.py"'));
+  assert.ok(pkg.includes('rglob("*.py")') && fs.existsSync('backend/files/lan_transfer.py'));
 });
