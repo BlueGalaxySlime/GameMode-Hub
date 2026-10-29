@@ -43,7 +43,7 @@ import tab_manager
 import collection_manager
 import library_backup
 
-CURRENT_VERSION = "0.5.51"
+CURRENT_VERSION = "0.5.52"
 RELEASES_API = "https://api.github.com/repos/BlueGalaxySlime/GameMode-Hub/releases/latest"
 ASSET_NAME = "GameMode-Hub.zip"
 
