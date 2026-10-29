@@ -99,7 +99,8 @@ class DownloadManager:
                 raise RuntimeError("Moduł pobierania jest wyłączany.")
             # A repeated click or stale frontend must not enqueue duplicates.
             existing = next((x for x in self._jobs if
-                             x["state"] in ACTIVE_STATES and x["target"] == (target or "") and
+                             x["state"] in ACTIVE_STATES and x["kind"] == "flatpak" and
+                             x["target"] == (target or "") and
                              x.get("scope", "user") == scope), None)
             if existing is not None:
                 return dict(existing)
