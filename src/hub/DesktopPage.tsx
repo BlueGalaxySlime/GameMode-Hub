@@ -15,16 +15,16 @@ import { useFlatpakChecks } from "./flatpakChecks";
 import type { DesktopCategory, DesktopSort } from "../core/desktopCatalog";
 import {
   createSteamDesktopShortcut, configureSteamDesktopShortcut, openSteamInputForDesktopShortcut,
-  openSteamDesktopShortcut, removeSteamDesktopShortcut
+  openSteamDesktopShortcut, removeSteamDesktopShortcut, setSteamShortcutDisplayProfile
 } from "./desktopLaunch";
-import type { DesktopWindowProfile } from "../core/desktopLaunchProfile";
+import type { DesktopDisplayProfile } from "./desktopLaunch";
 
 export type DesktopApp = {
   id: string; name: string; bin: string; cmd: string; workdir: string; flatpak: boolean;
 };
 type SavedApp = {
   favorite?: boolean; hidden?: boolean; shortcut?: number | null; lastOpened?: number | null;
-  category?: "auto" | "flatpak" | "system"; window_profile?: DesktopWindowProfile;
+  category?: "auto" | "flatpak" | "system"; display_profile?: DesktopDisplayProfile;
 };
 type DesktopState = { apps: Record<string, SavedApp>; temporary: number[] };
 type Category = DesktopCategory;
@@ -119,11 +119,11 @@ export function DesktopPage() {
       if (existing) {
         // Saved desktop app shortcuts retain their Steam Input layout.
         // Only their executable/UI-scale options are synchronized.
-        configureSteamDesktopShortcut(app, existing, stored.apps[app.id]?.window_profile ?? "system");
+        configureSteamDesktopShortcut(app, existing, "system", stored.apps[app.id]?.display_profile ?? "default");
         const opened = await openSteamDesktopShortcut(existing);
         if (!opened) throw new Error("Steam nie potwierdził uruchomienia.");
       } else {
-        const temporary = await createSteamDesktopShortcut(app, stored.apps[app.id]?.window_profile ?? "system");
+        const temporary = await createSteamDesktopShortcut(app, "system", stored.apps[app.id]?.display_profile ?? "default");
         temporaryId = temporary.appId;
         await withTimeout(rememberTemporary(temporary.appId), 4000);
         const cleanup = async () => {
@@ -159,7 +159,7 @@ export function DesktopPage() {
         removeSteamDesktopShortcut(oldId);
         await save(app, "shortcut", null);
       } else {
-        const shortcut = await createSteamDesktopShortcut(app, stored.apps[app.id]?.window_profile ?? "system");
+        const shortcut = await createSteamDesktopShortcut(app, "system", stored.apps[app.id]?.display_profile ?? "default");
         try {
           await save(app, "shortcut", shortcut.appId);
         } catch (error) {
@@ -174,20 +174,30 @@ export function DesktopPage() {
     }
   }
 
-  async function setWindowProfile(app: DesktopApp, next: DesktopWindowProfile) {
+  async function setDisplayProfile(app: DesktopApp, next: DesktopDisplayProfile) {
     if (working) return;
     setWorking(app.id);
     setMessage("");
+    const previous = stored.apps[app.id]?.display_profile ?? "default";
+    const shortcutId = stored.apps[app.id]?.shortcut;
     try {
-      await save(app, "window_profile", next);
-      // Do not force resolution, fullscreen or physical display size.
-      // Shortcut options are updated on next launch to avoid interrupting
-      // a running Firefox or Heroic window.
-      setMessage(next === "system"
-        ? "Przywrócono skalowanie aplikacji. Zmiana przy kolejnym uruchomieniu."
-        : "Zapisano kompaktowy interfejs. Zmiana przy kolejnym uruchomieniu.");
-    } catch {
-      setMessage("Nie udało się zapisać profilu okna.");
+      // Only the chosen shortcut is affected. SteamOS/Gamescope screen size
+      // and every other app's resolution remain unchanged.
+      if (shortcutId) setSteamShortcutDisplayProfile(shortcutId, next);
+      try {
+        await save(app, "display_profile", next);
+      } catch (error) {
+        if (shortcutId) {
+          try { setSteamShortcutDisplayProfile(shortcutId, previous); }
+          catch { /* Leave Steam's current state and report the error. */ }
+        }
+        throw error;
+      }
+      setMessage(next === "default"
+        ? "Przywrócono automatyczne dopasowanie obrazu aplikacji."
+        : "Zapisano natywny rozmiar obrazu. Sprawdź aplikację po ponownym uruchomieniu.");
+    } catch (reason) {
+      setMessage("Nie można ustawić dopasowania obrazu: " + String(reason));
     } finally {
       setWorking(null);
     }
@@ -202,7 +212,7 @@ export function DesktopPage() {
       if (!id) {
         // Explicit menu action says a persistent Steam shortcut will be
         // created; a temporary shortcut would discard the Steam Input layout.
-        const shortcut = await createSteamDesktopShortcut(app, stored.apps[app.id]?.window_profile ?? "system");
+        const shortcut = await createSteamDesktopShortcut(app, "system", stored.apps[app.id]?.display_profile ?? "default");
         id = shortcut.appId;
         try {
           await save(app, "shortcut", id);
@@ -339,13 +349,13 @@ export function DesktopPage() {
             Sprawdź / zaktualizuj Flatpak
           </MenuItem>
         </MenuGroup>}
-        <MenuGroup label="Okno w Gaming Mode">
+        <MenuGroup label="Dopasowanie obrazu w Gaming Mode">
           {([
-            { key: "system", label: "Domyślne (bez zmian)" },
-            { key: "compact", label: "Kompaktowy interfejs (eksperymentalne)" }
+            { key: "default", label: "Automatyczne (Steam)" },
+            { key: "native", label: "Natywna rozdzielczość aplikacji (test)" }
           ] as const).map(item => <MenuItem key={item.key}
-            selected={(prefs.window_profile ?? "system") === item.key}
-            onSelected={() => { void setWindowProfile(app, item.key); }}>
+            selected={(prefs.display_profile ?? "default") === item.key}
+            onSelected={() => { void setDisplayProfile(app, item.key); }}>
             {item.label}
           </MenuItem>)}
         </MenuGroup>
