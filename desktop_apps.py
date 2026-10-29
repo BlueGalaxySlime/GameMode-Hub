@@ -164,6 +164,8 @@ def get_desktop_state():
                     "category": stored.get("category") if stored.get("category") in
                         ("auto", "flatpak", "system") else "auto",
                     "shortcut": _shortcut_id(stored["shortcut"]) if stored.get("shortcut") is not None else None,
+                    "window_profile": stored.get("window_profile") if stored.get("window_profile") in
+                        ("system", "compact") else "system",
                     "lastOpened": stored.get("lastOpened") if type(stored.get("lastOpened")) is int and
                         0 <= stored["lastOpened"] < 10**16 else None,
                 }
@@ -191,8 +193,10 @@ def _save(value):
 
 def set_desktop_setting(app_id, key, value):
     app_id = _app_id(app_id)
-    if key not in ("favorite", "hidden", "shortcut", "lastOpened", "category"):
+    if key not in ("favorite", "hidden", "shortcut", "lastOpened", "category", "window_profile"):
         raise ValueError("Nieznane ustawienie aplikacji.")
+    if key == "window_profile" and value not in ("system", "compact"):
+        raise ValueError("Nieprawidłowy profil okna.")
     if key == "category" and value not in ("auto", "flatpak", "system"):
         raise ValueError("Nieznane przypisanie kategorii.")
     if key in ("favorite", "hidden") and type(value) is not bool:

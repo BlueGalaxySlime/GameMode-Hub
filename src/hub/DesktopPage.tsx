@@ -14,15 +14,17 @@ import { FlatpakManagerDialog } from "./FlatpakManagerDialog";
 import { useFlatpakChecks } from "./flatpakChecks";
 import type { DesktopCategory, DesktopSort } from "../core/desktopCatalog";
 import {
-  createSteamDesktopShortcut, openSteamDesktopShortcut, removeSteamDesktopShortcut
+  createSteamDesktopShortcut, configureSteamDesktopShortcut, openSteamInputForDesktopShortcut,
+  openSteamDesktopShortcut, removeSteamDesktopShortcut
 } from "./desktopLaunch";
+import type { DesktopWindowProfile } from "../core/desktopLaunchProfile";
 
 export type DesktopApp = {
   id: string; name: string; bin: string; cmd: string; workdir: string; flatpak: boolean;
 };
 type SavedApp = {
   favorite?: boolean; hidden?: boolean; shortcut?: number | null; lastOpened?: number | null;
-  category?: "auto" | "flatpak" | "system";
+  category?: "auto" | "flatpak" | "system"; window_profile?: DesktopWindowProfile;
 };
 type DesktopState = { apps: Record<string, SavedApp>; temporary: number[] };
 type Category = DesktopCategory;
@@ -115,10 +117,13 @@ export function DesktopPage() {
       const existing = stored.apps[app.id]?.shortcut;
       void save(app, "lastOpened", Date.now()).catch(() => {});
       if (existing) {
+        // Saved desktop app shortcuts retain their Steam Input layout.
+        // Only their executable/UI-scale options are synchronized.
+        configureSteamDesktopShortcut(app, existing, stored.apps[app.id]?.window_profile ?? "system");
         const opened = await openSteamDesktopShortcut(existing);
         if (!opened) throw new Error("Steam nie potwierdził uruchomienia.");
       } else {
-        const temporary = await createSteamDesktopShortcut(app);
+        const temporary = await createSteamDesktopShortcut(app, stored.apps[app.id]?.window_profile ?? "system");
         temporaryId = temporary.appId;
         await withTimeout(rememberTemporary(temporary.appId), 4000);
         const cleanup = async () => {
@@ -154,7 +159,7 @@ export function DesktopPage() {
         removeSteamDesktopShortcut(oldId);
         await save(app, "shortcut", null);
       } else {
-        const shortcut = await createSteamDesktopShortcut(app);
+        const shortcut = await createSteamDesktopShortcut(app, stored.apps[app.id]?.window_profile ?? "system");
         try {
           await save(app, "shortcut", shortcut.appId);
         } catch (error) {
@@ -164,6 +169,53 @@ export function DesktopPage() {
       }
     } catch (reason) {
       setMessage("Nie udało się zmienić biblioteki Steam: " + String(reason));
+    } finally {
+      setWorking(null);
+    }
+  }
+
+  async function setWindowProfile(app: DesktopApp, next: DesktopWindowProfile) {
+    if (working) return;
+    setWorking(app.id);
+    setMessage("");
+    try {
+      await save(app, "window_profile", next);
+      // Do not force resolution, fullscreen or physical display size.
+      // Shortcut options are updated on next launch to avoid interrupting
+      // a running Firefox or Heroic window.
+      setMessage(next === "system"
+        ? "Przywrócono skalowanie aplikacji. Zmiana przy kolejnym uruchomieniu."
+        : "Zapisano kompaktowy interfejs. Zmiana przy kolejnym uruchomieniu.");
+    } catch {
+      setMessage("Nie udało się zapisać profilu okna.");
+    } finally {
+      setWorking(null);
+    }
+  }
+
+  async function openSteamInput(app: DesktopApp) {
+    if (working) return;
+    setWorking(app.id);
+    setMessage("");
+    try {
+      let id = stored.apps[app.id]?.shortcut;
+      if (!id) {
+        // Explicit menu action says a persistent Steam shortcut will be
+        // created; a temporary shortcut would discard the Steam Input layout.
+        const shortcut = await createSteamDesktopShortcut(app, stored.apps[app.id]?.window_profile ?? "system");
+        id = shortcut.appId;
+        try {
+          await save(app, "shortcut", id);
+        } catch (error) {
+          removeSteamDesktopShortcut(id);
+          throw error;
+        }
+      }
+      openSteamInputForDesktopShortcut(id);
+    } catch (reason) {
+      setMessage("Nie można otworzyć Steam Input: " + String(reason));
+      // If a permanent shortcut was saved, leave it intact rather than
+      // destroying a potentially configured Steam Input profile.
     } finally {
       setWorking(null);
     }
@@ -287,6 +339,23 @@ export function DesktopPage() {
             Sprawdź / zaktualizuj Flatpak
           </MenuItem>
         </MenuGroup>}
+        <MenuGroup label="Okno w Gaming Mode">
+          {([
+            { key: "system", label: "Domyślne (bez zmian)" },
+            { key: "compact", label: "Kompaktowy interfejs (eksperymentalne)" }
+          ] as const).map(item => <MenuItem key={item.key}
+            selected={(prefs.window_profile ?? "system") === item.key}
+            onSelected={() => { void setWindowProfile(app, item.key); }}>
+            {item.label}
+          </MenuItem>)}
+        </MenuGroup>
+        <MenuGroup label="Sterowanie padem">
+          <MenuItem onSelected={() => { void openSteamInput(app); }}>
+            {prefs.shortcut
+              ? "Steam Input: szablony / inne gry"
+              : "Dodaj do Steam i wybierz układ Steam Input"}
+          </MenuItem>
+        </MenuGroup>
         <MenuGroup label="Przypisanie">
           {([
             { key: "auto", label: "Automatycznie (" +

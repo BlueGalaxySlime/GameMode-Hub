@@ -1,3 +1,12 @@
+# GameMode Hub 0.5.52 (testowy)
+
+- **Pulpit → menu Y aplikacji → Okno w Gaming Mode:** dodane dwie zachowywane osobno dla każdej aplikacji opcje: domyślny profil okna oraz kompaktowe skalowanie GUI (eksperymentalne). Nie zmieniamy rozdzielczości monitora, rozdzielczości Steam ani ustawień globalnych Gamescope.
+- **GTK, Qt, Electron i Flatpak:** dla kompaktowego profilu dodajemy tylko lokalne zmienne skalowania GUI przy starcie aplikacji. Dla Flatpak używamy `flatpak run --env=…`, żeby ustawienia działały także wewnątrz sandboksa. Zmiana profilu działa od kolejnego uruchomienia aplikacji, bez przerywania bieżącej sesji.
+- **Pulpit → menu Y → Sterowanie padem:** otwiera bezpośrednio systemowy konfigurator Steam Input dla danej aplikacji, umożliwiając wybór szablonów, własnych układów i układów z innych gier. Jeśli program nie ma stałego skrótu Steam, użytkownik wybiera świadomie akcję jego dodania; nie tworzymy układu dla skrótu tymczasowego, który zniknie po wyjściu.
+- **Bez fałszywych obietnic:** kompaktowy profil może pomóc, gdy interfejs Firefoksa lub Heroica jest za duży, lecz nie naprawi każdego okna przyciętego przez Gamescope. Rozmiar samego okna i pełny ekran pozostają własnością aplikacji/SteamOS.
+- Nie przenosimy ani nie kasujemy istniejących konfiguracji Steam Input; stare skróty zachowują swój Steam AppID.
+- **Menu ☰ KARTY w głównej bibliotece** pozostaje integracją eksperymentalną. Jeżeli osobny TabMaster jest aktywny lub stan Decky jest nieznany, Hub nie nadpisuje paska kart. Nadal wymagany test na urządzeniu.
+
 # GameMode Hub 0.5.51 (testowy)
 
 - **Optymalizacja → Karty:** jeden wiersz „Karty w bibliotece” z przełącznikiem ON/OFF oraz sąsiadującą listą **Zarządzaj ▾**, w stylu systemowych rozwijanych menu SteamOS. Zamiast dwóch osobnych przycisków.
