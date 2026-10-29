@@ -1,3 +1,11 @@
+# GameMode Hub 0.5.51 (testowy)
+
+- **Optymalizacja → Karty:** jeden wiersz „Karty w bibliotece” z przełącznikiem ON/OFF oraz sąsiadującą listą **Zarządzaj ▾**, w stylu systemowych rozwijanych menu SteamOS. Zamiast dwóch osobnych przycisków.
+- **Zarządzaj ▾** pokazuje to samo natywne menu kart co ☰ KARTY na dolnej belce biblioteki launchera Steam: szybkie karty, profile, zmiana kolejności, ukryte karty. Opcje dotyczące *konkretnie zaznaczonej karty* pozostają tylko w menu jej zakładki w bibliotece.
+- **ON/OFF:** zapisuje się w ustawieniach Huba; OFF wyłącza wyłącznie patch UI biblioteki bez usuwania kart i kolekcji, ON przywraca natywne menu w Steam Gaming Mode. Ustawienie jest odczytywane po uruchomieniu dodatku, bez konieczności wchodzenia do Optymalizacji.
+- Nie usuwamy ani nie zmieniamy nazw kart systemowych Steam. Własne karty Huba i backup pozostają niezależne.
+- Wymagany test na Lenovo: dolna czarna belka Steam oraz nawigacja padem. Integracja bazuje na niepublicznych strukturach SteamOS.
+
 # GameMode Hub 0.5.50 (testowy)
 
 - **Poprawka menu kart launchera Steam.** W 0.5.49 integracja była domyślnie nieaktywna po uruchomieniu dodatku: kod oczekiwał starszego przełącznika w ustawieniach. Teraz karta Steam otrzymuje natywny skrót **☰ KARTY** na dolnej czarnej belce, bez wcześniejszego wejścia do Opcji/Optymalizacji Huba.
