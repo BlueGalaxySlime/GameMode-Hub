@@ -7,7 +7,7 @@ import {
 import { withTimeout } from "../utils/withTimeout";
 import { isDownloadActive, useDownloads } from "./downloads";
 
-const statusRpc = callable<[], { installed: boolean; app_id: string }>("heroic_get_status");
+const statusRpc = callable<[], { installed: boolean; app_id: string; installations: string[] }>("heroic_get_status");
 const installRpc = callable<[], { id: number }>("downloads_install_heroic");
 const HEROIC_ID = "com.heroicgameslauncher.hgl";
 
@@ -55,16 +55,21 @@ function ConfirmHeroicInstall({ onConfirm, closeModal }: {
 
 export function HubAddonsPage() {
   const [installed, setInstalled] = useState<boolean | null>(null);
+  const [installations, setInstallations] = useState<string[]>([]);
   const [error, setError] = useState("");
   const dialogOpen = useRef(false);
   const { jobs } = useDownloads();
   const heroicJob = jobs.find(job => job.kind === "heroic");
   const pending = !!heroicJob && isDownloadActive(heroicJob);
+  const installationLabel = installations.includes("user") &&
+    installations.some(value => value !== "user") ? "użytkownika i systemowy" :
+    installations.includes("user") ? "użytkownika" : "systemowy";
 
   async function refresh() {
     try {
       const status = await withTimeout(statusRpc(), 6000);
       setInstalled(status.installed);
+      setInstallations(status.installations ?? []);
       setError("");
     } catch (reason) {
       setError("Nie można sprawdzić instalacji Flatpak: " + String(reason));
@@ -99,14 +104,14 @@ export function HubAddonsPage() {
         flexDirection: "column", gap: 12, width: "100%", minWidth: 0 }}>
         <strong>Powiązane aplikacje</strong>
         <Field label="Heroic Games Launcher"
-          description={installed ? "Zainstalowany · Flatpak" :
+          description={installed ? "Zainstalowany · Flatpak " + installationLabel :
             pending ? "Instalacja trwa · szczegóły w Pobieraniu" :
             "Launcher gier Epic i GOG · Flatpak z Flathub"}>
           <DialogButton disabled={installed !== false || pending}
             onClick={confirmInstall}>{installed ? "Zainstalowany" :
               pending ? "W kolejce / instalowanie" : "Instaluj"}</DialogButton>
         </Field>
-        {!!heroicJob && <div style={{ fontSize: 12, opacity: 0.8 }}>
+        {!!heroicJob && !installed && <div style={{ fontSize: 12, opacity: 0.8 }}>
           {heroicJob.message}
         </div>}
         {!!error && <div role="alert">{error}</div>}
