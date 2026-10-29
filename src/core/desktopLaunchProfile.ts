@@ -25,7 +25,7 @@ export function desktopLaunchProfile(
 
   // Flatpak doesn't reliably forward the parent process' GTK/Qt variables.
   // Set them inside the sandbox using documented flatpak-run --env flags.
-  if (app.flatpak && /(^|\\/)flatpak$/.test(app.bin) && /^run(?:\\s|$)/.test(app.cmd)) {
+  if (app.flatpak && /(^|\/)flatpak$/.test(app.bin) && /^run(?:\s|$)/.test(app.cmd)) {
     const options = environment.map(item => "--env=" + item).join(" ");
     return { bin: app.bin, cmd: app.cmd.replace(/^run/, "run " + options) };
   }
