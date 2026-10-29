@@ -1,29 +1,30 @@
-# Architecture (proposal)
+# GameMode Hub architecture
 
-SteamOS-Hub aims to offer a single setup experience for SteamOS gaming mode tools. This is a design scaffold, not a functioning Decky plugin.
+GameMode Hub is an active Steam Gaming Mode plugin hosted by Decky Loader.
+The independent launcher is a future goal. There is no separate module-loader
+for third-party manifests; the old placeholder directory was removed.
 
-## Components
+## Current project layout
 
-- **Decky adapter (planned):** integration with the existing Decky Loader; avoid replacing Decky initially.
-- **Launcher UI (planned):** controller-friendly hub with tiles for Games, Terminal, Tabs and Settings.
-- **Modules (planned):** independent feature implementations with explicit permissions and lifecycle.
-- **Game store adapter (planned):** GOG first, then Epic and Amazon; expose Linux/Windows build choice only when supported.
+- `main.py`, `plugin.json`: required Decky entrypoint and plugin metadata.
+- `backend/core/`: settings, release catalog, runtime state.
+- `backend/files/`: file manager, trash, LAN file transfer.
+- `backend/apps/`: application discovery and Flatpak integration.
+- `backend/downloads/`: background jobs and update checks.
+- `backend/library/`: tabs, collections, backups, game settings and badges.
+- `src/hub/`: Decky UI pages and controller integration.
+- `src/modules/`: existing reusable UI feature modules.
+- `src/core/`: frontend logic independent of Steam/Decky.
+- `desktop/`: dormant Electron prototype, excluded from releases.
+- `terminal_core/`: disabled experimental PTY, excluded from releases.
+- `tests/`: regression tests; `scripts/`: packaging; `docs/`: documentation.
 
-## Important constraints
+Decky loads `main.py` by file path. It inserts the plugin root in `sys.path`
+to import `backend.*` from its sandbox. Moving Python source files must not
+change persisted user settings, Decky RPC names or the installation layout.
+The ZIP is built by `scripts/package.py` using the `backend/` package.
 
-- Steam library's native tabs are not a supported extension API. TabMaster integration and feasibility must be investigated before promising a new native tab.
-- Running a terminal in gaming mode requires careful session handling, command confirmation, and no blanket root privileges.
-- Existing projects must not be vendored until license, attribution and compatibility review is complete.
-- Never collect or store store-account passwords in this repository; use supported authentication flows.
-
-## Proposed milestones
-
-1. Audit Decky Loader, TabMaster, and Unifideck APIs/licenses.
-2. Build minimal controller-friendly hub with a safe backend bridge.
-3. Add optional module registry and installer.
-4. Implement GOG Linux/Windows installer selection with real availability checks.
-5. Prototype tabs/library integration and terminal with permission boundaries.
-
+## Earlier proposals (historical)
 
 ## Independent terminal (implementation)
 

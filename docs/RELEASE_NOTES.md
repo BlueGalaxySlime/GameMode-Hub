@@ -1,3 +1,10 @@
+# GameMode Hub 0.5.56 (testowy)
+
+- **Repozytorium:** backend Pythona uporządkowany w `backend/core/`, `backend/files/`, `backend/apps/`, `backend/downloads/` i `backend/library/`.
+- **Moduły:** usunięto nieaktywny katalog `modules/` z pustym przykładowym manifestem; istniejące moduły interfejsu pozostają w `src/modules/`.
+- **Kompatybilność:** poprawiono importy, testy, budowanie ZIP i opis architektury bez zmiany ścieżek ustawień użytkownika ani RPC Decky.
+- **Instalacja:** poprawiono stary odnośnik do pobrania w README.
+
 # GameMode Hub 0.5.55 (testowy)
 
 - **Pulpit → Y → Widok:** zachowane stałe widoki Wszystkie, Ulubione, Flatpak, Systemowe i Ukryte. Nie można ich usuwać ani zmieniać nazw. Dodano osobne **Własne**: tworzenie, zmiana nazwy i usuwanie widoków oraz przypisywanie aplikacji. Dotychczasowe Ukryj/Pokaż i Pokaż ukryte pozostają bez zmian.
