@@ -1,4 +1,5 @@
 import type { DesktopApp } from "./DesktopPage";
+import { desktopLaunchProfile, type DesktopWindowProfile } from "../core/desktopLaunchProfile";
 
 type SteamAppInfo = { display_name?: string; m_gameid: string };
 type SteamHost = {
@@ -11,6 +12,7 @@ type SteamHost = {
       SetShortcutStartDir: (id: number, dir: string) => void;
       SetShortcutLaunchOptions: (id: number, opts: string) => void;
       RunGame: (id: string, args: string, a: number, b: number) => void;
+      ShowControllerConfigurator?: (appId: number) => void;
     };
     GameSessions: {
       RegisterForAppLifetimeNotifications: (cb: (event: { unAppID: number; bRunning: boolean }) => void) =>
@@ -30,18 +32,19 @@ function host(): Required<SteamHost> {
 
 function delay(ms: number) { return new Promise<void>(resolve => window.setTimeout(resolve, ms)); }
 
-export async function createSteamDesktopShortcut(app: DesktopApp) {
+export async function createSteamDesktopShortcut(app: DesktopApp, windowProfile: DesktopWindowProfile = "system") {
   const client = host();
   // Create the shortcut first, then populate its launch fields; Steam may
   // ignore some properties passed directly to AddShortcut.
   const appId = await Promise.resolve(client.SteamClient.Apps.AddShortcut(app.id, app.id, "", ""));
+  const launch = desktopLaunchProfile(app, windowProfile);
   if (!Number.isSafeInteger(appId) || appId <= 0) throw new Error("Steam nie utworzył skrótu.");
   try {
     for (let attempt = 0; attempt < 25; attempt++) {
       client.SteamClient.Apps.SetShortcutName(appId, app.name);
-      client.SteamClient.Apps.SetShortcutExe(appId, app.bin);
+      client.SteamClient.Apps.SetShortcutExe(appId, launch.bin);
       client.SteamClient.Apps.SetShortcutStartDir(appId, app.workdir);
-      client.SteamClient.Apps.SetShortcutLaunchOptions(appId, app.cmd);
+      client.SteamClient.Apps.SetShortcutLaunchOptions(appId, launch.cmd);
       await delay(120);
       const info = client.appStore.GetAppOverviewByAppID(appId);
       if (info?.display_name === app.name && info.m_gameid) {
@@ -53,6 +56,25 @@ export async function createSteamDesktopShortcut(app: DesktopApp) {
     try { client.SteamClient.Apps.RemoveShortcut(appId); } catch { /* Steam may already have removed it. */ }
     throw error;
   }
+}
+
+/** Reapply the selected UI-scale profile for persistent shortcuts before launching. */
+export function configureSteamDesktopShortcut(
+  app: DesktopApp, appId: number, profile: DesktopWindowProfile = "system"
+) {
+  const client = host();
+  const launch = desktopLaunchProfile(app, profile);
+  client.SteamClient.Apps.SetShortcutExe(appId, launch.bin);
+  client.SteamClient.Apps.SetShortcutLaunchOptions(appId, launch.cmd);
+}
+
+/** Opens Steam's own layout chooser; templates from other games stay in Steam. */
+export function openSteamInputForDesktopShortcut(appId: number) {
+  const client = host();
+  if (typeof client.SteamClient.Apps.ShowControllerConfigurator !== "function") {
+    throw new Error("Steam Input nie udostępnia konfiguratora na tym urządzeniu.");
+  }
+  client.SteamClient.Apps.ShowControllerConfigurator(appId);
 }
 
 export function removeSteamDesktopShortcut(id: number) {
