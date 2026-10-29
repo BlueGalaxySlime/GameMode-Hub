@@ -42,3 +42,27 @@ test("unavailable plugin loader is not mistaken for active TabMaster", () => {
   assert.equal(getTabMasterActivity(undefined), "unknown");
   assert.equal(getTabMasterActivity({ hasPlugin: () => { throw Error("loader unavailable"); } }), "unknown");
 });
+
+test("loaded plugin list works when Decky has no hasPlugin method", () => {
+  assert.equal(getTabMasterActivity({
+    plugins: [{ name: "GameMode Hub" }, { name: "TabMaster" }]
+  }), "active");
+  assert.equal(getTabMasterActivity({
+    plugins: [{ name: "GameMode Hub" }]
+  }), "inactive");
+});
+
+test("Decky backend can confirm TabMaster is disabled when loader is unavailable", async () => {
+  const { readDeckyTabMasterActivity } = context.exports;
+  const disabledBackend = {
+    callable: () => async () => [{ name: "TabMaster", disabled: true }]
+  };
+  const enabledBackend = {
+    callable: () => async () => [{ name: "TabMaster", disabled: false }]
+  };
+  assert.equal(await readDeckyTabMasterActivity(undefined, disabledBackend), "inactive");
+  assert.equal(await readDeckyTabMasterActivity(undefined, enabledBackend), "active");
+  assert.equal(await readDeckyTabMasterActivity(undefined, {
+    callable: () => async () => { throw Error("offline"); }
+  }), "unknown");
+});
