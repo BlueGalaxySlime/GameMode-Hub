@@ -19,7 +19,7 @@
 
 ## Optymalizacja
 
-**Optymalizacja** jest prostą stroną ustawień: Gaming Mode, Karty, Kolekcje i Kopia zapasowa bez dodatkowych przełączanych ekranów. Dodawanie i edycja kart odbywają się **z poziomu biblioteki Gaming Mode** przez natywne menu **☰** zaznaczonej karty. W Optymalizacji pozostają akcje **Zarządzaj** i **Wyświetlaj**, bez przełącznika. Kolekcje Huba i karty są niezależne. Kopie zapasowe kart, kolekcji i profili można zapisać i przywrócić, bez plików gier i haseł. Nie trzeba instalować TabMastera; integracja z biblioteką startuje automatycznie przy uruchomieniu Huba i jest eksperymentalna. **☰ KARTY** pokazuje się na dolnej belce biblioteki launchera Steam, nie wewnątrz opcji Huba. Osobny aktywny TabMaster musi być wyłączony; stan można odświeżyć w Optymalizacja → Karty. Szczegóły w [dokumentacji](docs/TAB_MANAGER.md).
+**Optymalizacja** jest prostą stroną ustawień: Gaming Mode, Karty, Kolekcje i Kopia zapasowa bez dodatkowych przełączanych ekranów. Dodawanie i edycja kart odbywają się **z poziomu biblioteki Gaming Mode** przez natywne menu **☰** zaznaczonej karty. W Optymalizacji jest jeden wiersz z **ON/OFF** oraz sąsiadującą listą **Zarządzaj ▾**, używającą tego samego menu co w bibliotece. Kolekcje Huba i karty są niezależne. Kopie zapasowe kart, kolekcji i profili można zapisać i przywrócić, bez plików gier i haseł. Nie trzeba instalować TabMastera; integracja z biblioteką respektuje zapisany przełącznik ON/OFF przy uruchomieniu Huba i jest eksperymentalna. **☰ KARTY** pokazuje się na dolnej belce biblioteki launchera Steam, nie wewnątrz opcji Huba. Osobny aktywny TabMaster musi być wyłączony; stan można odświeżyć w Optymalizacja → Karty. Szczegóły w [dokumentacji](docs/TAB_MANAGER.md).
 
 ## Pliki
 

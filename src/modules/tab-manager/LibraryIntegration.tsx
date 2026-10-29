@@ -33,6 +33,7 @@ export type TabDefinition = {
   collection_id: string;
 };
 
+const readEnabled = callable<[], boolean>("get_tab_manager_enabled");
 const readTabs = callable<[], TabDefinition[]>("get_tab_definitions");
 const readHiddenSteamTabs = callable<[], string[]>("get_hidden_steam_tabs");
 const saveHiddenSteamTabs = callable<[string[]], string[]>("save_hidden_steam_tabs");
@@ -79,7 +80,8 @@ export async function refreshTabManagerConflict(): Promise<TabMasterActivity> {
     current.DeckyPluginLoader, current.DeckyBackend
   );
   conflict = result !== "inactive";
-  statusDetail = result === "inactive" ? "Moduł aktywny w bibliotece Steam"
+  statusDetail = result === "inactive" ? (active
+      ? "Moduł aktywny w bibliotece Steam" : "Moduł kart jest wyłączony w Optymalizacji")
     : result === "active" ? "Aktywny TabMaster blokuje menu Huba"
     : "Decky nie udostępnia stanu innych wtyczek";
   syncPatch();
@@ -89,16 +91,16 @@ export async function refreshTabManagerConflict(): Promise<TabMasterActivity> {
 export async function startTabManager() {
   const request = ++generation;
   try {
-    const [savedTabs, savedCollections, savedHidden] = await Promise.all([
-      readTabs(), readHubCollections(), readHiddenSteamTabs()
+    const [savedEnabled, savedTabs, savedCollections, savedHidden] = await Promise.all([
+      readEnabled(), readTabs(), readHubCollections(), readHiddenSteamTabs()
     ]);
     if (request !== generation) return;
     definitions = savedTabs;
     hubCollections = savedCollections;
     hiddenSteamTabs = savedHidden;
-    // The library module is part of Hub, not an opt-in option. Start
-    // without opening Optimization or clicking Manage.
-    active = true;
+    // Honor the user's saved ON/OFF setting at plugin startup.
+    // No need to open Optimization after enabling the module once.
+    active = savedEnabled;
     await refreshTabManagerConflict();
     if (request !== generation) {
       active = false;
