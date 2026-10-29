@@ -4,7 +4,7 @@ import { withTimeout } from "../utils/withTimeout";
 
 export type Download = {
   id: number;
-  kind: "flatpak";
+  kind: "flatpak" | "heroic";
   target: string;
   scope: "user" | "system";
   label: string;
