@@ -5,7 +5,7 @@ import unittest
 from pathlib import Path
 from unittest.mock import patch
 
-import desktop_apps
+from backend.apps import desktop_apps
 
 
 class DesktopCustomViewsTests(unittest.TestCase):
@@ -13,7 +13,7 @@ class DesktopCustomViewsTests(unittest.TestCase):
         self.tmp = tempfile.TemporaryDirectory()
         self.addCleanup(self.tmp.cleanup)
         patcher = patch.object(desktop_apps, "STATE_FILE",
-                               Path(self.tmp.name) / "desktop_apps.json")
+                               Path(self.tmp.name) / "backend.apps.desktop_apps.json")
         patcher.start()
         self.addCleanup(patcher.stop)
 

@@ -5,7 +5,7 @@ import unittest
 from pathlib import Path
 from unittest.mock import patch
 
-import hub_settings
+from backend.core import hub_settings
 
 
 class HubSelectionTests(unittest.TestCase):
@@ -72,7 +72,7 @@ class HubSelectionTests(unittest.TestCase):
             self.assertEqual(hub_settings.get_hub_preferences(), saved)
 
     def test_favorite_folders_persist_and_reject_escaping_home(self):
-        import file_manager
+        from backend.files import file_manager
         home = Path(self.root.name) / "home"
         home.mkdir()
         mods = home / "Mod manager"

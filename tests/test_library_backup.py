@@ -5,9 +5,9 @@ import unittest
 from pathlib import Path
 from unittest.mock import patch
 
-import collection_manager
-import tab_manager
-import library_backup
+from backend.library import collection_manager
+from backend.library import tab_manager
+from backend.library import library_backup
 import main
 
 

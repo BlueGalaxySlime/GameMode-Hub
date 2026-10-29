@@ -6,7 +6,7 @@ import unittest
 from pathlib import Path
 from unittest.mock import patch
 
-from downloads_manager import DownloadManager
+from backend.downloads.downloads_manager import DownloadManager
 
 
 class FakeTask:
@@ -35,7 +35,7 @@ class DownloadManagerTests(unittest.TestCase):
         self.addCleanup(self.tmp.cleanup)
         self.path = Path(self.tmp.name) / "downloads.json"
         self.task = FakeTask()
-        self.nonroot = patch("downloads_manager.os.geteuid", return_value=1000)
+        self.nonroot = patch("backend.downloads.downloads_manager.os.geteuid", return_value=1000)
         self.nonroot.start()
         self.addCleanup(self.nonroot.stop)
         self.manager = DownloadManager(self.task, self.path)
@@ -86,7 +86,7 @@ class DownloadManagerTests(unittest.TestCase):
     def test_invalid_and_root_requests_rejected(self):
         with self.assertRaises(ValueError):
             self.manager.enqueue_flatpak("$(unsafe)")
-        with patch("downloads_manager.os.geteuid", return_value=0):
+        with patch("backend.downloads.downloads_manager.os.geteuid", return_value=0):
             with self.assertRaises(PermissionError):
                 self.manager.enqueue_flatpak()
 
@@ -108,7 +108,7 @@ class SystemScopeTests(unittest.TestCase):
             def cancel(self):
                 self.state = "cancelled"
         with tempfile.TemporaryDirectory() as temp, patch(
-            "downloads_manager.os.geteuid", return_value=1000
+            "backend.downloads.downloads_manager.os.geteuid", return_value=1000
         ):
             task = Fake()
             manager = DownloadManager(task, Path(temp) / "state.json")
