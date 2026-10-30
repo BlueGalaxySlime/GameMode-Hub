@@ -4,7 +4,7 @@ const fs = require("node:fs");
 const ts = require("typescript");
 
 const source = fs.readFileSync("src/modules/terminal/sessionNavigation.ts", "utf8");
-const js = ts.transpileModule(source, { compilerOptions: { module: ts.ModuleKind.CommonJS } }).outputText;
+const js = ts.transpileModule(source, { compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2020 } }).outputText;
 const moduleExports = {};
 new Function("exports", js)(moduleExports);
 

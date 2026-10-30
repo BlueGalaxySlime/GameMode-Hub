@@ -7,9 +7,8 @@ export type TerminalTabs = { open: number[]; selected: number | null };
 export const INITIAL_TERMINAL_TABS: TerminalTabs = { open: [0], selected: 0 };
 
 export function normalizeTerminalTabs(state: TerminalTabs): TerminalTabs {
-  const open = [...new Set((state?.open ?? [])
-    .filter(id => Number.isInteger(id) && TERMINAL_SESSIONS.includes(id as 0 | 1 | 2)))]
-    .sort((a, b) => a - b);
+  const open: number[] = TERMINAL_SESSIONS.filter(id =>
+    Array.isArray(state?.open) && state.open.includes(id));
   const selected = state && state.selected !== null && open.includes(state.selected)
     ? state.selected : (open[0] ?? null);
   return { open, selected };
