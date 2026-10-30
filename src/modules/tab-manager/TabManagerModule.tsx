@@ -1,14 +1,15 @@
 import { useEffect, useState } from "react";
 import { callable } from "@decky/api";
 import {
-  DialogButton, DialogControlsSection, DialogControlsSectionHeader,
-  Field, Focusable, NavEntryPositionPreferences, Toggle, showContextMenu
+  DialogControlsSection, DialogControlsSectionHeader,
+  Field, showContextMenu
 } from "@decky/ui";
 import {
   tabManagerEnabledChanged, refreshTabManagerConflict, tabManagerStatus
 } from "./LibraryIntegration";
 import { LibraryCardsContextMenu } from "./LibraryCardsContextMenu";
 import type { TabMasterActivity } from "./TabMasterDetection";
+import { OptimizationManageControl } from "../../hub/OptimizationManageControl";
 
 const readEnabled = callable<[], boolean>("get_tab_manager_enabled");
 const saveEnabled = callable<[boolean], boolean>("set_tab_manager_enabled");
@@ -63,17 +64,8 @@ export function TabManagerModule() {
 
   return <DialogControlsSection>
     <DialogControlsSectionHeader>Karty</DialogControlsSectionHeader>
-    <Focusable flow-children="row"
-      navEntryPreferPosition={NavEntryPositionPreferences.MAINTAIN_X}
-      style={{ display: "flex", justifyContent: "space-between", alignItems: "center",
-        gap: 12, padding: "8px 0" }}>
-      <DialogButton disabled={busy} style={{ flex: "0 1 auto", minWidth: 150 }}
-        onClick={event => openManageMenu(event.currentTarget)}>
-        Zarządzaj ▾
-      </DialogButton>
-      <Toggle value={enabled} disabled={busy}
-        onChange={value => { void toggle(value); }} />
-    </Focusable>
+    <OptimizationManageControl busy={busy} enabled={enabled}
+      onManage={openManageMenu} onToggle={value => { void toggle(value); }} />
     {enabled && activity === "active" && <Field label="Konflikt"
       description="Aktywny TabMaster blokuje menu Huba w bibliotece. Wyłącz go w Decky." />}
     {enabled && activity === "unknown" && <Field label="Stan modułu"
