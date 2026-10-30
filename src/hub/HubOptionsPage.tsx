@@ -104,10 +104,10 @@ export function HubOptionsPage({ terminalFontSize, setTerminalFontSize }: {
     </DialogControlsSection>
     <DialogControlsSection>
       <DialogControlsSectionHeader>Terminal</DialogControlsSectionHeader>
-      <Field label="Tryb bezpieczny"
-        description="Uruchamianie terminala pozostaje wyłączone do czasu rozwiązania problemu restartów SteamOS." />
+      <Field label="Uruchamianie na żądanie"
+        description="PTY uruchamia się dopiero po wybraniu Uruchom terminal. Brak automatycznego startu po wejściu na kartę. Przed udostępnieniem wersji stabilnej wymagane testy na handheldzie." />
       <Field label="Rozmiar czcionki terminala"
-        description="Zachowujemy ustawienie dla przyszłego uruchomienia terminala. Nie włącza ono powłoki.">
+        description="Wielkość czcionki w terminalu Huba. Zmiana nie uruchamia powłoki.">
         <SliderField min={11} max={22} step={1} value={terminalFontSize}
           showValue onChange={setTerminalFontSize} />
       </Field>
