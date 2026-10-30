@@ -683,7 +683,7 @@ export function DesktopPage() {
           )}
           </Focusable>
         </div>
-        <div aria-label="Aplikacje pulpitu" ref={scrollRef}
+        <div aria-label="Aplikacje pulpitu" data-hub-scroll-container="desktop-list" ref={scrollRef}
           style={{ minHeight: 160, height: "min(54vh, 540px)", width: "100%",
             overflowY: "auto", overscrollBehavior: "contain", paddingBottom: 36 }}>
           <Focusable flow-children="column"
