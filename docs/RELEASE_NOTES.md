@@ -1,3 +1,11 @@
+# GameMode Hub 0.5.59 (testowy)
+
+- **Pliki → ...:** wiersz katalogu nadrzędnego pokazuje wyłącznie `...`, bez drugiej etykiety „Katalog wyżej”. **A** przechodzi wyżej, a **Y** otwiera zwykłe „Opcje plików” — samo otwarcie menu nie wykonuje operacji.
+- **Pliki → Y → Właściwości:** informacyjne okno dla wybranego pliku lub folderu: pełna nazwa, rodzaj, rozszerzenie (jeśli występuje), rozmiar pliku (również dokładny w bajtach), data modyfikacji i pełna ścieżka.
+- **Foldery:** rozmiar nie jest automatycznie liczony, aby unikać kosztownego skanowania dysku podczas grania.
+- **Bezpieczeństwo i pad:** właściwości nie zmieniają plików; okno ma przewijanie i zamykanie B. Zmiany nie uruchamiają powłoki ani instalatorów modów.
+- **Testy:** sprawdzanie działania wiersza `...` oraz formatowania informacji o plikach i folderach.
+
 # GameMode Hub 0.5.58 (testowy)
 
 - **Terminal — zakładki:** na początku widoczna jest tylko sesja 1. Przycisk **+** dodaje sesję 2 lub 3, a **×** przy konkretnej zakładce ją zamyka. Limit to trzy otwarte zakładki; nie ma automatycznego tworzenia trzech.

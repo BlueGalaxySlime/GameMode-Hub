@@ -160,6 +160,29 @@ test("favourites and multi-selection live in Steam menus; B cancels selection", 
   assert.ok(ui.includes('exitMultiSelect()'));
 });
 
+test("parent row uses only three dots and has explicit non-destructive Y menu", () => {
+  const row = ui.split("function ParentDirectoryRow(", 2)[1].split("export function FileManagerPage()", 1)[0];
+  assert.ok(row.includes(">...</span>"));
+  assert.ok(!row.includes(">Katalog wyżej</span>"));
+  assert.ok(row.includes('onOptionsActionDescription="Opcje plików"'));
+  assert.ok(row.includes("onOptions(event.currentTarget ?? window)"));
+  assert.ok(ui.includes("openBrowserMenu(target)"));
+});
+
+test("Y properties is a read-only modal for selected file or directory", () => {
+  const dialog = fs.readFileSync("src/hub/FilePropertiesDialog.tsx", "utf8");
+  const details = fs.readFileSync("src/core/fileProperties.ts", "utf8");
+  assert.ok(ui.includes('onSelected={() => openProperties(entry)}>Właściwości</MenuItem>'));
+  assert.ok(ui.includes("<FilePropertiesDialog entry={entry} />"));
+  assert.ok(dialog.includes("<ModalRoot"));
+  assert.ok(dialog.includes("<GamepadScrollArea>"));
+  for (const field of ["Nazwa", "Typ", "Rozszerzenie", "Rozmiar", "Data modyfikacji", "Ścieżka"]) {
+    assert.ok(details.includes('label: "' + field + '"'));
+  }
+  assert.ok(details.includes('Nieobliczony (bez skanowania folderu)'));
+  assert.ok(!dialog.includes('callable<'));
+});
+
 test("directory changes retain focus inside the file tree instead of jumping to tabs", () => {
   assert.ok(ui.includes('const pendingDirectoryFocus = useRef<"left" | "right" | null>(null)'));
   assert.ok(ui.includes("useLayoutEffect(() => {"));
