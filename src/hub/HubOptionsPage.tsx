@@ -1,6 +1,6 @@
 import { useEffect, useState, useSyncExternalStore } from "react";
 import { callable } from "@decky/api";
-import { DialogBody, DialogControlsSection, DialogControlsSectionHeader, Field, SliderField, Toggle } from "@decky/ui";
+import { DialogBody, DialogControlsSection, DialogControlsSectionHeader, Dropdown, Field, SliderField, Toggle } from "@decky/ui";
 import { applyHubPreferences, getHubPreferences, subscribeHubPreferences } from "../core/hubSession";
 import type { HubPreferences } from "../core/hubSession";
 import { withTimeout } from "../utils/withTimeout";
@@ -50,10 +50,10 @@ export function HubOptionsPage({ terminalFontSize, setTerminalFontSize }: {
   // This page may be opened directly; always keep defaults if Decky is offline.
   useEffect(() => { void initializeHubOptions().catch(() => {}); }, []);
 
-  async function update(key: keyof HubPreferences, enabled: boolean) {
+  async function update<K extends keyof HubPreferences>(key: K, value: HubPreferences[K]) {
     if (saving) return;
     const previous = getHubPreferences();
-    const next = applyHubPreferences({ ...previous, [key]: enabled });
+    const next = applyHubPreferences({ ...previous, [key]: value });
     setError("");
     setSaving(true);
     try {
@@ -67,8 +67,22 @@ export function HubOptionsPage({ terminalFontSize, setTerminalFontSize }: {
     }
   }
 
+  const english = options.language === "en";
+
   return <DialogBody>
     <DialogControlsSection>
+      <Field label={english ? "Language" : "Język"}
+        description={english ? "Hub interface language (Polish or English)." :
+          "Język interfejsu Huba. Na razie dostępne są polski i angielski."}>
+        <Dropdown
+          rgOptions={[{ data: "pl", label: "Polski" }, { data: "en", label: "English" }]}
+          selectedOption={options.language}
+          disabled={saving}
+          onChange={option => {
+            if (option.data === "pl" || option.data === "en")
+              void update("language", option.data);
+          }} />
+      </Field>
       <Field label="Zachowuj stan kart"
         description="Zapamiętaj otwarte katalogi, sortowanie, zaznaczenia, schowek i ustawienia paneli przy zmianie zakładki. Dane sesji pozostają w pamięci, nie na dysku.">
         <Toggle value={options.saveSession} disabled={saving}
