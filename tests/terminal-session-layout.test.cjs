@@ -50,6 +50,6 @@ test("terminal uses the same content layout as Files and Desktop, not custom rou
   assert.doesNotMatch(hub, /title: "Terminal"[\s\S]*?hideTitle: true, padding: "none"/);
   assert.match(code, /TerminalView/);
   assert.match(code, /Uruchom terminal/);
-  assert.match(code, /activated\\.includes\\(active\\)/);
+  assert.match(code, /activated\.includes\(active\)/);
   assert.match(code, /HubTextInput/);
 });
