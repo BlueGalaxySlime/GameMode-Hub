@@ -137,20 +137,23 @@ test("B on Desktop backs out of edit and filters, then releases SteamOS Back", (
   assert.ok(page.includes('onSecondaryButton={event => {'));
 });
 
-test("Konta remains the fourth controller tab and now shows Epic only", () => {
+test("Konta remains the fourth controller tab and exposes GOG and Epic stores", () => {
   const tabs = [...hub.matchAll(/title: "(Pulpit|Pliki|Terminal|Konta|Dodatki)"/g)]
     .map(match => match[1]);
   assert.deepEqual(tabs, ["Pulpit", "Pliki", "Terminal", "Konta", "Dodatki"]);
   assert.ok(hub.includes('content: <AccountsPage />'));
   const accounts = fs.readFileSync("src/hub/AccountsPage.tsx", "utf8");
-  assert.ok(accounts.includes('DialogControlsSectionHeader>Konta</DialogControlsSectionHeader>'));
+  assert.ok(accounts.includes('DialogControlsSectionHeader>Konta i sklepy</DialogControlsSectionHeader>'));
   assert.ok(accounts.includes('<Dropdown rgOptions={ACCOUNT_OPTIONS}'));
-  assert.ok(accounts.includes('label="Wybierz konto"'));
+  assert.ok(accounts.includes('label="Wybierz sklep"'));
   assert.ok(accounts.includes("Stan sesji: niezweryfikowany"));
   assert.ok(accounts.includes('label="Logowanie do Epic Games"'));
+  assert.ok(accounts.includes('label="GOG — połączenie"'));
+  assert.ok(accounts.includes('void importGog()'));
+  assert.ok(accounts.includes('void loadGogGames()'));
   assert.ok(accounts.includes('onClick={() => { void signIn(); }}'));
   assert.ok(accounts.includes('disabled={loading || opening || !chosenLauncher}'));
-  assert.ok(accounts.includes("Bezpieczeństwo konta"));
+  assert.ok(accounts.includes("Bezpieczeństwo kont"));
   assert.ok(accounts.includes("<GamepadScrollArea>"));
 });
 
