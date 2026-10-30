@@ -43,3 +43,15 @@ Hub nie wylogowuje ani nie modyfikuje sesji Unifideck.
 - **Przyszłe moduły:** osobne uprawnienia do logowania, biblioteki, instalowania,
   pobierania, zapisów w chmurze i ekranu sklepu. Sklepy powinny móc dodawać
   własne funkcje bez wymuszania przełączenia launchera.
+
+## Podgląd sparowania (0.5.69)
+
+W **Konta i sklepy** górny pasek ikon jest wyłącznie wskaźnikiem statusu.
+- **GOG:** „Połączone” tylko gdy backend Huba ma własną sesję GOG;
+  „Niepołączone” po potwierdzonym braku; „Niezweryfikowane” gdy odczyt się nie udał.
+- **Epic / Steam:** „Niezweryfikowane”, dopóki nie istnieje właściwa
+  integracja statusu. Nie odczytujemy nieznanych tokenów Unifideck
+  i nie uznajemy wykrytego programu za sesję.
+- Ikony korzystają z `react-icons` (`FaSteam`, `SiGogdotcom`, `SiEpicgames`),
+  podobnie jak mapowanie `StoreIcon` w Unifideck. Nie kopiujemy jego
+  komponentu ani nie dodajemy zależności runtime od Unifideck.

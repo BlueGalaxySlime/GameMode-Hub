@@ -1,3 +1,11 @@
+# GameMode Hub 0.5.69 (testowy)
+
+- **Konta i sklepy:** na samej górze jeden rząd niewybieralnych ikon Steam, GOG i Epic Games, wykorzystujących ten sam zestaw symboli z react-icons, który używa Unifideck. Ikony pokazują wyłącznie stan połączenia, nie służą do wybierania sklepu ani logowania.
+- **Połączenia:** zielony symbol GOG wyłącznie wtedy, gdy backend Huba raportuje własną sesję GOG; szary przy braku połączenia. Steam i Epic pozostają „Niezweryfikowane”, dopóki Hub nie będzie miał odpowiedniego potwierdzenia; obecność launchera ani wtyczki Unifideck nie oznacza sparowania. Sam stan GOG oznacza sesję lokalną; nie jest dodatkowym odpytywaniem GOG przez sieć.
+- **Opcje Huba — język:** zapisywany wybór **Polski / English**, bez innych języków. Przełączenie zmienia nazwy zakładek menu, Pomoc, główne ustawienia i podpisy ikon połączeń. Pozostałe moduły nie mają jeszcze kompletnego tłumaczenia angielskiego; stopniowa lokalizacja będzie kolejnym etapem.
+- **Zachowane ustawienia:** migracja starszego pliku preferencji domyślnie wybiera Polski i nie resetuje pozostałych ustawień. Żadnych zmian w tokenach, logowaniu ani sesjach sklepów.
+- **Weryfikacja:** testy TypeScript, backend, frontend i paczka; wygląd oraz nawigację padem trzeba sprawdzić na Lenovo w Steam Gaming Mode.
+
 # GameMode Hub 0.5.68 (testowy)
 
 - **Optymalizacja:** jeden nagłówek „Karty i Kolekcje”, a pod nim dwa obramowane wiersze zgodne z pozostałymi ustawieniami. Zamiast przycisku „Zarządzaj” są niewielkie przyciski „Karty” i „Kolekcje”; każdy otwiera swoje dotychczasowe natywne menu. Oba przełączniki ON/OFF pozostają niezależne.

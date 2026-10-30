@@ -13,6 +13,10 @@
 
 **Wymagany jest Decky Loader tylko jako adapter do Quick Access.** Valve nie udostępnia stabilnego publicznego interfejsu wtyczek do Quick Access. Nie modyfikujemy plików Steam ani nie wstrzykujemy własnych procesów do klienta Steam poza adapterem Decky.
 
+## Język
+
+W **Opcje Huba → Język** dostępne są obecnie **Polski** i **English**. Ustawienie zapisuje się poza instalacją wtyczki. Nazwy zakładek, Pomoc, główne Opcje Huba i podgląd sparowania mają angielskie odpowiedniki; pozostałe ekrany są na razie częściowo po polsku. To nie jest jeszcze kompletna lokalizacja całej aplikacji.
+
 ## Opcje Huba i zapamiętywanie sesji
 
 „Opcje Huba” zawierają dwa przełączniki: **Zachowuj stan kart** (domyślnie włączony) oraz **Podział drzewa plików** (domyślnie wyłączony). Stan kart jest przechowywany w pamięci wtyczki, więc można przełączać zakładki bez utraty ścieżki i bieżących ustawień. Same opcje są zapisywane na dysku. Podział w Plikach ogranicza się do przeglądarki katalogów: foldery po lewej, pliki po prawej, natomiast pasek adresu i cały Hub nie są dzielone.
@@ -22,6 +26,8 @@
 Ostatnia pozycja menu, **Pomoc**, znajduje się bezpośrednio pod **Dodatki**. Zawiera zwięzły opis każdej zakładki Huba i podstawowego sterowania, bez dodatkowych formularzy.
 
 ## Konta i sklepy
+
+Na górze zakładki w jednym rzędzie znajdują się niewybieralne ikony Steam, GOG i Epic. Zielony GOG oznacza sesję Huba; szary brak sesji, a „Niezweryfikowane” brak wiarygodnej informacji (Steam/Epic). Klikanie ikon nie uruchamia logowania ani nie zmienia sklepu.
 
 W **Konta → GOG** można zalogować się niezależnie od Unifideck i Heroic: Hub otwiera stronę autoryzacji GOG, a użytkownik wkleja do Huba adres powrotu po zalogowaniu. Hasła i 2FA są wpisywane tylko na stronie GOG. Sesja jest tymczasowo przechowywana w pamięci albo, na wyraźne życzenie, w dostępnym systemowym sejfie Secret Service/KWallet. „Wczytaj gry” pobiera bibliotekę z GOG, bez instalowania gier. Mechanizm i otwieranie przeglądarki są eksperymentalne i wymagają testu w Gaming Mode. Szczegóły: [moduły sklepów](docs/STORE_CONNECTORS.md).
 
