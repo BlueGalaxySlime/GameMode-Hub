@@ -193,7 +193,11 @@ test("plain text information is never collapsed in credits, desktop, or terminal
   assert.ok(!infoField.includes("DialogButton"));
   assert.ok(hubPage.includes("content: <DesktopPage />"));
   assert.ok(desktopPage.includes('overflowY: "auto"'));
-  assert.ok(terminalPage.includes("<GamepadScrollArea>"));
+  // Terminal now uses the same full-width Focusable layout as Files and Desktop,
+  // with its own scrollable console region rather than an information-only page.
+  assert.ok(terminalPage.includes('role="region" aria-label={"Terminal — sesja "'));
+  assert.ok(terminalPage.includes('overflowY: "auto"'));
+  assert.ok(!terminalPage.includes("setExpanded"));
 });
 
 test("gamepad focus scrolls through full plain text instead of opening submenus", () => {
