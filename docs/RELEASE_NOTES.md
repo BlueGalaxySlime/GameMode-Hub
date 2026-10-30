@@ -1,3 +1,10 @@
+# GameMode Hub 0.5.58 (testowy)
+
+- **Terminal — zakładki:** na początku widoczna jest tylko sesja 1. Przycisk **+** dodaje sesję 2 lub 3, a **×** przy konkretnej zakładce ją zamyka. Limit to trzy otwarte zakładki; nie ma automatycznego tworzenia trzech.
+- **Nawigacja:** LB/RB przechodzi tylko między otwartymi zakładkami, X wraca do paska zakładek, Y otwiera menu; identyfikator pozostałych sesji nie zmienia się po zamknięciu jednej.
+- **Układ:** usunięto osobne ustawienia `hideTitle` i `padding: none` z trasy Terminala. Teraz ma taką samą pozycję i marginesy jak Pliki oraz Pulpit; obszar wyjścia ma identyczną wysokość jak lista plików.
+- **Tryb bezpieczny:** dodawanie/zamykanie zakładek zmienia tylko interfejs; PTY i wykonywanie poleceń pozostają wyłączone. Przyczyna starszego restartu Steam nadal jest nieznana.
+
 # GameMode Hub 0.5.57 (testowy)
 
 - **Terminal:** ekran w trybie bezpiecznym przebudowany na układ Plików i Pulpitu — cienki pasek stanu, trzy zakładki sesji i duży obszar terminala zamiast kilku opisowych pól.
