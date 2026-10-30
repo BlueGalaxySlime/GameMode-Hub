@@ -35,19 +35,29 @@ test("Y on the focused file or address opens native SteamOS context menu", () =>
   assert.ok(ui.includes("data-file-path={entry.path}"));
   assert.ok(ui.includes('onOptionsActionDescription="Opcje plików"'));
   assert.ok(ui.includes("openBrowserMenu(event.currentTarget ?? window)"));
-  assert.ok(ui.includes('onOptionsActionDescription="Opcje pliku i Huba"'));
+  assert.ok(ui.includes('onOptionsActionDescription={entry.directory ? "Opcje folderu" : "Opcje pliku"}'));
   assert.ok(ui.includes("openFileMenu(entry, event.currentTarget ?? window, pane);"));
   assert.ok(ui.includes("function openFocusedFilesMenu(parent: EventTarget)"));
   assert.ok(ui.includes("event.stopPropagation();"));
-  assert.ok(ui.includes("<Menu label={entry.name}"));
+  assert.ok(ui.includes('<Menu label={(entry.directory ? "Opcje folderu: " : "Opcje pliku: ") + entry.name}>'));
   assert.ok(ui.includes('clipboardAction(entry, "copy")'));
   assert.ok(ui.includes('clipboardAction(entry, "move")'));
   assert.ok(ui.includes("onSecondaryButton={event => {")); // X returns to address; Y still owns context menus.
 });
 
+test("Y action and menu title clearly distinguish files, folders and global options", () => {
+  const fileMenu = ui.split('function openFileMenu(entry: Entry', 2)[1].split('function openFocusedFilesMenu', 1)[0];
+  const parent = ui.split('function ParentDirectoryRow(', 2)[1].split('export function FileManagerPage()', 1)[0];
+  assert.ok(fileMenu.includes('Opcje folderu: '));
+  assert.ok(fileMenu.includes('Opcje pliku: '));
+  assert.ok(ui.includes('onOptionsActionDescription={entry.directory ? "Opcje folderu" : "Opcje pliku"}'));
+  assert.ok(parent.includes('onOptionsActionDescription="Opcje plików"'));
+  assert.ok(ui.includes('<Menu label="Opcje plików">'));
+});
+
 test("Y on normal files and folders includes both file actions and global options", () => {
   const specific = ui.split('function openFileMenu(entry: Entry', 2)[1].split('function openFocusedFilesMenu', 1)[0];
-  assert.ok(specific.includes('<Menu label={entry.name}>'));
+  assert.ok(specific.includes('<Menu label={(entry.directory ? "Opcje folderu: " : "Opcje pliku: ") + entry.name}>'));
   assert.ok(specific.includes('>Właściwości</MenuItem>'));
   assert.ok(specific.includes('{browserOptions()}'));
   assert.ok(ui.includes('onContextMenu={event => {'));

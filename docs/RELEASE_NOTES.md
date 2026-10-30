@@ -1,3 +1,9 @@
+# GameMode Hub 0.5.61 (testowy)
+
+- **Pliki — nazwy menu Y:** na zwykłym pliku dolny pasek Steam wyświetla „Opcje pliku”, a na folderze „Opcje folderu”. Tytuł otwartego menu zawiera także nazwę konkretnego elementu.
+- **Opcje plików:** na pasku adresu i wierszu `...` pozostaje „Opcje plików” (menu globalne). Zestawy dostępnych akcji, ścieżki, ulubione i dane użytkownika pozostają bez zmian.
+- **Testy:** sprawdzają odrębne podpisy dla pliku, folderu oraz ogólnego menu.
+
 # GameMode Hub 0.5.60 (testowy)
 
 - **Pliki → Y:** naprawiono rozbieżność między menu na `...` a menu zwykłych plików i folderów. Zaznaczony element pokazuje własne operacje (kopiuj, przenieś, właściwości, kosz) **oraz** wspólne ustawienia Plików (Ulubione, widok, sortowanie, lokalizacje). Wiersz `...` nadal otwiera wyłącznie menu ogólne.

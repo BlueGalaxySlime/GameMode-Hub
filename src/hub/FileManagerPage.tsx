@@ -532,7 +532,7 @@ export function FileManagerPage() {
     setAction(null);
     setName(entry.name);
     showContextMenu(
-      <Menu label={entry.name}>
+      <Menu label={(entry.directory ? "Opcje folderu: " : "Opcje pliku: ") + entry.name}>
         <MenuItem onSelected={() => {
           setSelected(entry);
           setName(entry.name);
@@ -861,7 +861,7 @@ export function FileManagerPage() {
                           event.stopPropagation();
                           returnToAddressBar();
                         }}
-                        onOptionsActionDescription="Opcje pliku i Huba"
+                        onOptionsActionDescription={entry.directory ? "Opcje folderu" : "Opcje pliku"}
                         onOptionsButton={event => {
                            if (event.defaultPrevented) return;
                            event.preventDefault();
