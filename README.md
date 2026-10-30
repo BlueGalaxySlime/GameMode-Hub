@@ -19,7 +19,7 @@
 
 ## Konta i sklepy
 
-W **Konta → GOG** można powiązać istniejącą, zaszyfrowaną sesję GOG z Unifideck i na żądanie pobrać listę posiadanych gier. Jest to wyłącznie lokalne, odczytowe powiązanie, nie nowy klient logowania i nie migracja samych tokenów. Hub nie przechowuje haseł, a odłączenie nie zmienia konta Unifideck. Funkcja jest testowa i nie instaluje jeszcze gier. Docelowa architektura [modułów sklepów](docs/STORE_CONNECTORS.md) pozwoli zastąpić programy uruchamiające wspólnym interfejsem sklepu.
+W **Konta → GOG** można zalogować się niezależnie od Unifideck i Heroic: Hub otwiera stronę autoryzacji GOG, a użytkownik wkleja do Huba adres powrotu po zalogowaniu. Hasła i 2FA są wpisywane tylko na stronie GOG. Sesja jest tymczasowo przechowywana w pamięci albo, na wyraźne życzenie, w dostępnym systemowym sejfie Secret Service/KWallet. „Wczytaj gry” pobiera bibliotekę z GOG, bez instalowania gier. Mechanizm i otwieranie przeglądarki są eksperymentalne i wymagają testu w Gaming Mode. Szczegóły: [moduły sklepów](docs/STORE_CONNECTORS.md).
 
 ## Optymalizacja
 

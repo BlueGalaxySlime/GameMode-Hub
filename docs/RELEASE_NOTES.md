@@ -1,3 +1,12 @@
+# GameMode Hub 0.5.66 (testowy)
+
+- **GOG — własne logowanie Huba:** GOG nie zależy już od aktywnego Unifideck ani Heroica. Przycisk „Zaloguj” tworzy sesję OAuth i otwiera prawdziwą stronę `auth.gog.com`; hasło oraz 2FA użytkownik wpisuje wyłącznie na stronie GOG, nie w Hubie.
+- **Powrót z przeglądarki (wersja próbna):** po zalogowaniu użytkownik kopiuje pełny adres `https://embed.gog.com/on_login_success?…` i wkleja go w Hubie. Bezpieczna walidacja domeny, HTTPS, jednorazowego kodu i ograniczenie czasu próby; ta metoda wymaga sprawdzenia z przeglądarką SteamOS na Lenovo. Jeśli SteamOS zablokuje otwarcie strony, dostępna jest opcja „Kopiuj adres logowania”.
+- **Sesje:** domyślnie tymczasowa w pamięci backendu (nie zapisuje tokenu na dysku). Opcjonalnie „Sejf systemowy” korzysta z aktywnego, odblokowanego Secret Service/KWallet; nie używa niezabezpieczonego pliku jako planu B. Zapis w sejfie może być niedostępny w środowisku Decky — wtedy użytkownik może wybrać sesję tymczasową.
+- **Biblioteka GOG:** „Wczytaj gry” pobiera dane bezpośrednio z GOG; Hub obsługuje odświeżenie własnego tokenu oraz wylogowanie bez modyfikowania danych Unifideck. Nie pokazuje błędu logowania jako pustej biblioteki. Nie instaluje jeszcze gier.
+- **Architektura:** nieoficjalna integracja bazuje na powszechnie używanym przepływie GOG Galaxy OAuth, bez podszywania się pod oficjalny moduł sklepu. Nie ma automatycznego przechwytywania przekierowania OAuth ani pełnego, samodzielnego launchera.
+- **Weryfikacja:** testy automatyczne i pakiet; wymagane ręczne testy w Gaming Mode (logowanie, przekierowanie, odczyt biblioteki, klawiatura i dostępność sejfu). Wydanie pozostaje testowe; możliwość downgrade’u do 0.5.65.
+
 # GameMode Hub 0.5.65 (testowy)
 
 - **Konta i sklepy:** wybór sklepu GOG lub Epic zamiast wyboru launchera jako głównego sposobu integracji. Epic zachowuje istniejące, tymczasowe przekierowanie do programu, ale nie udaje natywnego połączenia.
