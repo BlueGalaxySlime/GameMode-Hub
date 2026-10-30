@@ -11,6 +11,7 @@ import { CreateFolderDialog } from "./CreateFolderDialog";
 import { ConfirmTrashDialog, TrashListDialog } from "./TrashDialogs";
 import { TransferDialog } from "./TransferDialog";
 import { FilePropertiesDialog } from "./FilePropertiesDialog";
+import { RenameFavoriteDialog } from "./RenameFavoriteDialog";
 
 type SortBy = "name" | "type" | "size" | "date";
 type Entry = {
@@ -32,6 +33,8 @@ const renameFile = callable<[string, string], { path: string }>("files_rename");
 const pasteMany = callable<[string[], string, "copy" | "move"], { items: { path: string }[]; count: number }>("files_paste_many");
 const readFavorites = callable<[], string[]>("get_favorite_folders");
 const saveFavorites = callable<[string[]], string[]>("set_favorite_folders");
+const readFavoriteLabels = callable<[], Record<string, string>>("get_favorite_labels");
+const saveFavoriteLabel = callable<[string, string], Record<string, string>>("set_favorite_label");
 const saveHubOptions = callable<[HubPreferences], HubPreferences>("set_hub_preferences");
 
 const sortOptions = [
@@ -99,6 +102,7 @@ export function FileManagerPage() {
   const [multiSelect, setMultiSelect] = useHubSessionState("files.multiSelect", false);
   const [markedPaths, setMarkedPaths] = useHubSessionState<string[]>("files.markedPaths", []);
   const [favorites, setFavorites] = useHubSessionState<string[]>("files.favorites", []);
+  const [favoriteLabels, setFavoriteLabels] = useHubSessionState<Record<string, string>>("files.favoriteLabels", {});
   const [savingFavorites, setSavingFavorites] = useState(false);
   const [name, setName] = useHubSessionState("files.name", "");
   const [action, setAction] = useHubSessionState<"folder" | "rename" | null>("files.action", null);
@@ -237,6 +241,7 @@ export function FileManagerPage() {
   useEffect(() => {
     if (!page) void load(null, hidden, 0, sortBy, descending, "left");
     void withTimeout(readFavorites(), 4000).then(setFavorites).catch(() => {});
+    void withTimeout(readFavoriteLabels(), 4000).then(setFavoriteLabels).catch(() => {});
     return () => { request.current++; };
   }, []);
 
@@ -342,11 +347,30 @@ export function FileManagerPage() {
     void reloadBoth(show, sortBy, descending);
   }
 
-  // A opens the bookmarked directory. Right on that same row opens a single
-  // destructive bookmark action; no duplicate list of "Open" / "Remove" rows.
+  function displayFavorite(path: string) {
+    return favoriteLabels[path] || favoriteLabel(path);
+  }
+
+  function renameFavorite(path: string) {
+    const label = displayFavorite(path);
+    // Defer the modal until the Steam native submenu has released gamepad focus.
+    window.setTimeout(() => showModal(
+      <RenameFavoriteDialog label={label}
+        onSave={async next => {
+          const saved = await withTimeout(saveFavoriteLabel(path, next), 5000);
+          setFavoriteLabels(saved);
+          setMessage("Zmieniono nazwę zakładki. Ścieżka bez zmian.");
+        }} />
+    ), 0);
+  }
+
+  // A opens the bookmark; Right shows only its bookmark-specific operations.
+  // Removing a bookmark never deletes the actual directory.
   function openRemoveFavoriteMenu(path: string) {
     showContextMenu(
-      <Menu label={favoriteLabel(path)}>
+      <Menu label={displayFavorite(path)}>
+        <MenuItem disabled={savingFavorites}
+          onSelected={() => renameFavorite(path)}>Zmień nazwę</MenuItem>
         <MenuItem disabled={savingFavorites}
           onSelected={() => { void changeFavorites(favorites.filter(p => p !== path)); }}>
           Usuń
@@ -426,14 +450,12 @@ export function FileManagerPage() {
     ), 0);
   }
 
-  // Native Steam menu, like the existing menu on a folder/file row.
-  // MenuGroup opens its choices in a right-hand submenu, as in Gaming Mode.
-  function openBrowserMenu(parent: EventTarget) {
-    if (busy) return;
+  // One shared set of global options, available on the address bar, ...
+  // and in every ordinary file/folder context menu.
+  function browserOptions() {
     const shortcuts = currentPage?.roots.filter(root => !breadcrumbs(currentPage.path, currentPage.roots)
       .some(part => part.path === root.path)) ?? [];
-    showContextMenu(
-      <Menu label="Opcje plików">
+    return <>
         <MenuItem disabled={!currentPage} onSelected={openCreateFolderDialog}>Nowy folder...</MenuItem>
         <MenuItem onSelected={openTrashDialog}>Kosz</MenuItem>
         <MenuItem onSelected={() => openTransferDialog()}>Transfer Wi-Fi...</MenuItem>
@@ -448,7 +470,7 @@ export function FileManagerPage() {
             <MenuItem key={path}
               onSelected={() => { void load(path, hidden); }}
               onMoveRight={() => openRemoveFavoriteMenu(path)}>
-              {favoriteLabel(path)}
+              {displayFavorite(path)}
             </MenuItem>)}
         </MenuGroup>
         {clipboard && <MenuItem onSelected={() => { void operate("paste"); }}>
@@ -482,6 +504,15 @@ export function FileManagerPage() {
                 {root.name}
               </MenuItem>)}
           </MenuGroup>}
+
+    </>;
+  }
+
+  function openBrowserMenu(parent: EventTarget) {
+    if (busy) return;
+    showContextMenu(
+      <Menu label="Opcje plików">
+        {browserOptions()}
       </Menu>,
       parent,
       { bFitToWindow: true, bShiftToFitWindow: true, bPreferPopTop: true }
@@ -528,6 +559,7 @@ export function FileManagerPage() {
           <MenuItem onSelected={() => { void pasteTo(entry.path); }}>
             {"Wklej do folderu (" + clipboard.paths.length + ")"}
           </MenuItem>}
+        {browserOptions()}
       </Menu>,
       parent,
       { bFitToWindow: true, bShiftToFitWindow: true, bPreferPopTop: true }
@@ -790,6 +822,11 @@ export function FileManagerPage() {
                   }} /></div>
                 {folder.items.map(entry =>
                   <div key={entry.path} data-file-entry data-file-path={entry.path}
+                    onContextMenu={event => {
+                      event.preventDefault();
+                      event.stopPropagation();
+                      openFileMenu(entry, event.currentTarget, pane);
+                    }}
                     style={{ width: "100%", minWidth: 0 }}>
                     {activePane === pane && selected?.path === entry.path && action === "rename" ? (
                       <Focusable flow-children="row"
@@ -824,8 +861,9 @@ export function FileManagerPage() {
                           event.stopPropagation();
                           returnToAddressBar();
                         }}
-                        onOptionsActionDescription="Opcje"
+                        onOptionsActionDescription="Opcje pliku i Huba"
                         onOptionsButton={event => {
+                           if (event.defaultPrevented) return;
                            event.preventDefault();
                            event.stopPropagation();
                            openFileMenu(entry, event.currentTarget ?? window, pane);

@@ -120,81 +120,6 @@ def validate_favorites(paths):
     return result
 
 
-def _default_steam_mods_favorite():
-    """Shortcut to Steam's steamapps root for manual mods and Workshop content.
-
-    This is NOT a mod-loader directory: each game keeps its own mod path.
-    Never create or modify Steam directories just to add a bookmark.
-    """
-    from backend.files.file_manager import _allowed_roots, _normalize
-    home = _allowed_roots()[0][1]
-    for relative in (
-        ".local/share/Steam/steamapps",
-        ".steam/steam/steamapps",
-        ".steam/root/steamapps",
-    ):
-        try:
-            folder = _normalize(str(home / relative))
-            if folder.is_dir():
-                return str(folder)
-        except (PermissionError, OSError, ValueError):
-            continue
-    return None
-
-
-def _default_favorite_labels():
-    folder = _default_steam_mods_favorite()
-    return {folder: "Mody Steam"} if folder else {}
-
-
-FAVORITE_LABELS_FILE = SELECTION_FILE.parent / "favorite_labels.json"
-
-
-def get_favorite_labels():
-    """Aliases are separate from paths for compatibility with existing saves."""
-    available = set(get_favorite_folders())
-    labels = {key: value for key, value in _default_favorite_labels().items()
-              if key in available}
-    try:
-        raw = json.loads(FAVORITE_LABELS_FILE.read_text(encoding="utf-8"))
-        if isinstance(raw, dict):
-            for path, label in raw.items():
-                if (path in available and isinstance(label, str) and
-                        1 <= len(label) <= 64 and label == label.strip() and
-                        not any(ord(char) < 32 or ord(char) == 127 for char in label)):
-                    labels[path] = label
-    except (OSError, ValueError, TypeError):
-        pass
-    return labels
-
-
-def set_favorite_label(path, label):
-    """Rename only a bookmark caption. Never rename a filesystem directory."""
-    from backend.files.file_manager import _normalize
-    if not isinstance(path, str) or len(path) > 4096:
-        raise ValueError("Nieprawidłowa ścieżka zakładki.")
-    normalized = str(_normalize(path))
-    if normalized not in get_favorite_folders():
-        raise ValueError("Zakładka nie jest w Ulubionych.")
-    if not isinstance(label, str) or not (1 <= len(label.strip()) <= 64):
-        raise ValueError("Nazwa zakładki musi mieć od 1 do 64 znaków.")
-    label = label.strip()
-    if any(ord(char) < 32 or ord(char) == 127 for char in label):
-        raise ValueError("Nazwa zakładki zawiera niedozwolone znaki.")
-    try:
-        data = json.loads(FAVORITE_LABELS_FILE.read_text(encoding="utf-8"))
-        if not isinstance(data, dict):
-            data = {}
-    except (OSError, ValueError, TypeError):
-        data = {}
-    data[normalized] = label
-    FAVORITE_LABELS_FILE.parent.mkdir(parents=True, exist_ok=True)
-    temp = FAVORITE_LABELS_FILE.with_suffix(".tmp")
-    temp.write_text(json.dumps(data, ensure_ascii=False), encoding="utf-8")
-    temp.replace(FAVORITE_LABELS_FILE)
-    return get_favorite_labels()
-
-
 def get_favorite_folders():
     try:
         data = json.loads(FAVORITE_FOLDERS_FILE.read_text(encoding="utf-8"))
@@ -211,9 +136,6 @@ def get_favorite_folders():
             except (OSError, ValueError, TypeError, PermissionError):
                 continue
         return result
-    except FileNotFoundError:
-        default = _default_steam_mods_favorite()
-        return [default] if default else []
     except (OSError, ValueError, TypeError):
         return []
 
