@@ -35,29 +35,28 @@ test("Y on the focused file or address opens native SteamOS context menu", () =>
   assert.ok(ui.includes("data-file-path={entry.path}"));
   assert.ok(ui.includes('onOptionsActionDescription="Opcje plików"'));
   assert.ok(ui.includes("openBrowserMenu(event.currentTarget ?? window)"));
-  assert.ok(ui.includes('onOptionsActionDescription={entry.directory ? "Opcje folderu" : "Opcje pliku"}'));
+  assert.ok(ui.includes('onOptionsActionDescription={multiSelect ? "Opcje zaznaczenia" : "Opcje"}'));
   assert.ok(ui.includes("openFileMenu(entry, event.currentTarget ?? window, pane);"));
   assert.ok(ui.includes("function openFocusedFilesMenu(parent: EventTarget)"));
   assert.ok(ui.includes("event.stopPropagation();"));
-  assert.ok(ui.includes('<Menu label={(entry.directory ? "Opcje folderu: " : "Opcje pliku: ") + entry.name}>'));
+  assert.ok(ui.includes('<Menu label={"Opcje: " + entry.name}>'));
   assert.ok(ui.includes('clipboardAction(entry, "copy")'));
   assert.ok(ui.includes('clipboardAction(entry, "move")'));
   assert.ok(ui.includes("onSecondaryButton={event => {")); // X returns to address; Y still owns context menus.
 });
 
-test("Y action and menu title clearly distinguish files, folders and global options", () => {
+test("Y is called Opcje on a single item, Opcje zaznaczenia in selection, and Opcje plików on address / ...", () => {
   const fileMenu = ui.split('function openFileMenu(entry: Entry', 2)[1].split('function openFocusedFilesMenu', 1)[0];
   const parent = ui.split('function ParentDirectoryRow(', 2)[1].split('export function FileManagerPage()', 1)[0];
-  assert.ok(fileMenu.includes('Opcje folderu: '));
-  assert.ok(fileMenu.includes('Opcje pliku: '));
-  assert.ok(ui.includes('onOptionsActionDescription={entry.directory ? "Opcje folderu" : "Opcje pliku"}'));
+  assert.ok(fileMenu.includes('<Menu label={"Opcje: " + entry.name}>'));
+  assert.ok(ui.includes('onOptionsActionDescription={multiSelect ? "Opcje zaznaczenia" : "Opcje"}'));
   assert.ok(parent.includes('onOptionsActionDescription="Opcje plików"'));
   assert.ok(ui.includes('<Menu label="Opcje plików">'));
 });
 
 test("Y on normal files and folders includes both file actions and global options", () => {
   const specific = ui.split('function openFileMenu(entry: Entry', 2)[1].split('function openFocusedFilesMenu', 1)[0];
-  assert.ok(specific.includes('<Menu label={(entry.directory ? "Opcje folderu: " : "Opcje pliku: ") + entry.name}>'));
+  assert.ok(specific.includes('<Menu label={"Opcje: " + entry.name}>'));
   assert.ok(specific.includes('>Właściwości</MenuItem>'));
   assert.ok(specific.includes('{browserOptions()}'));
   assert.ok(ui.includes('onContextMenu={event => {'));
@@ -65,6 +64,28 @@ test("Y on normal files and folders includes both file actions and global option
   assert.ok(ui.includes('function browserOptions()'));
   assert.ok(ui.includes('readFavoriteLabels()'));
   assert.ok(ui.includes('saveFavoriteLabel(path, next)'));
+});
+
+test("multiple files and folders use selection menu and never act on a single focused row", () => {
+  const selection = ui.split('function openSelectionMenu(parent: EventTarget)', 2)[1]
+    .split('function openFileMenu(entry: Entry', 1)[0];
+  const fileMenu = ui.split('function openFileMenu(entry: Entry', 2)[1]
+    .split('function openFocusedFilesMenu', 1)[0];
+  assert.ok(selection.includes('Opcje zaznaczenia ('));
+  assert.ok(selection.includes('markedPaths.length'));
+  assert.ok(selection.includes('clipboardMarked("copy")'));
+  assert.ok(selection.includes('clipboardMarked("move")'));
+  assert.ok(selection.includes('disabled={count === 0}'));
+  assert.ok(selection.includes('Odznacz wszystko'));
+  assert.ok(selection.includes('onSelected={exitMultiSelect}'));
+  assert.ok(!selection.includes('clipboardAction(entry'));
+  assert.ok(!selection.includes('confirmTrash(entry'));
+  assert.ok(!selection.includes('openProperties(entry'));
+  assert.match(fileMenu, /if \(multiSelect\) \{\s*openSelectionMenu\(parent\);\s*return;/);
+  assert.ok(fileMenu.includes('clipboardAction(entry, "copy")'));
+  assert.ok(ui.includes('onOptionsActionDescription={multiSelect ? "Opcje zaznaczenia" : "Opcje"}'));
+  assert.ok(ui.includes('onOptions={target => {'));
+  assert.ok(ui.includes('openBrowserMenu(target)')); // Y on ... remains global.
 });
 
 test("file options are in native right-hand submenus, not inline controls", () => {

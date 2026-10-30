@@ -1,3 +1,10 @@
+# GameMode Hub 0.5.62 (testowy)
+
+- **Pliki — Y:** przy pojedynczym zaznaczonym pliku lub folderze przycisk ma nazwę „Opcje”, a nagłówek menu zawiera nazwę elementu. Na `...` i pasku adresu pozostaje „Opcje plików”.
+- **Zaznaczanie wielu elementów:** Y pokazuje „Opcje zaznaczenia” wraz z liczbą zaznaczonych pozycji, niezależnie od tego, czy zaznaczono pliki, foldery czy oba rodzaje. Wyłącznie operacje zbiorcze: kopiuj, przenieś, odznacz wszystko, zakończ zaznaczanie.
+- **Bezpieczeństwo:** w trybie wielokrotnego zaznaczania menu Y nie udostępnia operacji na pojedynczym pliku (zmiana nazwy, kosz, właściwości). Przy zerowym zaznaczeniu kopiowanie i przenoszenie są nieaktywne. Istniejąca weryfikacja ścieżek i kolizji w backendzie pozostaje bez zmian.
+- **Testy:** rozdzielenie menu pojedynczego i zbiorczego oraz zachowanie globalnego menu na `...`.
+
 # GameMode Hub 0.5.61 (testowy)
 
 - **Pliki — nazwy menu Y:** na zwykłym pliku dolny pasek Steam wyświetla „Opcje pliku”, a na folderze „Opcje folderu”. Tytuł otwartego menu zawiera także nazwę konkretnego elementu.
