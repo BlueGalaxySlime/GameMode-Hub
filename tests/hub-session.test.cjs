@@ -42,3 +42,16 @@ test("Developer measurements are opt-in and not enabled by legacy settings",()=>
   assert.equal(getHubPreferences().developerMode,true);
   applyHubPreferences({developerMode:false});
 });
+
+test("only Polish and English are accepted and the selection survives tab switches",()=>{
+  applyHubPreferences({language:"en",saveSession:true});
+  writeHubSession("test.language","preserved");
+  assert.equal(getHubPreferences().language,"en");
+  assert.equal(readHubSession("test.language",null),"preserved");
+  applyHubPreferences({language:"pl"});
+  assert.equal(getHubPreferences().language,"pl");
+  applyHubPreferences({language:"es"});
+  assert.equal(getHubPreferences().language,"pl");
+  applyHubPreferences({language:"en"});
+  assert.equal(getHubPreferences().language,"en");
+});
