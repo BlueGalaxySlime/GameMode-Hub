@@ -14,6 +14,8 @@ class PackageTests(unittest.TestCase):
             data=json.loads(z.read("GameMode Hub/plugin.json"))
             self.assertEqual(data["name"],"GameMode Hub")
             self.assertIn("GameMode Hub/main.py",names)
+            self.assertIn("GameMode Hub/requirements.txt",names)
+            self.assertIn("GameMode Hub/backend/stores/gog_unifideck.py",names)
             self.assertIn("GameMode Hub/backend/__init__.py",names)
             self.assertFalse(any(name.startswith("GameMode Hub/") and name.endswith(".py")
                 and name.count("/") == 1 and name != "GameMode Hub/main.py" for name in names))
