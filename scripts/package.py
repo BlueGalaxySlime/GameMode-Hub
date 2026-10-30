@@ -18,13 +18,13 @@ files = [ROOT / name for name in (
 )]
 # Include organized service packages and keep the plugin entrypoint at root.
 files += sorted(path for path in (ROOT / "backend").rglob("*.py") if path.is_file())
+files += sorted(path for path in (ROOT / "terminal_core").rglob("*.py") if path.is_file())
 files += sorted(path for path in DIST.rglob("*") if path.is_file())
 for file in files:
     if not file.is_file():
         raise SystemExit(f"Missing required file: {file}")
 
-# The PTY implementation stays in source for later research, but is NOT
-# included in the plugin while terminal startup remains disabled.
+# Bundle the non-root PTY service; it is loaded only when a user starts a session.
 OUT.parent.mkdir(parents=True, exist_ok=True)
 with ZipFile(OUT, "w", ZIP_DEFLATED) as archive:
     for file in files:
