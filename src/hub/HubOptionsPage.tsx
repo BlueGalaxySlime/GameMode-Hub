@@ -83,17 +83,23 @@ export function HubOptionsPage({ terminalFontSize, setTerminalFontSize }: {
               void update("language", option.data);
           }} />
       </Field>
-      <Field label="Zachowuj stan kart"
-        description="Zapamiętaj otwarte katalogi, sortowanie, zaznaczenia, schowek i ustawienia paneli przy zmianie zakładki. Dane sesji pozostają w pamięci, nie na dysku.">
+      <Field label={english ? "Remember tab state" : "Zachowuj stan kart"}
+        description={english
+          ? "Preserve open folders, sorting, selections and clipboard when switching tabs. Session data stays in memory."
+          : "Zapamiętaj otwarte katalogi, sortowanie, zaznaczenia, schowek i ustawienia paneli przy zmianie zakładki. Dane sesji pozostają w pamięci, nie na dysku."}>
         <Toggle value={options.saveSession} disabled={saving}
           onChange={value => { void update("saveSession", value); }} />
       </Field>
-      <Field label="Automatycznie pokazuj klawiaturę"
-        description="Włącz: klawiatura ekranowa Steam przy edycji pól Huba. Wyłącz: pola przyjmują tekst z klawiatury fizycznej bez automatycznego wywoływania ekranowej. Ustawienie wspólne dla Plików, Pulpitu i Terminala.">
+      <Field label={english ? "Show on-screen keyboard automatically" : "Automatycznie pokazuj klawiaturę"}
+        description={english
+          ? "Show the Steam on-screen keyboard when editing Hub fields. Disable to use a physical keyboard without opening it."
+          : "Włącz: klawiatura ekranowa Steam przy edycji pól Huba. Wyłącz: pola przyjmują tekst z klawiatury fizycznej bez automatycznego wywoływania ekranowej. Ustawienie wspólne dla Plików, Pulpitu i Terminala."}>
         <Toggle value={options.autoKeyboard} disabled={saving}
           onChange={value => { void update("autoKeyboard", value); }} />
       </Field>
-      <Field label="Tryb DEV" description="Pomiary tylko podczas otwartych Opcji Huba. Bez stałego monitorowania podczas gry.">
+      <Field label={english ? "Developer mode" : "Tryb DEV"}
+        description={english ? "Measurements run only while Hub Options is open." :
+          "Pomiary tylko podczas otwartych Opcji Huba. Bez stałego monitorowania podczas gry."}>
         <Toggle value={options.developerMode} disabled={saving}
           onChange={value => { void update("developerMode", value); }} />
       </Field>
@@ -118,10 +124,12 @@ export function HubOptionsPage({ terminalFontSize, setTerminalFontSize }: {
     </DialogControlsSection>
     <DialogControlsSection>
       <DialogControlsSectionHeader>Terminal</DialogControlsSectionHeader>
-      <Field label="Uruchamianie na żądanie"
-        description="PTY uruchamia się dopiero po wybraniu Uruchom terminal. Brak automatycznego startu po wejściu na kartę. Przed udostępnieniem wersji stabilnej wymagane testy na handheldzie." />
-      <Field label="Rozmiar czcionki terminala"
-        description="Wielkość czcionki w terminalu Huba. Zmiana nie uruchamia powłoki.">
+      <Field label={english ? "Start on demand" : "Uruchamianie na żądanie"}
+        description={english ? "The Linux shell starts only after selecting Start terminal. It does not launch when opening the tab. Handheld testing is required." :
+          "PTY uruchamia się dopiero po wybraniu Uruchom terminal. Brak automatycznego startu po wejściu na kartę. Przed udostępnieniem wersji stabilnej wymagane testy na handheldzie."} />
+      <Field label={english ? "Terminal font size" : "Rozmiar czcionki terminala"}
+        description={english ? "Adjust the terminal font without starting a shell." :
+          "Wielkość czcionki w terminalu Huba. Zmiana nie uruchamia powłoki."}>
         <SliderField min={11} max={22} step={1} value={terminalFontSize}
           showValue onChange={setTerminalFontSize} />
       </Field>
