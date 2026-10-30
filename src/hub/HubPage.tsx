@@ -40,7 +40,6 @@ export function HubPage() {
     { title: "Pliki", route: HUB_ROUTE + "/files", icon: <FaFolderOpen />,
       content: <FileManagerPage /> },
     { title: "Terminal", route: HUB_ROUTE + "/terminal", icon: <FaTerminal />,
-      hideTitle: true, padding: "none" as const,
       content: <DeckyTerminalPage fontSize={terminalFontSize} /> },
     { title: "Konta", route: HUB_ROUTE + "/accounts", icon: <FaUserCircle />,
       content: <AccountsPage /> },

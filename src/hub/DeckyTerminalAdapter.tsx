@@ -1,39 +1,83 @@
-import { useRef } from "react";
+import { useLayoutEffect, useRef } from "react";
 import {
   DialogBody, DialogButton, DialogControlsSection, Focusable, GamepadButton,
-  Menu, MenuGroup, MenuItem, NavEntryPositionPreferences, showContextMenu
+  Menu, MenuItem, NavEntryPositionPreferences, showContextMenu
 } from "@decky/ui";
 import { useHubSessionState } from "./useHubSessionState";
-import { nextTerminalSession, TERMINAL_SESSIONS } from "../modules/terminal/sessionNavigation";
+import {
+  addTerminalSession, closeTerminalSession, INITIAL_TERMINAL_TABS,
+  nextTerminalSession, normalizeTerminalTabs, selectTerminalSession
+} from "../modules/terminal/sessionNavigation";
+import type { TerminalTabs } from "../modules/terminal/sessionNavigation";
 
 /**
- * Steam Gaming Mode terminal shell: share the layout and gamepad controls of
- * Files/Desktop, without mounting xterm or making terminal RPC requests.
- *
- * A prior handheld test ended in a Steam UI restart. The cause is unconfirmed,
- * so the separate PTY engine must remain disabled until it is investigated.
+ * Same layout and gamepad navigation as Files/Desktop. The earlier three
+ * numbered tabs were only UI, not running shells. The PTY backend stays
+ * disabled until the unexplained Steam Gaming Mode restart is isolated.
  */
 export function DeckyTerminalPage({ fontSize }: { fontSize: number }) {
-  const [selected, setSelected] = useHubSessionState("terminal.selected", 0);
+  const [tabState, setTabState] = useHubSessionState<TerminalTabs>(
+    "terminal.tabs", INITIAL_TERMINAL_TABS
+  );
   const [details, setDetails] = useHubSessionState("terminal.safeDetails", false);
+  const tabs = normalizeTerminalTabs(tabState);
+  const active = tabs.selected;
   const sessionsRef = useRef<HTMLDivElement>(null);
-  const active = TERMINAL_SESSIONS.includes(selected as 0 | 1 | 2) ? selected : 0;
+  const focusAfterAdd = useRef(false);
 
-  function focusSession() {
-    const buttons = sessionsRef.current?.querySelectorAll<HTMLElement>('button, [role="button"]');
-    (buttons?.[active] ?? buttons?.[0])?.focus({ preventScroll: true });
+  function focusSession(id: number | null = active) {
+    if (id === null) {
+      sessionsRef.current?.querySelector<HTMLElement>('[data-terminal-add] button')?.focus({ preventScroll: true });
+      return;
+    }
+    sessionsRef.current?.querySelector<HTMLElement>(
+      '[data-terminal-session="' + id + '"] button'
+    )?.focus({ preventScroll: true });
+  }
+
+  useLayoutEffect(() => {
+    if (!focusAfterAdd.current) return;
+    focusAfterAdd.current = false;
+    focusSession(active);
+  }, [active, tabs.open.length]);
+
+  function addTab() {
+    if (tabs.open.length >= 3) return;
+    focusAfterAdd.current = true;
+    setTabState(addTerminalSession);
+  }
+
+  function closeTab(id: number) {
+    setTabState(current => closeTerminalSession(current, id));
+  }
+
+  function selectTab(id: number) {
+    setTabState(current => selectTerminalSession(current, id));
+  }
+
+  function switchSession(direction: -1 | 1) {
+    setTabState(current => {
+      const state = normalizeTerminalTabs(current);
+      const next = nextTerminalSession(state.selected, direction, state.open);
+      return { ...state, selected: next };
+    });
   }
 
   function openTerminalMenu(parent: EventTarget) {
     showContextMenu(
       <Menu label="Opcje terminala">
-        <MenuGroup label="Sesje">
-          {TERMINAL_SESSIONS.map(number =>
-            <MenuItem key={number} selected={active === number}
-              onSelected={() => setSelected(number)}>
-              Sesja {number + 1}
-            </MenuItem>)}
-        </MenuGroup>
+        <MenuItem disabled={tabs.open.length >= 3} onSelected={addTab}>
+          Nowa sesja
+        </MenuItem>
+        {tabs.open.map(id =>
+          <MenuItem key={id} selected={active === id}
+            onSelected={() => selectTab(id)}>
+            {"Sesja " + (id + 1)}
+          </MenuItem>)}
+        <MenuItem disabled={active === null}
+          onSelected={() => { if (active !== null) closeTab(active); }}>
+          Zamknij bieżącą sesję
+        </MenuItem>
         <MenuItem onSelected={() => setDetails(previous => !previous)}>
           {details ? "Ukryj informacje" : "Informacje o terminalu"}
         </MenuItem>
@@ -43,12 +87,8 @@ export function DeckyTerminalPage({ fontSize }: { fontSize: number }) {
     );
   }
 
-  function switchSession(direction: -1 | 1) {
-    setSelected(next => nextTerminalSession(next, direction));
-  }
-
-  // SteamOS uses named shoulder buttons across different controller layouts.
-  // Do not trap other buttons or Steam's native Back action.
+  // SteamOS can swallow physical LB/RB before the plugin sees them. The
+  // visible tabs and native Y menu remain available as fallbacks.
   function handleShoulderButton(button: GamepadButton): boolean {
     const values = GamepadButton as unknown as Record<string, number>;
     const left = [values.LB, values.L1, values.LBUMPER, values.LEFT_BUMPER];
@@ -67,8 +107,7 @@ export function DeckyTerminalPage({ fontSize }: { fontSize: number }) {
   return <DialogBody>
     <DialogControlsSection>
       <Focusable flow-children="column"
-        style={{ display: "flex", flexDirection: "column", gap: 9,
-          width: "100%", minWidth: 0 }}
+        style={{ display: "flex", flexDirection: "column", gap: 8, width: "100%", minWidth: 0 }}
         onOptionsActionDescription="Opcje terminala"
         onOptionsButton={event => {
           if (event.defaultPrevented) return;
@@ -76,7 +115,7 @@ export function DeckyTerminalPage({ fontSize }: { fontSize: number }) {
           event.stopPropagation();
           openTerminalMenu(event.currentTarget ?? window);
         }}
-        onSecondaryActionDescription="Wybierz sesję"
+        onSecondaryActionDescription="Zakładki sesji"
         onSecondaryButton={event => {
           if (event.defaultPrevented) return;
           event.preventDefault();
@@ -89,7 +128,6 @@ export function DeckyTerminalPage({ fontSize }: { fontSize: number }) {
           event.stopPropagation();
         }}
         onKeyDown={event => {
-          // Keyboard equivalent of LB/RB for testing without a controller.
           if (event.key === "PageUp" || event.key === "PageDown") {
             event.preventDefault();
             event.stopPropagation();
@@ -103,62 +141,98 @@ export function DeckyTerminalPage({ fontSize }: { fontSize: number }) {
         <div aria-label="Stan terminala" role="status"
           style={{ display: "flex", alignItems: "center", flexWrap: "wrap",
             gap: 14, minHeight: 23, fontSize: 12, opacity: 0.78 }}>
-          <span>Terminal</span>
-          <span>Sesja: {active + 1}/3</span>
-          <strong>Tryb bezpieczny — wyłączony</strong>
+          <span>Sesje: {tabs.open.length}/3</span>
+          <strong>Powłoka wyłączona — tryb bezpieczny</strong>
         </div>
 
         <Focusable flow-children="row" ref={sessionsRef}
           aria-label="Sesje terminala — LB i RB"
           navEntryPreferPosition={NavEntryPositionPreferences.MAINTAIN_X}
-          style={{ display: "flex", flexDirection: "row", gap: 5,
-            width: "100%", minWidth: 0 }}>
-          {TERMINAL_SESSIONS.map(number => <DialogButton key={number}
-            preferredFocus={active === number}
-            aria-label={"Sesja " + (number + 1)}
-            onOKActionDescription="Wybierz sesję"
-            onSecondaryActionDescription="Wybierz sesję"
-            onSecondaryButton={event => {
-              event.preventDefault();
-              event.stopPropagation();
-              focusSession();
-            }}
-            onOptionsActionDescription="Opcje terminala"
-            onOptionsButton={event => {
-              event.preventDefault();
-              event.stopPropagation();
-              openTerminalMenu(event.currentTarget ?? window);
-            }}
-            onClick={() => setSelected(number)}
-            style={{ flex: "1 1 0", minWidth: 0, textAlign: "center",
-              padding: "7px 10px", fontWeight: active === number ? 700 : 400,
-              borderRadius: 0,
-              borderBottom: active === number ? "2px solid currentColor" : "2px solid transparent" }}>
-            {number + 1}
-          </DialogButton>)}
+          style={{ display: "flex", flexDirection: "row", flexWrap: "nowrap",
+            alignItems: "stretch", gap: 5, width: "100%", minWidth: 0,
+            overflowX: "auto", overflowY: "hidden" }}>
+          {tabs.open.map(id =>
+            <div key={id} data-terminal-session={id}
+              style={{ display: "flex", alignItems: "stretch", minWidth: 0, flex: "0 0 auto" }}>
+              <DialogButton preferredFocus={active === id}
+                aria-label={"Sesja " + (id + 1)}
+                onOKActionDescription="Wybierz sesję"
+                onSecondaryActionDescription="Zakładki sesji"
+                onSecondaryButton={event => {
+                  event.preventDefault();
+                  event.stopPropagation();
+                  focusSession();
+                }}
+                onOptionsActionDescription="Opcje terminala"
+                onOptionsButton={event => {
+                  event.preventDefault();
+                  event.stopPropagation();
+                  openTerminalMenu(event.currentTarget ?? window);
+                }}
+                onClick={() => selectTab(id)}
+                style={{ minWidth: 55, padding: "7px 10px", textAlign: "center",
+                  borderRadius: 0, fontWeight: active === id ? 700 : 400,
+                  borderBottom: active === id ? "2px solid currentColor" : "2px solid transparent" }}>
+                {id + 1}
+              </DialogButton>
+              <DialogButton aria-label={"Zamknij zakładkę " + (id + 1)}
+                onOKActionDescription="Zamknij zakładkę"
+                onOptionsActionDescription="Opcje terminala"
+                onOptionsButton={event => {
+                  event.preventDefault();
+                  event.stopPropagation();
+                  openTerminalMenu(event.currentTarget ?? window);
+                }}
+                onSecondaryButton={event => {
+                  event.preventDefault();
+                  event.stopPropagation();
+                  focusSession();
+                }}
+                onClick={() => closeTab(id)}
+                style={{ minWidth: 34, padding: "7px 7px", borderRadius: 0 }}>
+                ×
+              </DialogButton>
+            </div>)}
+          <div data-terminal-add style={{ flex: "0 0 auto" }}>
+            <DialogButton disabled={tabs.open.length >= 3}
+              aria-label="Dodaj sesję"
+              onOKActionDescription="Dodaj sesję"
+              onOptionsActionDescription="Opcje terminala"
+              onOptionsButton={event => {
+                event.preventDefault();
+                event.stopPropagation();
+                openTerminalMenu(event.currentTarget ?? window);
+              }}
+              onClick={addTab}
+              style={{ minWidth: 42, padding: "7px 10px", borderRadius: 0 }}>
+              +
+            </DialogButton>
+          </div>
         </Focusable>
 
-        <div role="region" aria-label={"Terminal — sesja " + (active + 1)}
+        <div role="region"
+          aria-label={active === null ? "Terminal — brak sesji" : "Terminal — sesja " + (active + 1)}
           style={{ boxSizing: "border-box", width: "100%", minWidth: 0,
-            height: "min(49vh, 480px)", minHeight: 200, overflowY: "auto",
-            background: "rgba(0,0,0,0.28)", border: "1px solid rgba(255,255,255,0.13)",
-            padding: "12px 13px", fontFamily: "monospace",
+            height: "min(54vh, 540px)", minHeight: 160, overflowY: "auto",
+            background: "rgba(0,0,0,0.28)",
+            border: "1px solid rgba(255,255,255,0.13)",
+            padding: "10px 12px", fontFamily: "monospace",
             fontSize: Math.max(11, Math.min(22, fontSize)),
             lineHeight: 1.4, overflowWrap: "anywhere" }}>
-          <div style={{ opacity: 0.85 }}>
-            Sesja {active + 1} — nieuruchomiona.
-          </div>
-          <div style={{ marginTop: 8, opacity: 0.72 }}>
-            Wykonywanie poleceń jest zablokowane do czasu wyjaśnienia wcześniejszego
-            restartu interfejsu Steam.
-          </div>
+          {active === null ? <div style={{ opacity: 0.82 }}>
+            Brak sesji. Wybierz +, aby dodać zakładkę.
+          </div> : <>
+            <div style={{ opacity: 0.85 }}>Sesja {active + 1} — nieuruchomiona.</div>
+            <div style={{ marginTop: 8, opacity: 0.72 }}>
+              Wykonywanie poleceń pozostaje zablokowane do czasu wyjaśnienia
+              wcześniejszego restartu interfejsu Steam.
+            </div>
+          </>}
         </div>
-
         {details && <div role="status"
           style={{ fontSize: 12, opacity: 0.82, lineHeight: 1.5, padding: "3px 1px" }}>
-          Silnik PTY pozostaje wyłączony również w backendzie. W tym widoku
-          nie uruchamiamy powłoki, nie wysyłamy poleceń i nie odczytujemy
-          poświadczeń. Przyczyna wcześniejszej awarii nie jest potwierdzona.
+          Zakładki nie uruchamiają powłoki ani nie tworzą procesów. Silnik PTY
+          pozostaje wyłączony również w backendzie.
         </div>}
       </Focusable>
     </DialogControlsSection>
