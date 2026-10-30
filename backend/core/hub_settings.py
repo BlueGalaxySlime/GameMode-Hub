@@ -68,6 +68,7 @@ DEFAULT_HUB_PREFERENCES = {
     "splitFileTree": False,
     "autoKeyboard": True,
     "developerMode": False,
+    "language": "pl",
 }
 
 
@@ -76,8 +77,12 @@ def validate_hub_preferences(value):
         raise ValueError("Nieprawidlowe opcje Huba.")
     # Merge previous installations' two-key settings with new defaults.
     options = {**DEFAULT_HUB_PREFERENCES, **value}
-    if any(not isinstance(options[key], bool) for key in DEFAULT_HUB_PREFERENCES):
+    if any(not isinstance(options[key], bool) for key in (
+        "saveSession", "splitFileTree", "autoKeyboard", "developerMode"
+    )):
         raise ValueError("Opcje Huba musza miec wartosc wlacz/wylacz.")
+    if options["language"] not in ("pl", "en"):
+        raise ValueError("Nieobsługiwany język.")
     return options
 
 
