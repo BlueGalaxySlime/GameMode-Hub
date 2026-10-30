@@ -42,7 +42,7 @@ from backend.core.runtime_state import set_hub_ui_open, get_runtime_state, diagn
 from backend.library import tab_manager
 from backend.library import collection_manager
 from backend.library import library_backup
-from backend.stores import gog_unifideck
+from backend.stores import gog_unifideck, gog_native
 
 CURRENT_VERSION = "0.5.65"
 RELEASES_API = "https://api.github.com/repos/BlueGalaxySlime/GameMode-Hub/releases/latest"
@@ -331,9 +331,23 @@ class Plugin:
     async def gog_link_remove(self):
         return await asyncio.to_thread(gog_unifideck.unlink)
 
+    async def gog_native_status(self):
+        return await asyncio.to_thread(gog_native.status)
+
+    async def gog_native_begin(self, storage="memory"):
+        return await asyncio.to_thread(gog_native.begin, storage)
+
+    async def gog_native_complete(self, callback):
+        return await asyncio.wait_for(
+            asyncio.to_thread(gog_native.complete, callback), timeout=20
+        )
+
+    async def gog_native_logout(self):
+        return await asyncio.to_thread(gog_native.logout)
+
     async def gog_library(self):
         return await asyncio.wait_for(
-            asyncio.to_thread(gog_unifideck.library), timeout=35
+            asyncio.to_thread(gog_native.library), timeout=55
         )
 
     async def heroic_get_status(self):
