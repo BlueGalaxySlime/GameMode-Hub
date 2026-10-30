@@ -525,29 +525,47 @@ export function FileManagerPage() {
     window.setTimeout(() => showModal(<FilePropertiesDialog entry={entry} />), 0);
   }
 
+  // Selection is a separate interaction mode. Never expose an operation on
+  // one focused entry while other files or folders are marked.
+  function openSelectionMenu(parent: EventTarget) {
+    if (busy || !multiSelect) return;
+    const count = markedPaths.length;
+    showContextMenu(
+      <Menu label={"Opcje zaznaczenia (" + count + ")"}>
+        <MenuItem disabled={count === 0} onSelected={() => clipboardMarked("copy")}>
+          {"Kopiuj zaznaczone (" + count + ")"}
+        </MenuItem>
+        <MenuItem disabled={count === 0} onSelected={() => clipboardMarked("move")}>
+          {"Przenieś zaznaczone (" + count + ")"}
+        </MenuItem>
+        <MenuItem disabled={count === 0} onSelected={() => setMarkedPaths([])}>
+          Odznacz wszystko
+        </MenuItem>
+        <MenuItem onSelected={exitMultiSelect}>Zakończ zaznaczanie</MenuItem>
+      </Menu>,
+      parent,
+      { bFitToWindow: true, bShiftToFitWindow: true, bPreferPopTop: true }
+    );
+  }
+
   function openFileMenu(entry: Entry, parent: EventTarget, pane: "left" | "right") {
     if (busy || entry.symlink) return;
+    if (multiSelect) {
+      openSelectionMenu(parent);
+      return;
+    }
     activatePane(pane);
     setSelected(entry);
     setAction(null);
     setName(entry.name);
     showContextMenu(
-      <Menu label={(entry.directory ? "Opcje folderu: " : "Opcje pliku: ") + entry.name}>
+      <Menu label={"Opcje: " + entry.name}>
         <MenuItem onSelected={() => {
           setSelected(entry);
           setName(entry.name);
           setAction("rename");
         }}>Zmień nazwę</MenuItem>
         <MenuItem onSelected={() => startMultiSelect(entry)}>Zaznacz kilka (B kończy)</MenuItem>
-        {multiSelect && markedPaths.length > 0 && <>
-          <MenuItem onSelected={() => clipboardMarked("copy")}>
-            {"Kopiuj zaznaczone (" + markedPaths.length + ")"}
-          </MenuItem>
-          <MenuItem onSelected={() => clipboardMarked("move")}>
-            {"Przenieś zaznaczone (" + markedPaths.length + ")"}
-          </MenuItem>
-          <MenuItem onSelected={exitMultiSelect}>Zakończ zaznaczanie</MenuItem>
-        </>}
         <MenuItem onSelected={() => clipboardAction(entry, "copy")}>Kopiuj</MenuItem>
         <MenuItem onSelected={() => clipboardAction(entry, "move")}>Przenieś</MenuItem>
         <MenuItem onSelected={() => confirmTrash(entry)}>Przenieś do Kosza</MenuItem>
@@ -861,7 +879,7 @@ export function FileManagerPage() {
                           event.stopPropagation();
                           returnToAddressBar();
                         }}
-                        onOptionsActionDescription={entry.directory ? "Opcje folderu" : "Opcje pliku"}
+                        onOptionsActionDescription={multiSelect ? "Opcje zaznaczenia" : "Opcje"}
                         onOptionsButton={event => {
                            if (event.defaultPrevented) return;
                            event.preventDefault();
