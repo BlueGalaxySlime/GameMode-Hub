@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useSyncExternalStore } from "react";
 import { callable } from "@decky/api";
 import {
   DialogBody, DialogButton, DialogControlsSection, DialogControlsSectionHeader,
@@ -8,6 +8,8 @@ import { withTimeout } from "../utils/withTimeout";
 import { GamepadScrollArea } from "./GamepadScrollArea";
 import { HubTextInput } from "./HubTextInput";
 import { useHubSessionState } from "./useHubSessionState";
+import { getHubPreferences, subscribeHubPreferences } from "../core/hubSession";
+import { StoreConnectionRibbon } from "./StoreConnectionRibbon";
 import { identifyEpicLaunchers, openEpicLauncher } from "./epicAccountAdapter";
 import type { EpicLauncher } from "./epicAccountAdapter";
 import type { DesktopApp } from "./DesktopPage";
@@ -43,6 +45,7 @@ const GOG_ERRORS: Record<string, string> = {
 
 /** Stores, not a launcher switcher. No password/2FA input in GameMode Hub. */
 export function AccountsPage() {
+  const language = useSyncExternalStore(subscribeHubPreferences, getHubPreferences).language;
   const [selectedAccount, setSelectedAccount] = useHubSessionState<"epic" | "gog">(
     "accounts.selected", "gog"
   );
@@ -222,6 +225,13 @@ export function AccountsPage() {
     <GamepadScrollArea>
       <DialogControlsSection>
         <DialogControlsSectionHeader>Konta i sklepy</DialogControlsSectionHeader>
+        <StoreConnectionRibbon
+          language={language}
+          states={{
+            steam: "unknown",
+            gog: gog === null ? "unknown" : gog.connected ? "connected" : "disconnected",
+            epic: "unknown"
+          }} />
         <Field label="Wybierz sklep"
           description="Konto i biblioteka należą do sklepu, nie do programu uruchamiającego.">
           <Dropdown rgOptions={ACCOUNT_OPTIONS} selectedOption={selectedAccount}
