@@ -1,4 +1,3 @@
-import type { ReactNode } from "react";
 import { DialogButton, Focusable, NavEntryPositionPreferences, Toggle } from "@decky/ui";
 
 /** Same compact SteamOS action and an independent ON/OFF control in both sections. */
