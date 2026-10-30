@@ -149,8 +149,10 @@ test("Konta remains the fourth controller tab and exposes GOG and Epic stores", 
   assert.ok(accounts.includes("Stan sesji: niezweryfikowany"));
   assert.ok(accounts.includes('label="Logowanie do Epic Games"'));
   assert.ok(accounts.includes('label="GOG — połączenie"'));
-  assert.ok(accounts.includes('void importGog()'));
+  assert.ok(accounts.includes('void startGog()'));
   assert.ok(accounts.includes('void loadGogGames()'));
+  assert.ok(accounts.includes('void finishGog()'));
+  assert.ok(accounts.includes('HubTextInput'));
   assert.ok(accounts.includes('onClick={() => { void signIn(); }}'));
   assert.ok(accounts.includes('disabled={loading || opening || !chosenLauncher}'));
   assert.ok(accounts.includes("Bezpieczeństwo kont"));
