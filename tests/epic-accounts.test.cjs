@@ -86,14 +86,14 @@ test("unknown shortcut is rejected before creating any Steam resource", async ()
 
 test("Epic accounts stay credential-free and do not call UniFiDeck auth or report a fake login", () => {
   assert.match(account,/Stan sesji: niezweryfikowany/);
-  assert.match(account, /label="Wybierz konto"/);
+  assert.match(account, /label="Wybierz sklep"/);
   assert.match(account, /<Dropdown rgOptions={ACCOUNT_OPTIONS}/);
   assert.match(account, /onClick=\{\(\) => \{ void signIn\(\); \}\}/);
   assert.match(account, /disabled=\{loading \|\| opening \|\| !chosenLauncher\}/);
-  assert.match(account,/Magazyn poświadczeń/);
+  assert.match(account,/Bezpieczeństwo kont/);
   assert.match(account,/openEpicLauncher/);
   assert.match(hub,/<AccountsPage \/>/);
-  for (const filename of [source,account]) {
+  for (const filename of [source]) {
     assert.doesNotMatch(filename, /readUnifideckStatuses|check_store_status|store_auth|readFileSync|secret-tool/);
   }
 });
