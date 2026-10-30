@@ -51,6 +51,10 @@ export function HelpPage() {
         <DialogControlsSectionHeader>{english ? "Controls" : "Sterowanie"}</DialogControlsSectionHeader>
         <Field label={english ? "A — select" : "A — wybierz"} description={english ? "Opens the focused item." : "Otwiera zaznaczony element."} focusable />
         <Field label={english ? "Y — options" : "Y — opcje"} description={english ? "Opens actions for the selected file, app or terminal." : "Menu działań dla zaznaczonego pliku, aplikacji lub terminala."} focusable />
+        <Field label={english ? "Right stick / trackpad — scroll" : "Prawy drążek / pad — przewijaj"}
+          description={english
+            ? "Scroll the open tab on the right, without moving selection or scrolling the left tab list. A trackpad must send mouse-wheel input through Steam Input."
+            : "Przewija zawartość otwartej zakładki po prawej, bez zmiany zaznaczenia ani przewijania listy zakładek po lewej. Gładzik musi wysyłać przewijanie kółkiem przez Steam Input."} focusable />
         <Field label={english ? "B — back" : "B — wyjdź"} description={english ? "Exits a menu or current mode. In Files and Desktop its behavior depends on focus." : "Wraca z menu lub kończy bieżący tryb. W Plikach i Pulpicie działa zależnie od miejsca."} focusable />
       </DialogControlsSection>
     </GamepadScrollArea>
