@@ -172,7 +172,7 @@ test("split option appears only in Files, not universal Hub options", () => {
   assert.ok(!hubOptions.includes('label="Podział drzewa plików"'));
   assert.ok(!hubOptions.includes("splitFileTree"));
   assert.ok(hubOptions.includes('"Zachowuj stan kart"'));
-  assert.ok(hubOptions.includes('label="Automatycznie pokazuj klawiaturę"'));
+  assert.ok(hubOptions.includes('"Automatycznie pokazuj klawiaturę"'));
   assert.ok(hubOptions.includes('update("autoKeyboard", value)'));
 });
 
