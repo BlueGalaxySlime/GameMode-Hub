@@ -21,11 +21,21 @@ class TerminalBackendHandshakeTests(unittest.TestCase):
         self.assertEqual(info["protocol"], 2)
         self.assertIsNone(plugin._terminal)
 
-    def test_no_terminal_process_can_start_in_safe_mode(self):
+    def test_terminal_backend_is_opt_in_and_uses_worker_thread(self):
+        from main import Plugin
+        from terminal_core.service import TerminalService
+        plugin = Plugin()
+        self.assertIsNone(plugin._terminal)
+        with patch.object(TerminalService, "start", return_value={"id": "test-session"}) as start:
+            session = asyncio.run(plugin.terminal_start(80, 24))
+        self.assertEqual(session, {"id": "test-session"})
+        start.assert_called_once_with(80, 24)
+
+    def test_terminal_ping_does_not_spawn_process(self):
         from main import Plugin
         plugin = Plugin()
-        with self.assertRaisesRegex(RuntimeError, "tymczasowo"):
-            asyncio.run(plugin.terminal_start(80, 24))
+        info = asyncio.run(plugin.terminal_ping())
+        self.assertTrue(info["terminal_enabled"])
         self.assertIsNone(plugin._terminal)
 
 
