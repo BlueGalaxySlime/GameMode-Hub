@@ -119,31 +119,46 @@ class Plugin:
         self._transfer = TransferManager()
 
     async def terminal_ping(self):
-        # Lightweight handshake works even when the Linux PTY engine is broken.
-        return {"ok": True, "version": CURRENT_VERSION, "protocol": 2, "terminal_enabled": False}
+        # Handshake checks connectivity without creating any PTY or shell.
+        return {"ok": True, "version": CURRENT_VERSION, "protocol": 2, "terminal_enabled": True}
+
+    def _terminal_service(self):
+        # The PTY engine is loaded only after the user explicitly starts a session.
+        if self._terminal is None:
+            from terminal_core.service import TerminalService
+            self._terminal = TerminalService()
+        return self._terminal
 
     async def terminal_start(self, cols=80, rows=24):
-        # Hardware fail-safe: even a stale Steam/Decky frontend must not start
-        # PTYs while the reported Steam UI reset is being investigated.
-        raise RuntimeError(
-            "Terminal GameMode Hub tymczasowo wylaczony: ryzyko restartu Gaming Mode."
-        )
+        # PTY creation belongs to a worker thread, not Decky's asyncio loop.
+        # TerminalService refuses root and caps active sessions at three.
+        service = self._terminal_service()
+        return await asyncio.to_thread(service.start, cols, rows)
 
-    # Fail closed on every legacy PTY method as well as start(). We no longer
-    # package terminal_core in the Decky ZIP, so none may lazy-import it.
     async def terminal_read(self, session_id):
-        raise RuntimeError("Terminal wylaczony w trybie bezpiecznym.")
+        if self._terminal is None:
+            raise ValueError("Terminal session not found")
+        return await asyncio.to_thread(self._terminal.read, session_id)
 
     async def terminal_write(self, session_id, data):
-        raise RuntimeError("Terminal wylaczony w trybie bezpiecznym.")
+        if self._terminal is None:
+            raise ValueError("Terminal session not found")
+        return await asyncio.to_thread(self._terminal.write, session_id, data)
 
     async def terminal_resize(self, session_id, cols, rows):
-        raise RuntimeError("Terminal wylaczony w trybie bezpiecznym.")
+        if self._terminal is None:
+            raise ValueError("Terminal session not found")
+        return await asyncio.to_thread(self._terminal.resize, session_id, cols, rows)
 
     async def terminal_close(self, session_id):
-        raise RuntimeError("Terminal wylaczony w trybie bezpiecznym.")
+        if self._terminal is None:
+            return {"ok": True}
+        return await asyncio.to_thread(self._terminal.close, session_id)
 
     async def _unload(self):
+        if self._terminal is not None:
+            await asyncio.to_thread(self._terminal.close_all)
+            self._terminal = None
         await asyncio.to_thread(self._transfer.stop)
         DOWNLOADS.shutdown()
 
