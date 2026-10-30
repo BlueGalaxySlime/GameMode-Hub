@@ -3,6 +3,7 @@
  * The left sidebar must never become a scroll target. Wheel/PageUp/PageDown
  * are mapped into the visible tab's content viewport. Steam Input must map the physical right trackpad to wheel events:
  * Decky's web UI cannot change a device's Steam Input configuration.
+ * Right analog stick also works when the browser exposes standard Gamepad axes.
  *
  * D-pad and left pad remain owned by Steam's directional focus navigation.
  * No controller polling, pointer capture, fake key presses, or focus changes.
@@ -144,9 +145,34 @@ export function enableHubScroll(shell: HTMLElement): () => void {
     }
   };
 
+  // Lenovo and SteamOS may expose the right analog stick directly through
+  // Gamepad API rather than mapping it to a mouse wheel. Poll only while the
+  // Hub route is mounted, with a dead zone; leave left stick and D-pad alone.
+  // Touchpads mapped by Steam Input to mouse wheel use onWheel above.
+  const scrollRightStick = () => {
+    if (document.visibilityState === "hidden" ||
+        isEditing(document.activeElement) ||
+        document.querySelector('[role="dialog"][aria-modal="true"]') ||
+        typeof navigator.getGamepads !== "function") return;
+    let pads: (Gamepad | null)[];
+    try { pads = Array.from(navigator.getGamepads()); }
+    catch { return; }
+    for (const pad of pads) {
+      if (!pad?.connected || pad.axes.length < 4) continue;
+      const vertical = pad.axes[3];
+      if (!Number.isFinite(vertical) || Math.abs(vertical) < 0.25) continue;
+      const intensity = (Math.abs(vertical) - 0.25) / 0.75;
+      const pixels = Math.sign(vertical) * Math.max(2, Math.round(33 * intensity * intensity));
+      // No synthetic focus movement or Steam Input remapping.
+      route(null, pixels);
+      break;
+    }
+  };
+  const polling = window.setInterval(scrollRightStick, 50);
   window.addEventListener("wheel", onWheel, { passive: false, capture: true });
   window.addEventListener("keydown", onKey, true);
   return () => {
+    window.clearInterval(polling);
     window.removeEventListener("wheel", onWheel, true);
     window.removeEventListener("keydown", onKey, true);
   };
