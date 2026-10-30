@@ -82,7 +82,7 @@ test("sidebar starts with Pulpit / Pliki / Terminal; terminal settings live in H
   const options = fs.readFileSync("src/hub/HubOptionsPage.tsx", "utf8");
   assert.ok(options.includes('label="Rozmiar czcionki terminala"'));
   assert.ok(options.includes('showValue onChange={setTerminalFontSize}'));
-  assert.ok(options.includes('Uruchamianie terminala pozostaje wyłączone'));
+  assert.ok(options.includes('Uruchamianie na żądanie'));
   const terminal = fs.readFileSync("src/hub/DeckyTerminalAdapter.tsx", "utf8");
   assert.ok(!terminal.includes("TerminalOptionsPage"));
 });
