@@ -1,4 +1,4 @@
-"""Validate the Decky ZIP root and verify that unsafe PTY files stay out."""
+"""Validate the Decky ZIP root and the bundled, on-demand PTY service."""
 from pathlib import Path
 from zipfile import ZipFile
 import json
@@ -30,7 +30,8 @@ class PackageTests(unittest.TestCase):
             self.assertIn("GameMode Hub/backend/library/collection_manager.py",names)
             self.assertIn("GameMode Hub/backend/library/library_backup.py",names)
             self.assertTrue(any(name.startswith("GameMode Hub/dist/") and name.endswith(".js") for name in names))
-            self.assertFalse(any(name.startswith("GameMode Hub/terminal_core/") for name in names))
+            self.assertIn("GameMode Hub/terminal_core/service.py", names)
+            self.assertIn("GameMode Hub/terminal_core/worker.py", names)
             self.assertFalse(any(name.startswith("GameMode Hub/desktop/") for name in names))
 
 if __name__=="__main__":
