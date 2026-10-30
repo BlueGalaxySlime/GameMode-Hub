@@ -11,8 +11,9 @@ const control = fs.readFileSync("src/hub/OptimizationManageControl.tsx", "utf8")
 test("Optimization uses the same simple settings sections as Hub Options", () => {
   assert.ok(options.includes("<DialogControlsSectionHeader>Terminal</DialogControlsSectionHeader>"));
   assert.ok(page.includes("<DialogControlsSectionHeader>Gaming Mode</DialogControlsSectionHeader>"));
-  assert.ok(cards.includes("<DialogControlsSectionHeader>Karty</DialogControlsSectionHeader>"));
-  assert.ok(collections.includes("<DialogControlsSectionHeader>Kolekcje</DialogControlsSectionHeader>"));
+  assert.ok(page.includes("<DialogControlsSectionHeader>Karty i Kolekcje</DialogControlsSectionHeader>"));
+  assert.ok(control.includes("<Field label={label}"));
+  assert.ok(control.includes('label: "Karty" | "Kolekcje"'));
   assert.ok(!page.includes("<Focusable"));
   assert.ok(!page.includes('setGamingModule('));
   assert.ok(!page.includes('setCategory('));
@@ -44,10 +45,10 @@ test("All Optimization modules are visible in one page without nested tabs", () 
   assert.ok(integration.includes('await refreshTabManagerConflict()'));
   assert.ok(integration.includes('onMenuActionDescription: "Karty"'));
   assert.ok(!integration.includes('active = true;'));
-  assert.ok(cards.includes('<OptimizationManageControl busy={busy} enabled={enabled}'));
+  assert.ok(cards.includes('<OptimizationManageControl label="Karty" busy={busy} enabled={enabled}'));
   assert.ok(cards.includes('<LibraryCardsContextMenu selectedTabId="" />'));
   assert.ok(cards.includes('onManage={openManageMenu}'));
-  assert.ok(collections.includes('<OptimizationManageControl busy={busy} enabled={enabled}'));
+  assert.ok(collections.includes('<OptimizationManageControl label="Kolekcje" busy={busy} enabled={enabled}'));
   assert.ok(collections.includes('<CollectionsContextMenu />'));
   assert.ok(collections.includes('showContextMenu(<CollectionsContextMenu />, parent'));
   assert.ok(collections.includes('Menu label="Kolekcje"'));
@@ -56,7 +57,10 @@ test("All Optimization modules are visible in one page without nested tabs", () 
   assert.ok(collections.includes('Usuń kolekcję'));
   assert.ok(collections.includes('set_hub_collections_enabled'));
   assert.ok(control.includes('width: "fit-content"'));
-  assert.ok(control.includes('Zarządzaj'));
+  assert.ok(control.includes('{label}'));
+  assert.ok(!control.includes('Zarządzaj'));
+  assert.ok(page.includes('<TabManagerModule />'));
+  assert.ok(page.includes('<CollectionsModule />'));
   assert.ok(!control.includes('Zarządzaj ▾'));
   assert.ok(control.includes('<Toggle value={enabled}'));
   assert.ok(!collections.includes('<ModalRoot'));
