@@ -1,3 +1,10 @@
+# GameMode Hub 0.5.68 (testowy)
+
+- **Optymalizacja:** jeden nagłówek „Karty i Kolekcje”, a pod nim dwa obramowane wiersze zgodne z pozostałymi ustawieniami. Zamiast przycisku „Zarządzaj” są niewielkie przyciski „Karty” i „Kolekcje”; każdy otwiera swoje dotychczasowe natywne menu. Oba przełączniki ON/OFF pozostają niezależne.
+- **Pomoc:** nowa, ostatnia zakładka menu Huba, **bezpośrednio pod Dodatkami**. Krótkie opisy Pulpitu, Plików, Terminala, Kont, Opcji Huba, Aktualizacji, Pobierania, Optymalizacji, Podziękowań, Zgłoszeń i Dodatków oraz skrótów sterowania. Pomoc jest tylko do odczytu i można ją przewijać padem.
+- **Bez zmian w danych:** nie usuwamy kart, kolekcji ani ich przypisań. Integracje GOG/Epic i terminal nie są w tym wydaniu przebudowywane.
+- **Weryfikacja:** testy automatyczne obejmują układ, nawigację, TypeScript, Python i budowanie ZIP. Rzeczywisty wygląd obramowań i zachowanie pada trzeba potwierdzić na Lenovo.
+
 # GameMode Hub 0.5.67 (testowy)
 
 - **Optymalizacja → Karty i Kolekcje:** w obu sekcjach mały, zwykły przycisk „Zarządzaj” oraz niezależny przełącznik ON/OFF, bez strzałki udającej listę i bez przycisków rozciągniętych przez całą szerokość panelu.

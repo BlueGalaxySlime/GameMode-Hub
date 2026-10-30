@@ -17,6 +17,10 @@
 
 „Opcje Huba” zawierają dwa przełączniki: **Zachowuj stan kart** (domyślnie włączony) oraz **Podział drzewa plików** (domyślnie wyłączony). Stan kart jest przechowywany w pamięci wtyczki, więc można przełączać zakładki bez utraty ścieżki i bieżących ustawień. Same opcje są zapisywane na dysku. Podział w Plikach ogranicza się do przeglądarki katalogów: foldery po lewej, pliki po prawej, natomiast pasek adresu i cały Hub nie są dzielone.
 
+## Pomoc
+
+Ostatnia pozycja menu, **Pomoc**, znajduje się bezpośrednio pod **Dodatki**. Zawiera zwięzły opis każdej zakładki Huba i podstawowego sterowania, bez dodatkowych formularzy.
+
 ## Konta i sklepy
 
 W **Konta → GOG** można zalogować się niezależnie od Unifideck i Heroic: Hub otwiera stronę autoryzacji GOG, a użytkownik wkleja do Huba adres powrotu po zalogowaniu. Hasła i 2FA są wpisywane tylko na stronie GOG. Sesja jest tymczasowo przechowywana w pamięci albo, na wyraźne życzenie, w dostępnym systemowym sejfie Secret Service/KWallet. „Wczytaj gry” pobiera bibliotekę z GOG, bez instalowania gier. Mechanizm i otwieranie przeglądarki są eksperymentalne i wymagają testu w Gaming Mode. Szczegóły: [moduły sklepów](docs/STORE_CONNECTORS.md).
