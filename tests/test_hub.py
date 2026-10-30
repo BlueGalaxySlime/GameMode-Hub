@@ -95,8 +95,8 @@ class HubSelectionTests(unittest.TestCase):
         steamapps.mkdir(parents=True)
         favorites_file = Path(self.root.name) / "favorites.json"
         labels_file = Path(self.root.name) / "labels.json"
-        with patch.object(file_manager, "_allowed_roots", return_value=[("Dom", home)]), \\
-             patch.object(hub_settings, "FAVORITE_FOLDERS_FILE", favorites_file), \\
+        with patch.object(file_manager, "_allowed_roots", return_value=[("Dom", home)]), \
+             patch.object(hub_settings, "FAVORITE_FOLDERS_FILE", favorites_file), \
              patch.object(hub_settings, "FAVORITE_LABELS_FILE", labels_file):
             path = str(steamapps)
             self.assertEqual(hub_settings.get_favorite_folders(), [path])
@@ -117,8 +117,8 @@ class HubSelectionTests(unittest.TestCase):
         target.mkdir(parents=True)
         favfile = Path(self.root.name) / "fav.json"
         labelfile = Path(self.root.name) / "fav_labels.json"
-        with patch.object(file_manager, "_allowed_roots", return_value=[("Dom", home)]), \\
-             patch.object(hub_settings, "FAVORITE_FOLDERS_FILE", favfile), \\
+        with patch.object(file_manager, "_allowed_roots", return_value=[("Dom", home)]), \
+             patch.object(hub_settings, "FAVORITE_FOLDERS_FILE", favfile), \
              patch.object(hub_settings, "FAVORITE_LABELS_FILE", labelfile):
             path = str(target)
             hub_settings.set_favorite_folders([path])
