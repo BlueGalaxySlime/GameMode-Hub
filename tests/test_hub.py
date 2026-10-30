@@ -127,6 +127,48 @@ class HubSelectionTests(unittest.TestCase):
             hub_settings.set_favorite_folders([str(old)])
             self.assertEqual(hub_settings.get_favorite_folders(), [str(old)])
 
+    def test_workshop_shortcut_is_removable_and_stays_removed(self):
+        from backend.files import file_manager
+        home = Path(self.root.name) / "home"
+        content = home / ".local/share/Steam/steamapps/workshop/content"
+        content.mkdir(parents=True)
+        favorite_file = Path(self.root.name) / "workshop_favorites.json"
+        labels_file = Path(self.root.name) / "workshop_labels.json"
+        with patch.object(file_manager, "_allowed_roots", return_value=[("Dom", home)]), \
+             patch.object(hub_settings, "FAVORITE_FOLDERS_FILE", favorite_file), \
+             patch.object(hub_settings, "FAVORITE_LABELS_FILE", labels_file):
+            self.assertEqual(hub_settings.get_favorite_folders(), [str(content)])
+            self.assertEqual(hub_settings.get_favorite_labels(), {str(content): "Mody Steam"})
+            self.assertTrue(favorite_file.with_suffix(".steam_workshop_checked").exists())
+            # A browser-style default bookmark is not recreated after removal.
+            hub_settings.set_favorite_folders([])
+            self.assertEqual(hub_settings.get_favorite_folders(), [])
+            self.assertEqual(hub_settings.get_favorite_labels(), {})
+            self.assertTrue(content.is_dir())
+
+    def test_workshop_upgrade_keeps_existing_favorites_and_custom_labels(self):
+        from backend.files import file_manager
+        home = Path(self.root.name) / "home"
+        content = home / ".local/share/Steam/steamapps/workshop/content"
+        content.mkdir(parents=True)
+        personal = home / "My mods"
+        personal.mkdir()
+        favorite_file = Path(self.root.name) / "existing.json"
+        labels_file = Path(self.root.name) / "existing_labels.json"
+        favorite_file.write_text(json.dumps([str(personal)]), encoding="utf-8")
+        favorite_file.with_suffix(".steam_default_checked").touch()
+        labels_file.write_text(json.dumps({str(personal): "Moje mody"}), encoding="utf-8")
+        with patch.object(file_manager, "_allowed_roots", return_value=[("Dom", home)]), \
+             patch.object(hub_settings, "FAVORITE_FOLDERS_FILE", favorite_file), \
+             patch.object(hub_settings, "FAVORITE_LABELS_FILE", labels_file):
+            expected = [str(personal), str(content)]
+            self.assertEqual(hub_settings.get_favorite_folders(), expected)
+            self.assertEqual(hub_settings.get_favorite_folders(), expected)
+            self.assertEqual(hub_settings.get_favorite_labels(),
+                             {str(personal): "Moje mody", str(content): "Mody Steam"})
+            self.assertEqual(hub_settings.set_favorite_folders([str(personal)]), [str(personal)])
+            self.assertEqual(hub_settings.get_favorite_folders(), [str(personal)])
+
     def test_custom_favorite_labels_preserve_existing_paths(self):
         from backend.files import file_manager
         home = Path(self.root.name) / "home"
