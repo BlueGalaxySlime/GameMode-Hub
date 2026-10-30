@@ -28,6 +28,7 @@ export interface TerminalLayoutState {
   send(value: string): void;
   toggleAdvanced(): void;
   clear(): void;
+  focus(): void;
 }
 
 /** A Linux desktop frontend can provide its own presentation renderer. */
@@ -115,12 +116,13 @@ export function TerminalView({ bridge, render, fontSize = 15, autoStart = false,
           bridge.read(id),
           new Promise<never>((_, reject) => setTimeout(() => reject(new Error("Timeout odczytu terminala")), 3500))
         ]);
-        if (!mounted.current || id !== session.current) return;
+        // A read can finish after a route transition: never discard its bytes.
         if (result.data) {
           const bytes = decodeBytes(result.data);
           appendOutput(slot, new TextDecoder().decode(bytes));
-          if (mounted.current) instance.write(bytes);
+          if (mounted.current && id === session.current) instance.write(bytes);
         }
+        if (!mounted.current || id !== session.current) return;
         if (result.truncated) instance.writeln("\r\n[Ostrzeżenie: część wyjścia pominięta]");
         if (!result.running) {
           slot.phase = "ended";
@@ -141,7 +143,7 @@ export function TerminalView({ bridge, render, fontSize = 15, autoStart = false,
       } finally {
         polling.current = false;
       }
-    }, 170);
+    }, 500);
 
     return () => {
       mounted.current = false;
@@ -194,7 +196,7 @@ export function TerminalView({ bridge, render, fontSize = 15, autoStart = false,
   }, [slotNumber, visible, autoStart]);
 
   async function openSession() {
-    if (slot.starting || slot.phase !== "idle" || getBackendError()) return;
+    if (slot.starting || !["idle", "ended"].includes(slot.phase) || getBackendError()) return;
     const instance = term.current;
     if (!instance) return;
     slot.starting = true;
@@ -267,8 +269,9 @@ export function TerminalView({ bridge, render, fontSize = 15, autoStart = false,
     const id = slot.id;
     session.current = null;
     slot.id = null;
-    slot.phase = "ended";
-    if (!id) return;
+    slot.phase = "idle";
+    slot.error = "";
+    if (!id) { setActive(false); setStatus("Sesja zamknięta."); return; }
     setActive(false);
     setStatus("Zamykanie sesji…");
     try {
@@ -297,7 +300,8 @@ export function TerminalView({ bridge, render, fontSize = 15, autoStart = false,
     close: () => { void closeSession(); },
     setCommand, submit: submitCommand, send,
     toggleAdvanced: () => setAdvanced(value => !value),
-    clear: () => { term.current?.clear(); clearOutput(slot); }
+    clear: () => { term.current?.clear(); clearOutput(slot); },
+    focus: () => { term.current?.focus(); }
   };
   if (render) return <>{render(state)}</>;
   // Browser fallback for a future standalone Linux UI.
