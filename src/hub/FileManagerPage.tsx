@@ -10,6 +10,7 @@ import { HubTextInput, openHubTextMenu } from "./HubTextInput";
 import { CreateFolderDialog } from "./CreateFolderDialog";
 import { ConfirmTrashDialog, TrashListDialog } from "./TrashDialogs";
 import { TransferDialog } from "./TransferDialog";
+import { FilePropertiesDialog } from "./FilePropertiesDialog";
 
 type SortBy = "name" | "type" | "size" | "date";
 type Entry = {
@@ -57,20 +58,25 @@ function favoriteLabel(path: string) {
   return trimmed.slice(trimmed.lastIndexOf("/") + 1) || "/";
 }
 
-function ParentDirectoryRow({ parent, disabled, onOpen }: {
+function ParentDirectoryRow({ parent, disabled, onOpen, onOptions }: {
   parent: string | null;
   disabled: boolean;
   onOpen: (path: string) => void;
+  onOptions: (target: EventTarget) => void;
 }) {
   if (!parent) return null;
-  return <DialogButton disabled={disabled} aria-label="Katalog wyżej"
-    onOKActionDescription="Katalog wyżej"
+  return <DialogButton disabled={disabled} aria-label="Folder nadrzędny"
+    onOKActionDescription="Otwórz folder nadrzędny"
+    onOptionsActionDescription="Opcje plików"
+    onOptionsButton={event => {
+      if (event.defaultPrevented) return;
+      event.preventDefault();
+      event.stopPropagation();
+      onOptions(event.currentTarget ?? window);
+    }}
     style={{ width: "100%", minWidth: 0, textAlign: "left", padding: "7px 9px" }}
     onClick={() => onOpen(parent)}>
-    <span style={{ display: "flex", alignItems: "center", gap: 9, minWidth: 0 }}>
-      <span style={{ fontWeight: 700 }}>...</span>
-      <span style={{ fontSize: 12, opacity: 0.75 }}>Katalog wyżej</span>
-    </span>
+    <span style={{ fontWeight: 700 }}>...</span>
   </DialogButton>;
 }
 
@@ -482,6 +488,12 @@ export function FileManagerPage() {
     );
   }
 
+  function openProperties(entry: Entry) {
+    // Read-only local metadata from the current directory listing.
+    // Never execute, open or scan the contents of the chosen file.
+    window.setTimeout(() => showModal(<FilePropertiesDialog entry={entry} />), 0);
+  }
+
   function openFileMenu(entry: Entry, parent: EventTarget, pane: "left" | "right") {
     if (busy || entry.symlink) return;
     activatePane(pane);
@@ -508,6 +520,7 @@ export function FileManagerPage() {
         <MenuItem onSelected={() => clipboardAction(entry, "copy")}>Kopiuj</MenuItem>
         <MenuItem onSelected={() => clipboardAction(entry, "move")}>Przenieś</MenuItem>
         <MenuItem onSelected={() => confirmTrash(entry)}>Przenieś do Kosza</MenuItem>
+        <MenuItem onSelected={() => openProperties(entry)}>Właściwości</MenuItem>
         {!entry.directory && <MenuItem onSelected={() => openTransferDialog(entry.path)}>
           Udostępnij przez Wi-Fi
         </MenuItem>}
@@ -770,6 +783,10 @@ export function FileManagerPage() {
                   onOpen={parent => {
                     activatePane(pane);
                     navigateDirectory(parent, pane);
+                  }}
+                  onOptions={target => {
+                    activatePane(pane);
+                    openBrowserMenu(target);
                   }} /></div>
                 {folder.items.map(entry =>
                   <div key={entry.path} data-file-entry data-file-path={entry.path}

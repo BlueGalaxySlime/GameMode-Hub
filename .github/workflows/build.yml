@@ -48,7 +48,7 @@ jobs:
       - name: Verify text editing, selection and clipboard controls
         run: node --test tests/text-selection.test.cjs
       - name: Verify file manager layout and path navigation
-        run: node --test tests/file-manager-layout.test.cjs
+        run: node --test tests/file-manager-layout.test.cjs tests/file-properties.test.cjs
       - name: Verify Desktop Apps-style launcher with Files UI
         run: node --test tests/desktop-apps-layout.test.cjs tests/desktop-catalog.test.cjs
       - name: Test Epic account security boundary
