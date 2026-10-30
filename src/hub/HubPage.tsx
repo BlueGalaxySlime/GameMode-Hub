@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useSyncExternalStore } from "react";
 import { callable } from "@decky/api";
 import { SidebarNavigation } from "@decky/ui";
 import {
@@ -20,10 +20,19 @@ import { HubAddonsPage } from "./HubAddonsPage";
 import { HelpPage } from "./HelpPage";
 import { HUB_ROUTE } from "../core/identity";
 import { CORE_MODULES } from "../core/modules";
+import { getHubPreferences, subscribeHubPreferences } from "../core/hubSession";
 
 const setUiOpen = callable<[boolean], { ok: boolean }>("hub_ui_open");
+const NAV_EN: Record<string, string> = {
+  "Pulpit": "Desktop", "Pliki": "Files", "Terminal": "Terminal",
+  "Konta": "Accounts", "Opcje Huba": "Hub Options",
+  "Aktualizacje": "Updates", "Pobieranie": "Downloads",
+  "Optymalizacja": "Optimization", "Podziękowania": "Credits",
+  "Zgłoszenia": "Reports", "Dodatki": "Add-ons", "Pomoc": "Help"
+};
 
 export function HubPage() {
+  const language = useSyncExternalStore(subscribeHubPreferences, getHubPreferences).language;
   const [terminalFontSize, setTerminalFontSize] = useHubSessionState("terminal.fontSize", 15);
 
   useEffect(() => {
@@ -63,5 +72,7 @@ export function HubPage() {
       content: <HelpPage /> }
   ];
   if (!registered.includes("home")) return null;
-  return <SidebarNavigation pages={pages} />;
+  return <SidebarNavigation pages={language === "en"
+    ? pages.map(page => ({ ...page, title: NAV_EN[page.title] ?? page.title }))
+    : pages} />;
 }
