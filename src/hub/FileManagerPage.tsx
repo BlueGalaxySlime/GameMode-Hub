@@ -58,7 +58,7 @@ function favoriteLabel(path: string) {
   return trimmed.slice(trimmed.lastIndexOf("/") + 1) || "/";
 }
 
-function ParentDirectoryRow({ parent, disabled, onOpen }: {
+function ParentDirectoryRow({ parent, disabled, onOpen, onOptions }: {
   parent: string | null;
   disabled: boolean;
   onOpen: (path: string) => void;
