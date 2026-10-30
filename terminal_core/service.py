@@ -21,6 +21,7 @@ import threading
 
 MAX_SESSIONS = 3
 MAX_BUFFER = 256 * 1024
+MAX_READ = 16 * 1024  # Bound each Decky RPC response to protect Steam UI.
 MAX_INPUT = 4096
 
 
@@ -75,13 +76,15 @@ class _Session:
 
     def read(self):
         with self._lock:
-            data = bytes(self._pending)
-            self._pending.clear()
+            data = bytes(self._pending[:MAX_READ])
+            del self._pending[:MAX_READ]
+            has_more = bool(self._pending)
             truncated = self._truncated
             self._truncated = False
         return {
             "data": base64.b64encode(data).decode("ascii"),
-            "running": self.process.poll() is None,
+            # Drain output even after the shell has already exited.
+            "running": self.process.poll() is None or has_more or self._reader.is_alive(),
             "truncated": truncated,
         }
 
