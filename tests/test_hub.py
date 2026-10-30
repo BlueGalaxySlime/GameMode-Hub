@@ -88,6 +88,68 @@ class HubSelectionTests(unittest.TestCase):
                 hub_settings.set_favorite_folders(["relative/path"])
             self.assertEqual(hub_settings.set_favorite_folders([]), [])
 
+    def test_first_run_has_steam_mods_bookmark_if_steamapps_exists(self):
+        from backend.files import file_manager
+        home = Path(self.root.name) / "home"
+        steamapps = home / ".local" / "share" / "Steam" / "steamapps"
+        steamapps.mkdir(parents=True)
+        favorites_file = Path(self.root.name) / "favorites.json"
+        labels_file = Path(self.root.name) / "labels.json"
+        with patch.object(file_manager, "_allowed_roots", return_value=[("Dom", home)]), \
+             patch.object(hub_settings, "FAVORITE_FOLDERS_FILE", favorites_file), \
+             patch.object(hub_settings, "FAVORITE_LABELS_FILE", labels_file):
+            path = str(steamapps)
+            self.assertEqual(hub_settings.get_favorite_folders(), [path])
+            self.assertEqual(hub_settings.get_favorite_labels(), {path: "Mody Steam"})
+            # A rename only changes the bookmark, not the Steam directory.
+            self.assertEqual(hub_settings.set_favorite_label(path, "Moje gry"), {path: "Moje gry"})
+            self.assertTrue(steamapps.is_dir())
+            self.assertEqual(hub_settings.get_favorite_folders(), [path])
+            # Once explicitly removed, the shortcut is not silently restored.
+            self.assertEqual(hub_settings.set_favorite_folders([]), [])
+            self.assertEqual(hub_settings.get_favorite_folders(), [])
+            self.assertEqual(hub_settings.get_favorite_labels(), {})
+
+    def test_upgrade_adds_steam_shortcut_once_to_existing_bookmarks(self):
+        from backend.files import file_manager
+        home = Path(self.root.name) / "home"
+        steam = home / ".local" / "share" / "Steam" / "steamapps"
+        steam.mkdir(parents=True)
+        old = home / "MyMods"
+        old.mkdir()
+        favfile = Path(self.root.name) / "legacy-favorites.json"
+        favfile.write_text(json.dumps([str(old)]), encoding="utf-8")
+        with patch.object(file_manager, "_allowed_roots", return_value=[("Dom", home)]), \
+             patch.object(hub_settings, "FAVORITE_FOLDERS_FILE", favfile):
+            self.assertEqual(hub_settings.get_favorite_folders(), [str(old), str(steam)])
+            self.assertEqual(hub_settings.get_favorite_folders(), [str(old), str(steam)])
+            self.assertTrue(favfile.with_suffix(".steam_default_checked").exists())
+            hub_settings.set_favorite_folders([str(old)])
+            self.assertEqual(hub_settings.get_favorite_folders(), [str(old)])
+
+    def test_custom_favorite_labels_preserve_existing_paths(self):
+        from backend.files import file_manager
+        home = Path(self.root.name) / "home"
+        target = home / "Mods"
+        target.mkdir(parents=True)
+        favfile = Path(self.root.name) / "fav.json"
+        labelfile = Path(self.root.name) / "fav_labels.json"
+        with patch.object(file_manager, "_allowed_roots", return_value=[("Dom", home)]), \
+             patch.object(hub_settings, "FAVORITE_FOLDERS_FILE", favfile), \
+             patch.object(hub_settings, "FAVORITE_LABELS_FILE", labelfile):
+            path = str(target)
+            hub_settings.set_favorite_folders([path])
+            self.assertEqual(hub_settings.set_favorite_label(path, "Mody GK2"), {path: "Mody GK2"})
+            self.assertEqual(hub_settings.get_favorite_folders(), [path])
+            self.assertTrue(target.is_dir())
+            self.assertEqual(hub_settings.get_favorite_labels(), {path: "Mody GK2"})
+            for label in ("", " " * 10, "x" * 65, "A\x00B", "\n"):
+                with self.subTest(label=label), self.assertRaises(ValueError):
+                    hub_settings.set_favorite_label(path, label)
+            with self.assertRaises(ValueError):
+                hub_settings.set_favorite_label(str(home), "Nieznany")
+            self.assertEqual(hub_settings.get_favorite_folders(), [path])
+
     def test_reject_invalid_input(self):
         for invalid in ("a", {}, [8], [""], ["x" * 101]):
             with self.subTest(invalid=invalid), self.assertRaises(ValueError):

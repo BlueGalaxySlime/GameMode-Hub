@@ -1,3 +1,10 @@
+# GameMode Hub 0.5.60 (testowy)
+
+- **Pliki → Y:** naprawiono rozbieżność między menu na `...` a menu zwykłych plików i folderów. Zaznaczony element pokazuje własne operacje (kopiuj, przenieś, właściwości, kosz) **oraz** wspólne ustawienia Plików (Ulubione, widok, sortowanie, lokalizacje). Wiersz `...` nadal otwiera wyłącznie menu ogólne.
+- **Ulubione → zakładka → prawo:** obok „Usuń” dodano „Zmień nazwę”. Zapisujemy sam podpis zakładki, nie przemianowujemy folderu ani nie zmieniamy ścieżki. Istniejące ulubione zachowują swoje ścieżki i działają bez migracji.
+- **Mody Steam:** po aktualizacji (jednorazowo, także przy istniejących Ulubionych) Hub dodaje skrót „Mody Steam” do istniejącego folderu `steamapps` w bibliotece użytkownika. W nim są m.in. `common/` (gry i ręczne mody w podfolderach gier) oraz `workshop/content/` (mody Steam Workshop). To skrót, a nie automatyczny instalator modów. Nie tworzymy katalogów i nie przywracamy go po ręcznym usunięciu.
+- **Pad:** jawna obsługa Y także przy kliknięciu kontekstowym na zwykłych wierszach, bez przenoszenia operacji destrukcyjnych do `...`.
+
 # GameMode Hub 0.5.59 (testowy)
 
 - **Pliki → ...:** wiersz katalogu nadrzędnego pokazuje wyłącznie `...`, bez drugiej etykiety „Katalog wyżej”. **A** przechodzi wyżej, a **Y** otwiera zwykłe „Opcje plików” — samo otwarcie menu nie wykonuje operacji.
