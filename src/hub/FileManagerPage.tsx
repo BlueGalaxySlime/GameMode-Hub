@@ -825,7 +825,7 @@ export function FileManagerPage() {
                 minWidth: 0, height: "100%", overflow: "hidden",
                 paddingRight: splitTree && pane === "left" ? 6 : 0,
                 borderRight: splitTree && pane === "left" ? "1px solid #55677a" : undefined }}>
-              <div ref={pane === "left" ? treeScrollRef : fileScrollRef}
+              <div data-hub-scroll-container={pane === "left" ? "file-tree" : "file-list"} ref={pane === "left" ? treeScrollRef : fileScrollRef}
                 onScroll={event => writeHubSession(
                   pane === "left" ? "files.treeScrollTop" : "files.listScrollTop",
                   event.currentTarget.scrollTop)}
