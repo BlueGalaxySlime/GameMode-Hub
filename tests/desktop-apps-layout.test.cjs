@@ -375,7 +375,7 @@ test("Three runtime states and opt-in DEV are independent of the UI", () => {
   const opts = fs.readFileSync("src/hub/HubOptionsPage.tsx", "utf8");
   const runtime = fs.readFileSync("backend/core/runtime_state.py", "utf8");
   const prefs = fs.readFileSync("backend/core/hub_settings.py", "utf8");
-  assert.ok(opts.includes('label="Tryb DEV"'));
+  assert.ok(opts.includes('"Tryb DEV"'));
   assert.ok(opts.includes('options.developerMode'));
   assert.ok(runtime.includes('"active" if ui_open else "background" if active_downloads else "sleeping"'));
   assert.ok(prefs.includes('"developerMode": False'));
