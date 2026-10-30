@@ -41,10 +41,10 @@ W Quick Access → GameMode Hub → **Pliki** lista zajmuje całą szerokość p
 - `backend/library/` — biblioteka, karty, kolekcje i kopie danych.
 - `src/modules/` — działające moduły interfejsu; `src/hub/` — strony Huba i Decky.
 - Stary katalog `modules/` zawierał wyłącznie przykładowy manifest, dlatego został usunięty.
-- `terminal_core/` — zachowany do dalszych badań niezależny silnik PTY, **nie jest dołączany do instalatora**.
+- `terminal_core/` — niezależny silnik Linux PTY dołączany do paczki; uruchamiany tylko na żądanie, bez roota.
 - `desktop/` — wcześniejszy eksperyment z Electronem, **nie jest już budowany ani publikowany**. Opcjonalny niezależny launcher pozostaje osobnym przyszłym etapem.
 
-**Terminal jest tymczasowo wyłączony** ze względu na wcześniejsze restarty interfejsu Steam na Legion Go S. Nie uruchamia procesów po otwarciu panelu. Nie ma jeszcze niezależnego zamiennika Quick Access bez Decky — to cel długoterminowy.
+**Terminal w kanale testowym 0.5.64:** ręczne uruchamianie powłoki Linux, bez procesów przy samym otwarciu zakładki. Ze względu na wcześniejsze restarty Gaming Mode konieczna jest weryfikacja na Lenovo przed uznaniem funkcji za stabilną. Nie ma jeszcze niezależnego zamiennika Quick Access bez Decky — to cel długoterminowy.
 
 ## Aktualizator nie widzi nowej wersji w 0.5.2?
 
