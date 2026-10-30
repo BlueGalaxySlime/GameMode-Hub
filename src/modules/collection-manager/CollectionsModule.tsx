@@ -1,8 +1,7 @@
 import { useEffect, useState } from "react";
 import { callable } from "@decky/api";
 import {
-  ConfirmModal, DialogControlsSection, DialogControlsSectionHeader,
-  Field, Menu, MenuGroup, MenuItem, TextField, showContextMenu, showModal
+  ConfirmModal, Field, Menu, MenuGroup, MenuItem, TextField, showContextMenu, showModal
 } from "@decky/ui";
 import { OptimizationManageControl } from "../../hub/OptimizationManageControl";
 import { hubCollectionsChanged, hubCollectionsEnabledChanged } from "../tab-manager/LibraryIntegration";
@@ -253,10 +252,9 @@ export function CollectionsModule() {
     });
   }
 
-  return <DialogControlsSection>
-    <DialogControlsSectionHeader>Kolekcje</DialogControlsSectionHeader>
-    <OptimizationManageControl busy={busy} enabled={enabled}
+  return <>
+    <OptimizationManageControl label="Kolekcje" busy={busy} enabled={enabled}
       onManage={openManageMenu} onToggle={value => { void toggle(value); }} />
     {!!error && <Field label="Błąd" description={error} />}
-  </DialogControlsSection>;
+  </>;
 }
