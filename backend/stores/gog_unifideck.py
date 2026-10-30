@@ -109,7 +109,9 @@ def _credentials():
     try:
         decoded = aesgcm(key).decrypt(blob[4:16], blob[16:], None)
         tokens = json.loads(decoded.decode("utf-8"))
-    except (ValueError, TypeError, UnicodeDecodeError) as exc:
+    except Exception as exc:
+        # Includes cryptography.exceptions.InvalidTag. Never expose data or
+        # exception text to Decky, logs or the frontend.
         raise ValueError("Cannot decrypt GOG session") from exc
     if not isinstance(tokens, dict) or not all(
         isinstance(tokens.get(k), str) and tokens[k] for k in ("access_token", "refresh_token")
