@@ -1,3 +1,11 @@
+# GameMode Hub 0.5.67 (testowy)
+
+- **Optymalizacja → Karty i Kolekcje:** w obu sekcjach mały, zwykły przycisk „Zarządzaj” oraz niezależny przełącznik ON/OFF, bez strzałki udającej listę i bez przycisków rozciągniętych przez całą szerokość panelu.
+- **Wspólne zachowanie:** oba przyciski otwierają natywne menu kontekstowe SteamOS, zamiast różnych typów edytora. W Kolekcjach usunięto duże, osobne okno pełne pól i przycisków. Zmiana nazwy, dodawanie pozycji i potwierdzenie usunięcia używają krótkich okien SteamOS podobnie jak w Kartach.
+- **Bez utraty danych:** aktualizacja nie usuwa kolekcji, przypisań gier, kart ani profili. Przełącznik ON/OFF nie otwiera menu i nie kasuje zapisanych ustawień.
+- **Zakres:** jest to korekta interfejsu Optymalizacji. Integracja samodzielnego GOG przez przeniesione moduły Unifideck/gogdl oraz Epic przez Legendary pozostaje odrębną pracą, a obecny eksperymentalny adapter GOG nie został w tym wydaniu przebudowany.
+- **Testy:** TypeScript, frontend, Python, testy układu i paczki. Nawigacja padem i render menu wymagają sprawdzenia w rzeczywistym Steam Gaming Mode na Lenovo.
+
 # GameMode Hub 0.5.66 (testowy)
 
 - **GOG — własne logowanie Huba:** GOG nie zależy już od aktywnego Unifideck ani Heroica. Przycisk „Zaloguj” tworzy sesję OAuth i otwiera prawdziwą stronę `auth.gog.com`; hasło oraz 2FA użytkownik wpisuje wyłącznie na stronie GOG, nie w Hubie.

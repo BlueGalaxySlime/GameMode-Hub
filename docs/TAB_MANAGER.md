@@ -8,7 +8,15 @@ Zaznacz kartę Steam lub Huba i naciśnij **☰ (Menu)**. Otworzy się natywne m
 **Hub:** karty stworzone przez użytkownika można zmieniać, ukrywać, przenosić, kopiować i usuwać. Kolekcje pozostają niezależne; usunięcie karty nie usuwa kolekcji ani gry.
 
 ## Optymalizacja
-Jeden prosty ekran jak w Opcjach Huba. Sekcja **Karty** ma jeden wiersz: przełącznik **ON/OFF** obok przycisku listy **Zarządzaj ▾**. Po rozwinięciu pokazuje on to samo menu działań co w bibliotece Steam (szybkie karty, profile, kolejność, przywracanie ukrytych kart), z wyjątkiem akcji wymagających zaznaczenia konkretnej karty. ON aktywuje podpowiedź **☰ KARTY** na dolnej czarnej belce natywnej biblioteki Steam Gaming Mode, OFF wyłącza ten dodatek do UI bez usuwania danych. Wybrany stan zachowuje się po uruchomieniu SteamOS. Stan kart i profile są zapisywane poza UI, aby mogły służyć także przyszłemu launcherowi.
+Jeden prosty ekran jak w Opcjach Huba. Sekcja **Karty** ma jeden wiersz: przełącznik **ON/OFF** obok zwykłego przycisku **Zarządzaj**. Po rozwinięciu pokazuje on to samo menu działań co w bibliotece Steam (szybkie karty, profile, kolejność, przywracanie ukrytych kart), z wyjątkiem akcji wymagających zaznaczenia konkretnej karty. ON aktywuje podpowiedź **☰ KARTY** na dolnej czarnej belce natywnej biblioteki Steam Gaming Mode, OFF wyłącza ten dodatek do UI bez usuwania danych. Wybrany stan zachowuje się po uruchomieniu SteamOS. Stan kart i profile są zapisywane poza UI, aby mogły służyć także przyszłemu launcherowi.
+
+Sekcja **Kolekcje** ma identyczny, niewielki przycisk **Zarządzaj** i osobny
+przełącznik ON/OFF. Oba przyciski „Zarządzaj” otwierają natywne menu kontekstowe
+SteamOS. Kolekcje nie otwierają już osobnego, pełnego formularza z wieloma
+przyciskami. Działania na istniejących kolekcjach (nazwy, kolejność, zawartość,
+usuwanie) pozostają dostępne w podmenu, a edycja nazwy i potwierdzenie
+usunięcia otwierają krótkie natywne okna. Nie zmieniamy danych istniejących
+kolekcji ani ich powiązań z kartami.
 
 ## Bezpieczeństwo, konflikt i backup
 TabMaster musi być wyłączony; gdy stan konfliktu jest nieznany, integracja pozostaje wstrzymana. Biblioteka Steam używa niepublicznej struktury, więc niezbędny jest test na Lenovo.
