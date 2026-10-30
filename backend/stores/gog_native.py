@@ -133,17 +133,17 @@ def _normalize_tokens(payload, old=None):
 
 
 def status():
+    global _SESSION
     with _LOCK:
         if _valid_tokens(_SESSION):
             return {"connected": True,
                     "storage": "keyring" if _SESSION.get("saved") else "memory"}
     try:
         saved = _vault_load()
-    except (OSError, ValueError, RuntimeError, Exception):
+    except Exception:
         saved = None
     if saved:
         with _LOCK:
-            global _SESSION
             _SESSION = {**saved, "saved": True}
         return {"connected": True, "storage": "keyring"}
     return {"connected": False, "storage": None}
@@ -222,6 +222,11 @@ def logout():
     global _SESSION, _PENDING
     with _LOCK:
         had_saved = bool(_SESSION and _SESSION.get("saved"))
+    if not had_saved:
+        try:
+            had_saved = _vault_load() is not None
+        except (RuntimeError, OSError, ValueError):
+            pass
     if had_saved:
         try:
             _vault_delete()
