@@ -41,7 +41,7 @@ jobs:
         run: node --test tests/tabmaster-detection.test.cjs
       - name: Test update checker timeouts
         run: node --test tests/update-timeout.test.cjs
-      - name: Verify terminal safe mode
+      - name: Verify on-demand terminal safety
         run: node --test tests/terminal-safe-mode.test.cjs tests/terminal-session-layout.test.cjs
       - name: Verify session preservation and options
         run: node --test tests/hub-session.test.cjs
