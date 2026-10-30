@@ -1,7 +1,6 @@
 import { useEffect, useState } from "react";
 import { callable } from "@decky/api";
 import {
-  DialogControlsSection, DialogControlsSectionHeader,
   Field, showContextMenu
 } from "@decky/ui";
 import {
@@ -62,14 +61,13 @@ export function TabManagerModule() {
     );
   }
 
-  return <DialogControlsSection>
-    <DialogControlsSectionHeader>Karty</DialogControlsSectionHeader>
-    <OptimizationManageControl busy={busy} enabled={enabled}
+  return <>
+    <OptimizationManageControl label="Karty" busy={busy} enabled={enabled}
       onManage={openManageMenu} onToggle={value => { void toggle(value); }} />
     {enabled && activity === "active" && <Field label="Konflikt"
       description="Aktywny TabMaster blokuje menu Huba w bibliotece. Wyłącz go w Decky." />}
     {enabled && activity === "unknown" && <Field label="Stan modułu"
       description="Nie można potwierdzić stanu dodatków Decky. Menu biblioteki pozostaje wstrzymane." />}
     {error && <Field label="Błąd" description={error} />}
-  </DialogControlsSection>;
+  </>;
 }
