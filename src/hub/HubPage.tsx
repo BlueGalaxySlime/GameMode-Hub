@@ -84,8 +84,12 @@ export function HubPage() {
     ? pages.map(page => ({ ...page, title: NAV_EN[page.title] ?? page.title }))
     : pages).map(page => ({
       ...page,
+      // Only this right-hand page may scroll. The left SidebarNavigation list
+      // is never wrapped or included in the scroll target search.
       content: <div data-hub-scroll-page={page.route}
-        style={{ width: "100%", minWidth: 0 }}>{page.content}</div>
+        aria-label={language === "en" ? "Current tab content" : "Zawartość otwartej zakładki"}
+        style={{ width: "100%", minWidth: 0, maxHeight: "min(80vh, 740px)",
+          overflowY: "auto", overscrollBehavior: "contain" }}>{page.content}</div>
     }));
   return <div ref={shellRef} data-hub-shell style={{ display: "contents" }}>
     <SidebarNavigation pages={routedPages} />
