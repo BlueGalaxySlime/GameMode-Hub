@@ -1,3 +1,11 @@
+# GameMode Hub 0.5.70 (testowy)
+
+- **Przewijanie otwartej zakładki:** prawy drążek analogowy (jeżeli jest dostępny w przeglądarce jako standardowa oś gamepada) przewija zawartość aktywnej zakładki w prawym panelu. Obsługiwane są również zdarzenia kółka myszy z prawego gładzika oraz PageUp/PageDown.
+- **Lewy panel bez zmian:** lista zakładek po lewej nie jest celem przewijania. Lewy drążek i krzyżak nadal zmieniają zaznaczenie. Prawy drążek przewija bez przenoszenia fokusu ani naciskania przycisków.
+- **Własne obszary:** listy aplikacji Pulpitu, panele Plików oraz długie strony czytania (Pomoc, Konta, Podziękowania) wskazują rzeczywiste kontenery przewijania. Pozostałe zakładki otrzymują ograniczony do prawej strony obszar przewijania.
+- **Bez ingerencji w Steam Input:** prawy gładzik musi być przypisany do kółka/przewijania w Steam Input, jeżeli nie wysyła takich zdarzeń sam. Wbudowane zdarzenia osi prawego drążka działają tylko wtedy, gdy przeglądarka SteamOS udostępnia standardowy Gamepad API.
+- **Weryfikacja:** osobne testy ograniczenia przewijania do prawego panelu, bez ingerencji w nawigację i sesje. Zachowanie na Lenovo wymaga sprawdzenia w Gaming Mode.
+
 # GameMode Hub 0.5.69 (testowy)
 
 - **Konta i sklepy:** na samej górze jeden rząd niewybieralnych ikon Steam, GOG i Epic Games, wykorzystujących ten sam zestaw symboli z react-icons, który używa Unifideck. Ikony pokazują wyłącznie stan połączenia, nie służą do wybierania sklepu ani logowania.

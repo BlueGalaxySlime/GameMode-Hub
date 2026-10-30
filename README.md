@@ -21,6 +21,10 @@ W **Opcje Huba → Język** dostępne są obecnie **Polski** i **English**. Usta
 
 „Opcje Huba” zawierają dwa przełączniki: **Zachowuj stan kart** (domyślnie włączony) oraz **Podział drzewa plików** (domyślnie wyłączony). Stan kart jest przechowywany w pamięci wtyczki, więc można przełączać zakładki bez utraty ścieżki i bieżących ustawień. Same opcje są zapisywane na dysku. Podział w Plikach ogranicza się do przeglądarki katalogów: foldery po lewej, pliki po prawej, natomiast pasek adresu i cały Hub nie są dzielone.
 
+## Przewijanie prawym padem
+
+Lewy drążek/krzyżak porusza zaznaczenie; prawy drążek (jeśli SteamOS udostępnia oś Gamepad API) przewija tylko zawartość aktualnie otwartej zakładki, bez przewijania lewego panelu. Gładzik prawej ręki może wysyłać kółko myszy przez ustawienie Steam Input na przewijanie. Długie strony, listy aplikacji i Pliki mają własne obszary przewijania. Używanie przewijania nie powoduje zmiany zaznaczenia.
+
 ## Pomoc
 
 Ostatnia pozycja menu, **Pomoc**, znajduje się bezpośrednio pod **Dodatki**. Zawiera zwięzły opis każdej zakładki Huba i podstawowego sterowania, bez dodatkowych formularzy.
