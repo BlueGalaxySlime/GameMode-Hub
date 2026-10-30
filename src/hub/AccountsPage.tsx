@@ -6,6 +6,7 @@ import {
 } from "@decky/ui";
 import { withTimeout } from "../utils/withTimeout";
 import { GamepadScrollArea } from "./GamepadScrollArea";
+import { HubTextInput } from "./HubTextInput";
 import { useHubSessionState } from "./useHubSessionState";
 import { identifyEpicLaunchers, openEpicLauncher } from "./epicAccountAdapter";
 import type { EpicLauncher } from "./epicAccountAdapter";
@@ -16,38 +17,28 @@ const ACCOUNT_OPTIONS = [
   { data: "gog", label: "GOG" },
   { data: "epic", label: "Epic Games" }
 ];
-type GogState = "missing" | "source_missing" | "available" | "linked" | "unusable";
-type GogStatus = {
-  store: "gog";
-  source: "unifideck";
-  state: GogState;
-  linked: boolean;
-  can_import: boolean;
-};
-type GogResult = { ok: boolean; code?: string } & Partial<GogStatus>;
+type GogStatus = { connected: boolean; storage: "memory" | "keyring" | null };
+type GogResult = { ok: boolean; code?: string; url?: string; storage?: string };
 type GogGame = { store: "gog"; id: string; title: string };
 type GogLibrary = { ok: boolean; code?: string; games: GogGame[]; partial?: boolean };
 
-const gogStatus = callable<[], GogStatus>("gog_link_status");
-const gogImport = callable<[], GogResult>("gog_link_import");
-const gogRemove = callable<[], GogResult>("gog_link_remove");
+const gogStatus = callable<[], GogStatus>("gog_native_status");
+const gogBegin = callable<[string], GogResult>("gog_native_begin");
+const gogComplete = callable<[string], GogResult>("gog_native_complete");
+const gogLogout = callable<[], GogResult>("gog_native_logout");
 const gogLibrary = callable<[], GogLibrary>("gog_library");
 
-const GOG_MESSAGES: Record<string, string> = {
-  missing: "Nie znaleziono połączenia GOG w Unifideck.",
-  source_missing: "Połączenie było powiązane, ale plik sesji Unifideck zniknął.",
-  available: "Znaleziono zaszyfrowaną sesję GOG w Unifideck. Możesz ją powiązać za swoją zgodą.",
-  linked: "Powiązano z lokalną sesją Unifideck. Hub nie posiada własnej kopii tokenów.",
-  unusable: "Plik sesji jest uszkodzony, niezabezpieczony lub ma nieobsługiwany format."
-};
 const GOG_ERRORS: Record<string, string> = {
-  missing: "Unifideck nie udostępnia już pliku sesji GOG.",
-  unusable: "Nie można odczytać zaszyfrowanej sesji GOG. Sprawdź logowanie w Unifideck.",
-  crypto_unavailable: "Biblioteka szyfrowania jest niedostępna. Sesja nie została zaimportowana.",
-  not_linked: "Najpierw powiąż połączenie GOG.",
-  auth_expired: "Sesja GOG wymaga odświeżenia. Zaloguj się ponownie w Unifideck i spróbuj ponownie.",
-  network: "Nie udało się pobrać biblioteki GOG. Sprawdź połączenie internetowe.",
-  bad_response: "GOG zwrócił nieprawidłową odpowiedź. Biblioteka nie została zmieniona."
+  not_logged_in: "Zaloguj się do GOG, żeby wczytać gry.",
+  login_expired: "Minął czas logowania. Rozpocznij nowe logowanie.",
+  bad_callback: "Wklej pełny adres strony po zalogowaniu z embed.gog.com/on_login_success.",
+  login_failed: "GOG odmówił autoryzacji lub połączenie zostało przerwane. Spróbuj ponownie.",
+  bad_storage: "Nieobsługiwany sposób zapisu sesji.",
+  vault_locked: "Sejf systemowy jest zablokowany. Odblokuj go albo wybierz sesję tymczasową.",
+  vault_unavailable: "Sejf systemowy jest niedostępny. Możesz wybrać sesję tymczasową.",
+  auth_expired: "Wygasła sesja GOG. Zaloguj się ponownie.",
+  network: "Nie udało się połączyć z GOG. Sprawdź internet i spróbuj ponownie.",
+  bad_response: "GOG zwrócił nieprawidłową odpowiedź. Nie oznacza to pustej biblioteki."
 };
 
 /** Stores, not a launcher switcher. No password/2FA input in GameMode Hub. */
@@ -64,6 +55,9 @@ export function AccountsPage() {
   const [message, setMessage] = useState("");
   const [checked, setChecked] = useState(false);
   const [gog, setGog] = useState<GogStatus | null>(null);
+  const [gogStorage, setGogStorage] = useState<"memory" | "keyring">("memory");
+  const [gogLoginUrl, setGogLoginUrl] = useState("");
+  const [gogRedirect, setGogRedirect] = useState("");
   const [gogBusy, setGogBusy] = useState(false);
   const [gogMessage, setGogMessage] = useState("");
   const [games, setGames] = useState<GogGame[]>([]);
@@ -83,55 +77,102 @@ export function AccountsPage() {
     }
   }
 
-  async function importGog() {
+  async function startGog() {
     if (gogBusy) return;
     setGogBusy(true);
     setGogMessage("");
+    setGogRedirect("");
     try {
-      const result = await withTimeout(gogImport(), 10000);
-      if (!result.ok) {
-        setGogMessage(GOG_ERRORS[result.code ?? ""] ?? GOG_ERRORS.unusable);
-      } else {
-        setGogMessage("Powiązano GOG. Możesz teraz wczytać swoją bibliotekę.");
+      const result = await withTimeout(gogBegin(gogStorage), 6500);
+      if (!result.ok || !result.url) {
+        setGogMessage(GOG_ERRORS[result.code ?? ""] ?? GOG_ERRORS.login_failed);
+        return;
       }
-      await refreshGog();
+      setGogLoginUrl(result.url);
+      // Steam may block popup windows; offer a copyable URL as a fallback.
+      try {
+        window.open(result.url, "_blank", "noopener,noreferrer");
+        setGogMessage("Zaloguj się na stronie GOG. Po zalogowaniu skopiuj pełny adres strony powrotu i wklej go poniżej.");
+      } catch {
+        setGogMessage("Otwieranie przeglądarki jest niedostępne. Skopiuj adres logowania i otwórz go w przeglądarce.");
+      }
     } catch {
-      setGogMessage("Nie udało się powiązać GOG. Nie zmieniono sesji Unifideck.");
+      setGogMessage("Nie udało się rozpocząć logowania GOG.");
     } finally {
       setGogBusy(false);
     }
   }
 
-  async function unlinkGog() {
-    if (gogBusy) return;
+  async function copyGogUrl() {
+    if (!gogLoginUrl) return;
+    try {
+      await navigator.clipboard.writeText(gogLoginUrl);
+      setGogMessage("Skopiowano adres logowania GOG. Otwórz go w przeglądarce.");
+    } catch {
+      setGogMessage("Schowek jest niedostępny. Spróbuj ponownie otworzyć stronę.");
+    }
+  }
+
+  async function finishGog() {
+    if (gogBusy || !gogRedirect.trim()) return;
     setGogBusy(true);
     setGogMessage("");
+    // Authorization codes must never be persisted in Hub preferences.
+    const callback = gogRedirect.trim();
+    setGogRedirect("");
     try {
-      await withTimeout(gogRemove(), 6000);
-      setGames([]);
-      setGamesChecked(false);
-      setGogMessage("Odłączono GOG od Huba. Sesja Unifideck pozostała bez zmian.");
-      await refreshGog();
+      const result = await withTimeout(gogComplete(callback), 21000);
+      if (!result.ok) {
+        setGogMessage(GOG_ERRORS[result.code ?? ""] ?? GOG_ERRORS.login_failed);
+      } else {
+        setGogLoginUrl("");
+        setGogMessage(result.storage === "keyring"
+          ? "Zalogowano do GOG. Sesja jest zapisana w sejfie systemowym."
+          : "Zalogowano do GOG. Sesja jest tymczasowa i wygaśnie po zamknięciu backendu Huba.");
+        await refreshGog();
+      }
     } catch {
-      setGogMessage("Nie udało się odłączyć GOG od Huba.");
+      setGogMessage("Nie udało się zakończyć logowania. Sprawdź stan połączenia.");
+      await refreshGog();
+    } finally {
+      setGogBusy(false);
+    }
+  }
+
+  async function disconnectGog() {
+    if (gogBusy) return;
+    setGogBusy(true);
+    try {
+      const result = await withTimeout(gogLogout(), 7000);
+      if (!result.ok) {
+        setGogMessage(GOG_ERRORS[result.code ?? ""] ?? "Nie udało się usunąć sesji.");
+      } else {
+        setGames([]);
+        setGamesChecked(false);
+        setGogLoginUrl("");
+        setGogRedirect("");
+        setGogMessage("Odłączono GOG od Huba, bez zmieniania Unifideck.");
+        await refreshGog();
+      }
+    } catch {
+      setGogMessage("Nie udało się wylogować z Huba. Sprawdź sejf.");
     } finally {
       setGogBusy(false);
     }
   }
 
   async function loadGogGames() {
-    if (gogBusy || !gog?.linked) return;
+    if (gogBusy || !gog?.connected) return;
     setGogBusy(true);
     setGogMessage("");
     try {
-      const response = await withTimeout(gogLibrary(), 37000);
+      const response = await withTimeout(gogLibrary(), 58000);
       if (response.ok) {
         setGames(response.games);
         setGamesChecked(true);
         setPartial(!!response.partial);
-        setGogMessage("Biblioteka GOG została pobrana.");
+        setGogMessage("Wczytano bibliotekę GOG.");
       } else {
-        // A failed or expired token must NOT look like an empty library.
         setGamesChecked(false);
         setGogMessage(GOG_ERRORS[response.code ?? ""] ?? GOG_ERRORS.network);
       }
@@ -191,42 +232,78 @@ export function AccountsPage() {
         </Field>
         {selectedAccount === "gog" && <>
           <Field label="GOG — połączenie" focusable highlightOnFocus
-            description={gog
-              ? GOG_MESSAGES[gog.state]
-              : "Sprawdzanie dostępności lokalnej sesji Unifideck…"} />
-          <Field label="Sprawdź połączenie"
-            description="Odczyt stanu nie uruchamia Unifideck ani nie odszyfrowuje tokenów.">
+            description={!gog
+              ? "Sprawdzanie sesji GOG…"
+              : gog.connected
+                ? (gog.storage === "keyring"
+                  ? "Połączono z GOG. Sesja znajduje się w sejfie systemowym."
+                  : "Połączono z GOG. Sesja tymczasowa — tylko w pamięci Huba.")
+                : "Nie połączono. Możesz zalogować się bez Unifideck i Heroic."} />
+          {!gog?.connected && <>
+            <Field label="Przechowywanie sesji"
+              description="Tymczasowa nie zapisuje tokenów na dysku. Sejf systemowy wymaga działającego KWallet/Secret Service.">
+              <Dropdown
+                rgOptions={[
+                  { data: "memory", label: "Tymczasowa" },
+                  { data: "keyring", label: "Sejf systemowy" }
+                ]}
+                selectedOption={gogStorage}
+                onChange={option => {
+                  if (option.data === "memory" || option.data === "keyring")
+                    setGogStorage(option.data);
+                }} />
+            </Field>
+            <Field label="Zaloguj do GOG"
+              description="Otwiera stronę auth.gog.com. Hasło i 2FA wpisujesz tylko na stronie GOG. Hub nie uruchamia Unifideck ani Heroica.">
+              <DialogButton disabled={gogBusy} onClick={() => { void startGog(); }}>
+                {gogBusy ? "Łączenie…" : "Zaloguj"}
+              </DialogButton>
+            </Field>
+            {!!gogLoginUrl && <>
+              <Field label="Adres logowania"
+                description="Jeżeli SteamOS nie otworzył strony, skopiuj adres i otwórz go w przeglądarce.">
+                <DialogButton disabled={gogBusy} onClick={() => { void copyGogUrl(); }}>
+                  Kopiuj adres logowania
+                </DialogButton>
+              </Field>
+              <Field label="Adres powrotu po logowaniu"
+                description="Wklej cały adres zaczynający się od https://embed.gog.com/on_login_success lub https://www.gog.com/on_login_success. Nie wklejaj hasła ani kodu 2FA.">
+                <HubTextInput value={gogRedirect} onEditValue={setGogRedirect}
+                  aria-label="Adres powrotu GOG"
+                  onChange={event => setGogRedirect(event.currentTarget.value)}
+                  placeholder="https://embed.gog.com/on_login_success?…"
+                  disabled={gogBusy} />
+                <DialogButton disabled={gogBusy || !gogRedirect.trim()}
+                  onClick={() => { void finishGog(); }}>Połącz konto</DialogButton>
+              </Field>
+            </>}
+          </>}
+          {gog?.connected && <>
+            <Field label="Biblioteka GOG"
+              description="Pobieramy posiadane gry z GOG bez otwierania zewnętrznego launchera.">
+              <DialogButton disabled={gogBusy} onClick={() => { void loadGogGames(); }}>
+                {gogBusy ? "Pobieranie…" : "Wczytaj gry"}
+              </DialogButton>
+            </Field>
+            {gamesChecked && <Field label={"Gry GOG: " + games.length + (partial ? "+" : "")}
+              description={partial ? "Widok pokazuje ograniczoną część biblioteki." :
+                games.length ? "Gry odczytano z GOG." : "GOG zwrócił pustą bibliotekę."} />}
+            {gamesChecked && games.slice(0, 40).map(game =>
+              <Field key={game.id} label={game.title} description={"GOG · " + game.id} />)}
+            {gamesChecked && games.length > 40 && <Field label="Pozostałe gry"
+              description={"Jeszcze " + (games.length - 40) + " pozycji. Przedstawiamy 40, aby nie obciążać interfejsu."} />}
+            <Field label="Odłącz GOG"
+              description="Usuwa sesję Huba, nie modyfikuje konta ani danych Unifideck.">
+              <DialogButton disabled={gogBusy} onClick={() => { void disconnectGog(); }}>
+                Wyloguj
+              </DialogButton>
+            </Field>
+          </>}
+          <Field label="Sprawdź stan połączenia">
             <DialogButton disabled={gogBusy} onClick={() => { void refreshGog(); }}>
               Odśwież
             </DialogButton>
           </Field>
-          {gog?.can_import && <Field label="Importuj połączenie GOG"
-            description="Za Twoją zgodą Hub zweryfikuje szyfrowaną sesję Unifideck. Nie zapisze tokenów w swoich plikach.">
-            <DialogButton disabled={gogBusy} onClick={() => { void importGog(); }}>
-              {gogBusy ? "Sprawdzanie…" : "Powiąż GOG"}
-            </DialogButton>
-          </Field>}
-          {gog?.linked && <Field label="Biblioteka GOG"
-            description="Wczytaj posiadane gry z GOG, bez uruchamiania Heroica i bez zmiany launchera.">
-            <DialogButton disabled={gogBusy || gog.state !== "linked"}
-              onClick={() => { void loadGogGames(); }}>
-              {gogBusy ? "Pobieranie…" : "Wczytaj gry"}
-            </DialogButton>
-          </Field>}
-          {gamesChecked && gog?.linked && <Field label={"Gry GOG: " + games.length + (partial ? "+" : "")}
-            description={partial
-              ? "Wyświetlamy część biblioteki. Pozostałe gry będą dostępne w przyszłym pełnym widoku sklepu."
-              : games.length ? "Biblioteka odczytana z GOG — bez zmian na dysku." : "Brak gier w odpowiedzi GOG."} />}
-          {gamesChecked && gog?.linked && games.slice(0, 40).map(game =>
-            <Field key={game.id} label={game.title} description={"GOG · " + game.id} />)}
-          {gamesChecked && games.length > 40 && <Field label="Pozostałe gry"
-            description={"Jeszcze " + (games.length - 40) + " pozycji. Lista jest ograniczona w interfejsie, aby nie obciążać Gaming Mode."} />}
-          {gog?.linked && <Field label="Odłącz powiązanie"
-            description="Usuwa wyłącznie zgodę Huba. Nie wylogowuje GOG ani Unifideck.">
-            <DialogButton disabled={gogBusy} onClick={() => { void unlinkGog(); }}>
-              Odłącz GOG
-            </DialogButton>
-          </Field>}
           {!!gogMessage && <Field label="Informacja" focusable highlightOnFocus
             description={gogMessage} />}
         </>}
@@ -272,11 +349,11 @@ export function AccountsPage() {
         <Field label="Hasła i 2FA" focusable highlightOnFocus
           description="Hub nie przyjmuje haseł ani kodów 2FA. Logowanie pozostaje po stronie sklepu." />
         <Field label="Sesja GOG" focusable highlightOnFocus
-          description="Po zatwierdzeniu powiązania Hub chwilowo odszyfrowuje istniejący plik GOG Unifideck w pamięci. W ustawieniach zapisuje wyłącznie zgodę na powiązanie, nigdy tokeny ani hasło." />
+                    description="Hub ma własną sesję GOG. Logowanie odbywa się na stronie GOG, bez hasła w Hubie. Tokeny są w pamięci lub opcjonalnie w systemowym sejfie." />
         <Field label="Granice integracji" focusable highlightOnFocus
-          description="GOG pozostaje właścicielem konta, Unifideck przechowuje sesję. Hub nie zmienia jej, nie rotuje tokenów i nie wylogowuje Unifideck. Wymagane są testy na Lenovo." />
+                    description="GOG pozostaje właścicielem konta. Hub nie odczytuje i nie modyfikuje sesji Unifideck. Logowanie, otwieranie przeglądarki i obsługa pada wymagają testów na Lenovo." />
         <Field label="Szyfrowanie" focusable highlightOnFocus
-          description="Szyfrowanie Unifideck wiąże plik z urządzeniem, ale nie zastępuje systemowego sejfu ani nie chroni przed innym procesem tego samego użytkownika." />
+                    description="Hub nie przechowuje jawnych poświadczeń w plikach. Sejf wymaga aktywnej usługi Secret Service, bez obejścia jej blokady." />
       </DialogControlsSection>
     </GamepadScrollArea>
   </DialogBody>;
