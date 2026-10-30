@@ -1,6 +1,7 @@
 /**
- * Optional wheel/PageUp/PageDown scrolling within the currently visible Hub
- * page. Steam Input must map the physical right trackpad to wheel events:
+ * Scroll ONLY the content of the currently open tab (right-hand panel).
+ * The left sidebar must never become a scroll target. Wheel/PageUp/PageDown
+ * are mapped into the visible tab's content viewport. Steam Input must map the physical right trackpad to wheel events:
  * Decky's web UI cannot change a device's Steam Input configuration.
  *
  * D-pad and left pad remain owned by Steam's directional focus navigation.
@@ -79,15 +80,9 @@ export function findHubScrollTarget(
   for (const item of page.querySelectorAll<HTMLElement>('[style*="overflow"]')) add(item);
   add(page);
 
-  // Fallback for Decky's own page scroller, outside the route content wrapper.
-  let parent = page.parentElement;
-  const shell = page.closest<HTMLElement>("[data-hub-shell]");
-  while (parent && shell && shell.contains(parent)) {
-    add(parent);
-    if (parent === shell) break;
-    parent = parent.parentElement;
-  }
-
+  // The route wrapper itself is the final fallback for long Settings/Help
+  // pages. NEVER climb into SidebarNavigation's surrounding flex/scroller:
+  // that area also contains the left-hand tab list.
   return candidates.find(node => canScroll(node, distance)) ?? null;
 }
 
@@ -124,7 +119,13 @@ export function enableHubScroll(shell: HTMLElement): () => void {
     const page = currentPage(shell, event.target);
     if (!page) return;
     const amount = normalizedScrollDelta(event.deltaY, event.deltaMode, page.clientHeight);
-    if (route(event.target, amount)) event.preventDefault();
+    // Wheel input belongs to the open tab, even while the right-pad mouse
+    // cursor is over the left navigation list. Do not scroll that list.
+    const scrolled = route(event.target, amount);
+    if (scrolled || !(event.target instanceof Node && page.contains(event.target))) {
+      event.preventDefault();
+      if (scrolled) event.stopPropagation();
+    }
   };
 
   const onKey = (event: KeyboardEvent) => {
