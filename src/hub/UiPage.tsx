@@ -53,8 +53,11 @@ export function UiPage() {
       {showLookup && <ProtonDBPage />}
       {error && <Field label="Błąd" description={error} />}
     </DialogControlsSection>
-    <TabManagerModule />
-    <CollectionsModule />
+    <DialogControlsSection>
+      <DialogControlsSectionHeader>Karty i Kolekcje</DialogControlsSectionHeader>
+      <TabManagerModule />
+      <CollectionsModule />
+    </DialogControlsSection>
     <LibraryBackupSection />
   </DialogBody>;
 }
