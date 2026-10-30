@@ -126,7 +126,7 @@ class HubSelectionTests(unittest.TestCase):
             self.assertEqual(hub_settings.get_favorite_folders(), [path])
             self.assertTrue(target.is_dir())
             self.assertEqual(hub_settings.get_favorite_labels(), {path: "Mody GK2"})
-            for label in ("", " " * 10, "x" * 65, "A\\x00B", "\\n"):
+            for label in ("", " " * 10, "x" * 65, "A\x00B", "\n"):
                 with self.subTest(label=label), self.assertRaises(ValueError):
                     hub_settings.set_favorite_label(path, label)
             with self.assertRaises(ValueError):
