@@ -44,7 +44,7 @@ from backend.library import collection_manager
 from backend.library import library_backup
 from backend.stores import gog_unifideck
 
-CURRENT_VERSION = "0.5.64"
+CURRENT_VERSION = "0.5.65"
 RELEASES_API = "https://api.github.com/repos/BlueGalaxySlime/GameMode-Hub/releases/latest"
 ASSET_NAME = "GameMode-Hub.zip"
 
