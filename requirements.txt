@@ -1,0 +1,4 @@
+# GOG's imported Unifideck session uses AES-GCM encryption.
+# Decky installs this only into GameMode Hub's plugin environment.
+# No tokens, passwords or credentials are bundled.
+cryptography>=50.0.0,<51.0
