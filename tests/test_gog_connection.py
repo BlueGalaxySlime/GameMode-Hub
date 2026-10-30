@@ -43,7 +43,7 @@ class GOGLinkTests(unittest.TestCase):
         self.addCleanup(link_patch.stop)
         self.addCleanup(aes_patch.stop)
 
-    def write_session(self, content=b"UFD1" + b"n" * 12 + b"MOCK-CIPHERTEXT", mode=0o600):
+    def write_session(self, content=b"UFD1" + b"n" * 12 + b"MOCK-CIPHERTEXT!", mode=0o600):
         self.source.write_bytes(content)
         self.source.chmod(mode)
 
@@ -80,7 +80,7 @@ class GOGLinkTests(unittest.TestCase):
 
     def test_symlink_source_is_rejected(self):
         other = self.folder / "target"
-        other.write_bytes(b"UFD1" + b"n" * 12 + b"MOCK-CIPHERTEXT")
+        other.write_bytes(b"UFD1" + b"n" * 12 + b"MOCK-CIPHERTEXT!")
         other.chmod(0o600)
         self.source.symlink_to(other)
         self.assertEqual(gog.status()["state"], "unusable")
