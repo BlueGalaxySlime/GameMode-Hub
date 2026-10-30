@@ -3,7 +3,7 @@ import { callable } from "@decky/api";
 import { SidebarNavigation } from "@decky/ui";
 import {
   FaCog, FaFolderOpen, FaHeart, FaHome, FaPuzzlePiece, FaSyncAlt,
-  FaTerminal, FaUserCircle, FaBug, FaDownload, FaTv
+  FaTerminal, FaUserCircle, FaBug, FaDownload, FaTv, FaQuestionCircle
 } from "react-icons/fa";
 import { UpdatesPage } from "./UpdatesPage";
 import { FileManagerPage } from "./FileManagerPage";
@@ -17,6 +17,7 @@ import { ReportsPage } from "./ReportsPage";
 import { UiPage } from "./UiPage";
 import { DownloadsPage } from "./DownloadsPage";
 import { HubAddonsPage } from "./HubAddonsPage";
+import { HelpPage } from "./HelpPage";
 import { HUB_ROUTE } from "../core/identity";
 import { CORE_MODULES } from "../core/modules";
 
@@ -57,7 +58,9 @@ export function HubPage() {
     { title: "Zgłoszenia", route: HUB_ROUTE + "/reports", icon: <FaBug />,
       content: <ReportsPage /> },
     { title: "Dodatki", route: HUB_ROUTE + "/addons", icon: <FaPuzzlePiece />,
-      content: <HubAddonsPage /> }
+      content: <HubAddonsPage /> },
+    { title: "Pomoc", route: HUB_ROUTE + "/help", icon: <FaQuestionCircle />,
+      content: <HelpPage /> }
   ];
   if (!registered.includes("home")) return null;
   return <SidebarNavigation pages={pages} />;
