@@ -7,7 +7,7 @@
 - [x] Mały ZIP wtyczki bez Electron/Flatpak/AppImage i bez uruchamiania terminala.
 - [ ] Sprawdzenie na Legion Go S: otwieranie z Quick Access, pad, focus i współpraca z dodatkami.
 - [ ] Stabilne adaptery dla menedżera plików, ustawień, dodatków i bibliotek.
-- [ ] Przywrócenie niezależnego terminala dopiero po ustaleniu przyczyn restartów.
+- [ ] Przetestowanie na Legion Go S przywróconego na żądanie terminala: PTY, klawiatura Steam, 3 sesje, przejścia między kartami, brak restartu Gaming Mode. Kod testowy w osobnej gałęzi.
 - [ ] Ciągła zgodność adaptera z aktualizacjami Decky Loader.
 
 ## Opcjonalny etap późniejszy
