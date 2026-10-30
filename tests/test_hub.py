@@ -110,6 +110,23 @@ class HubSelectionTests(unittest.TestCase):
             self.assertEqual(hub_settings.get_favorite_folders(), [])
             self.assertEqual(hub_settings.get_favorite_labels(), {})
 
+    def test_upgrade_adds_steam_shortcut_once_to_existing_bookmarks(self):
+        from backend.files import file_manager
+        home = Path(self.root.name) / "home"
+        steam = home / ".local" / "share" / "Steam" / "steamapps"
+        steam.mkdir(parents=True)
+        old = home / "MyMods"
+        old.mkdir()
+        favfile = Path(self.root.name) / "legacy-favorites.json"
+        favfile.write_text(json.dumps([str(old)]), encoding="utf-8")
+        with patch.object(file_manager, "_allowed_roots", return_value=[("Dom", home)]), \
+             patch.object(hub_settings, "FAVORITE_FOLDERS_FILE", favfile):
+            self.assertEqual(hub_settings.get_favorite_folders(), [str(old), str(steam)])
+            self.assertEqual(hub_settings.get_favorite_folders(), [str(old), str(steam)])
+            self.assertTrue(favfile.with_suffix(".steam_default_checked").exists())
+            hub_settings.set_favorite_folders([str(old)])
+            self.assertEqual(hub_settings.get_favorite_folders(), [str(old)])
+
     def test_custom_favorite_labels_preserve_existing_paths(self):
         from backend.files import file_manager
         home = Path(self.root.name) / "home"
