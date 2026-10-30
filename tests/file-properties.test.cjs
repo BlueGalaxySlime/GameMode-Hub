@@ -15,7 +15,7 @@ test("file properties show extension, exact bytes and modification date", () => 
     size: 1548, modified: 1700000000, directory: false, symlink: false });
   assert.equal(props.find(x => x.label === "Nazwa").description, "mod.loader.zip");
   assert.equal(props.find(x => x.label === "Rozszerzenie").description, ".zip");
-  assert.match(props.find(x => x.label === "Rozmiar").description, /1\\s?548 B/);
+  assert.ok(props.find(x => x.label === "Rozmiar").description.replace(/\\s/g, "").includes("1548B"));
   assert.equal(props.find(x => x.label === "Ścieżka").description, "/home/deck/mod.loader.zip");
   assert.notEqual(props.find(x => x.label === "Data modyfikacji").description, "Brak danych");
 });
