@@ -1,3 +1,12 @@
+# GameMode Hub 0.5.64 (testowy)
+
+- **Terminal — powrót wersji eksperymentalnej:** możliwość ręcznego uruchomienia powłoki Linux z zakładki Terminal. Samo wejście do zakładki ani dodanie kolejnej sesji nie uruchamia procesu.
+- **Inspiracja Decky Terminal:** niezależny silnik PTY zachowuje obsługę sesji; Hub ponownie łączy go z xterm i wejściem klawiatury Steam, bez przejmowania interfejsu innej wtyczki.
+- **Stabilność:** operacje PTY wykonywane poza główną pętlą Decky; ograniczenie rozmiaru odpowiedzi i częstotliwości odczytów, zwalnianie procesów przy wyłączaniu Huba. Brak powłoki root, limit trzech sesji.
+- **Pad i sesje:** zakładki 1–3, LB/RB, Y — opcje, X — fokus zakładek; dodatkowe Ctrl+C, Tab i Enter. Stan powłoki jest zachowywany przy przełączaniu zakładek.
+- **Testy automatyczne:** typowanie TS, build, testy Pythona i JavaScript oraz walidacja paczki ZIP. **Przyczyna wcześniejszego restartu Gaming Mode nie została potwierdzona; potrzebne są testy na Lenovo.**
+- **Kanał:** testowy (prerelease); zachowana możliwość cofnięcia do 0.5.63. Nie oznaczać jako stabilnej.
+
 # GameMode Hub 0.5.63 (testowy)
 
 - **Pliki — bez dublowania opcji:** menu Y „Opcje” przy pliku lub folderze pokazuje tylko operacje na wybranym elemencie. „Opcje plików” na pasku adresu i wierszu `...` zawiera ustawienia widoku, sortowanie, Ulubione, transfer i kosz. „Opcje zaznaczenia” pozostają odrębne.
