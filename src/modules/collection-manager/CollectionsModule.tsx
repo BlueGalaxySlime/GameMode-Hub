@@ -1,8 +1,10 @@
 import { useEffect, useState } from "react";
 import { callable } from "@decky/api";
-import { DialogButton, DialogControlsSection, DialogControlsSectionHeader, Field,
-  Focusable, ModalRoot, NavEntryPositionPreferences, Toggle, showModal } from "@decky/ui";
-import { HubTextInput } from "../../hub/HubTextInput";
+import {
+  ConfirmModal, DialogControlsSection, DialogControlsSectionHeader,
+  Field, Menu, MenuGroup, MenuItem, TextField, showContextMenu, showModal
+} from "@decky/ui";
+import { OptimizationManageControl } from "../../hub/OptimizationManageControl";
 import { hubCollectionsChanged, hubCollectionsEnabledChanged } from "../tab-manager/LibraryIntegration";
 
 export type CollectionFilter = "manual" | "all" | "installed" | "favorites" | "non_steam";
@@ -13,165 +15,205 @@ export type HubCollection = {
   app_ids: string[];
 };
 
-const FILTERS: CollectionFilter[] = ["manual", "all", "installed", "favorites", "non_steam"];
 const FILTER_NAMES: Record<CollectionFilter, string> = {
-  manual: "Ręczna lista gier",
+  manual: "Wybrane gry",
   all: "Wszystkie gry",
   installed: "Zainstalowane",
   favorites: "Ulubione",
   non_steam: "Spoza Steam"
 };
+const FILTERS: CollectionFilter[] = ["manual", "all", "installed", "favorites", "non_steam"];
+
 const read = callable<[], HubCollection[]>("get_hub_collections");
 const save = callable<[HubCollection[]], HubCollection[]>("save_hub_collections");
 const readEnabled = callable<[], boolean>("get_hub_collections_enabled");
 const saveEnabled = callable<[boolean], boolean>("set_hub_collections_enabled");
 
-function CollectionsManagerDialog({ closeModal }: { closeModal?: () => void }) {
+/** Uses the same native Steam name dialog as the Cards menu. */
+function CollectionValueModal({ title, initial = "", appId = false, onSave, closeModal }: {
+  title: string;
+  initial?: string;
+  appId?: boolean;
+  onSave: (value: string) => Promise<void>;
+  closeModal?: () => void;
+}) {
+  const [value, setValue] = useState(initial);
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState("");
+
+  async function submit() {
+    if (busy) return;
+    const trimmed = value.trim();
+    if (appId
+      ? !/^[0-9]{1,10}$/.test(trimmed) || Number(trimmed) < 1 || Number(trimmed) > 4294967295
+      : !trimmed || trimmed.length > 80) {
+      setError(appId ? "Wpisz poprawne AppID gry." : "Nazwa musi mieć 1–80 znaków.");
+      return;
+    }
+    setBusy(true);
+    try {
+      await onSave(appId ? String(Number(trimmed)) : trimmed);
+      closeModal?.();
+    } catch {
+      setError("Nie można zapisać zmiany. Zachowano poprzednie dane.");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  return <ConfirmModal
+    strTitle={title}
+    strOKButtonText="Zapisz"
+    onOK={() => { void submit(); }}
+    onCancel={closeModal}
+    onEscKeypress={closeModal}>
+    <Field label={appId ? "AppID gry" : "Nazwa kolekcji"}>
+      <TextField value={value} focusOnMount
+        onChange={event => setValue(event.target.value)} />
+    </Field>
+    {!!error && <Field label="Błąd" description={error} />}
+    {busy && <Field label="Zapisywanie…" />}
+  </ConfirmModal>;
+}
+
+function CollectionDeleteModal({ collection, onDelete, closeModal }: {
+  collection: HubCollection;
+  onDelete: () => Promise<void>;
+  closeModal?: () => void;
+}) {
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState("");
+  return <ConfirmModal strTitle={`Usunąć kolekcję „${collection.title}”?`}
+    strOKButtonText="Usuń"
+    onCancel={closeModal}
+    onEscKeypress={closeModal}
+    onOK={() => {
+      if (busy) return;
+      setBusy(true);
+      void onDelete().then(() => closeModal?.()).catch(() =>
+        setError("Nie udało się usunąć kolekcji.")
+      ).finally(() => setBusy(false));
+    }}>
+    <Field label="Usunięta zostanie tylko kolekcja Huba"
+      description="Nie usuwamy gier, kolekcji Steam ani kart Huba." />
+    {!!error && <Field label="Błąd" description={error} />}
+  </ConfirmModal>;
+}
+
+/**
+ * Like LibraryCardsContextMenu: native SteamOS menu, grouped actions, and
+ * short native dialogs only when text/confirmation is needed.
+ * No full-screen editor, cycling filters, or extra row of action buttons.
+ */
+export function CollectionsContextMenu() {
   const [collections, setCollections] = useState<HubCollection[]>([]);
-  const [name, setName] = useState("");
-  const [editing, setEditing] = useState<string | null>(null);
-  const [editName, setEditName] = useState("");
-  const [gameId, setGameId] = useState("");
-  const [addingTo, setAddingTo] = useState<string | null>(null);
-  const [confirmDelete, setConfirmDelete] = useState<string | null>(null);
   const [busy, setBusy] = useState(true);
   const [error, setError] = useState("");
 
   useEffect(() => {
-    let mounted = true;
+    let alive = true;
     read().then(value => {
-      if (!mounted) return;
+      if (!alive) return;
       setCollections(value);
       hubCollectionsChanged(value);
     }).catch(() => {
-      if (mounted) setError("Nie udało się odczytać kolekcji.");
-    }).finally(() => { if (mounted) setBusy(false); });
-    return () => { mounted = false; };
+      if (alive) setError("Nie udało się odczytać kolekcji.");
+    }).finally(() => { if (alive) setBusy(false); });
+    return () => { alive = false; };
   }, []);
 
-  async function persist(next: HubCollection[]) {
-    if (busy) return;
+  async function mutate(change: (items: HubCollection[]) => HubCollection[]) {
+    if (busy) throw new Error("Zapis jest zajęty");
     setBusy(true);
-    setError("");
     try {
-      const stored = await save(next);
-      setCollections(stored);
-      hubCollectionsChanged(stored);
-      setConfirmDelete(null);
-    } catch {
-      setError("Nie udało się zapisać kolekcji. Dotychczasowy układ zachowano.");
-    } finally { setBusy(false); }
+      const current = await read();
+      const updated = await save(change(current));
+      setCollections(updated);
+      hubCollectionsChanged(updated);
+    } catch (cause) {
+      setError("Nie można zapisać kolekcji.");
+      throw cause;
+    } finally {
+      setBusy(false);
+    }
   }
 
   function create() {
-    const title = name.trim();
-    if (!title || busy) return;
-    const id = "collection-" + Date.now().toString(36) + "-" + Math.random().toString(36).slice(2, 8);
-    void persist([...collections, { id, title, filter: "manual", app_ids: [] }]);
-    setName("");
+    showModal(<CollectionValueModal title="Nowa kolekcja"
+      onSave={title => mutate(items => {
+        if (items.length >= 64) throw new Error("Limit kolekcji");
+        const id = "collection-" + Date.now().toString(36) + "-" +
+          Math.random().toString(36).slice(2, 8);
+        return [...items, { id, title, filter: "manual", app_ids: [] }];
+      })} />);
   }
 
-  function rename(id: string) {
-    if (!editName.trim()) return;
-    void persist(collections.map(c => c.id === id ? { ...c, title: editName.trim() } : c));
-    setEditing(null);
+  function rename(item: HubCollection) {
+    showModal(<CollectionValueModal title="Zmień nazwę kolekcji"
+      initial={item.title}
+      onSave={title => mutate(items => items.map(entry =>
+        entry.id === item.id ? { ...entry, title } : entry))} />);
   }
 
-  function nextFilter(collection: HubCollection) {
-    const index = FILTERS.indexOf(collection.filter);
-    const filter = FILTERS[(index + 1) % FILTERS.length];
-    void persist(collections.map(c => c.id === collection.id ? { ...c, filter } : c));
+  function addApp(item: HubCollection) {
+    showModal(<CollectionValueModal title="Dodaj grę do kolekcji" appId
+      onSave={appId => mutate(items => items.map(entry =>
+        entry.id === item.id
+          ? { ...entry, app_ids: [...new Set([...entry.app_ids, appId])] }
+          : entry))} />);
   }
 
-  function addGame(id: string) {
-    const text = gameId.trim();
-    if (!/^[0-9]{1,10}$/.test(text) || Number(text) < 1 || Number(text) > 4294967295) {
-      setError("Wpisz prawidłowe numeryczne AppID gry.");
-      return;
-    }
-    const app_id = String(Number(text));
-    void persist(collections.map(c => c.id === id
-      ? { ...c, app_ids: [...new Set([...c.app_ids, app_id])] }
-      : c));
-    setGameId("");
+  function move(item: HubCollection, offset: number) {
+    void mutate(items => {
+      const from = items.findIndex(entry => entry.id === item.id);
+      const to = from + offset;
+      if (from < 0 || to < 0 || to >= items.length) return items;
+      const result = [...items];
+      [result[from], result[to]] = [result[to], result[from]];
+      return result;
+    }).catch(() => {});
   }
 
-  function move(index: number, delta: number) {
-    const target = index + delta;
-    if (target < 0 || target >= collections.length) return;
-    const next = [...collections];
-    [next[index], next[target]] = [next[target], next[index]];
-    void persist(next);
-  }
-
-  return <ModalRoot onCancel={() => closeModal?.()}>
-    <div style={{ width: "min(88vw, 620px)", maxWidth: "100%", padding: 12,
-      display: "flex", flexDirection: "column", gap: 8 }}>
-      <Focusable flow-children="column" style={{ maxHeight: "min(68vh, 560px)",
-        overflowY: "auto" }}>
-        <DialogControlsSection>
-          <DialogControlsSectionHeader>Zarządzaj kolekcjami</DialogControlsSectionHeader>
-    <Field label="Nowa kolekcja">
-      <HubTextInput value={name} disabled={busy} placeholder="Nazwa kolekcji"
-        onChange={event => setName(event.target.value)} onEditValue={setName} />
-    </Field>
-    <DialogButton disabled={busy || !name.trim() || collections.length >= 64}
-      onClick={create}>Dodaj kolekcję</DialogButton>
-    {collections.map((collection, index) => <div key={collection.id}
-      style={{ padding: "8px 0", borderBottom: "1px solid rgba(255,255,255,.13)" }}>
-      {editing === collection.id ? <>
-        <Field label="Zmień nazwę">
-          <HubTextInput value={editName} disabled={busy}
-            onChange={event => setEditName(event.target.value)} onEditValue={setEditName} />
-        </Field>
-        <DialogButton disabled={busy || !editName.trim()} onClick={() => rename(collection.id)}>Zapisz nazwę</DialogButton>
-        <DialogButton disabled={busy} onClick={() => setEditing(null)}>Anuluj</DialogButton>
-      </> : <Field label={collection.title}
-        description={FILTER_NAMES[collection.filter] + " · " + collection.app_ids.length + " przypisanych AppID"} />}
-      <DialogButton disabled={busy} onClick={() => {
-        setEditing(collection.id); setEditName(collection.title);
-      }}>Zmień nazwę</DialogButton>
-      <DialogButton disabled={busy} onClick={() => nextFilter(collection)}>
-        Reguła: {FILTER_NAMES[collection.filter]}
-      </DialogButton>
-      <DialogButton disabled={busy || index === 0} onClick={() => move(index, -1)}>Wyżej</DialogButton>
-      <DialogButton disabled={busy || index === collections.length - 1}
-        onClick={() => move(index, 1)}>Niżej</DialogButton>
-      <DialogButton disabled={busy} onClick={() => {
-        setAddingTo(addingTo === collection.id ? null : collection.id);
-        setGameId("");
-      }}>{addingTo === collection.id ? "Ukryj przypisania" : "Przypisane gry"}</DialogButton>
-      {addingTo === collection.id && <>
-        <Field label="Dodaj grę (AppID)">
-          <HubTextInput value={gameId} disabled={busy} placeholder="AppID"
-            onChange={event => setGameId(event.target.value)} onEditValue={setGameId} />
-        </Field>
-        <DialogButton disabled={busy || !gameId.trim()} onClick={() => addGame(collection.id)}>
-          Dodaj AppID
-        </DialogButton>
-        {collection.app_ids.map(id => <Field key={id} label={"AppID " + id}>
-          <DialogButton disabled={busy} onClick={() => void persist(collections.map(c =>
-            c.id === collection.id ? { ...c, app_ids: c.app_ids.filter(a => a !== id) } : c
-          ))}>Usuń z kolekcji</DialogButton>
-        </Field>)}
-      </>}
-      {confirmDelete === collection.id ? <>
-        <Field label="Usunąć tę kolekcję?"
-          description="Karty odwołujące się do niej nie zostaną usunięte; do czasu wyboru innej kolekcji będą puste." />
-        <DialogButton disabled={busy} onClick={() => void persist(collections.filter(c =>
-          c.id !== collection.id
-        ))}>Potwierdź usunięcie</DialogButton>
-        <DialogButton disabled={busy} onClick={() => setConfirmDelete(null)}>Anuluj</DialogButton>
-      </> : <DialogButton disabled={busy} onClick={() => setConfirmDelete(collection.id)}>Usuń kolekcję</DialogButton>}
-    </div>)}
-    {!busy && !collections.length && <Field label="Brak kolekcji"
-      description="Dodaj kolekcję, aby przypisywać gry i reguły." />}
-    {error && <Field label="Błąd" description={error} />}
-        </DialogControlsSection>
-      </Focusable>
-      <DialogButton onClick={() => closeModal?.()}>Zamknij</DialogButton>
-    </div>
-  </ModalRoot>;
+  return <Menu label="Kolekcje">
+    {!!error && <MenuItem disabled>{error}</MenuItem>}
+    <MenuItem disabled={busy || collections.length >= 64} onClick={create}>
+      Dodaj kolekcję
+    </MenuItem>
+    {collections.length > 0
+      ? <MenuGroup label="Moje kolekcje">
+        {collections.map((item, index) => <MenuGroup key={item.id} label={item.title}>
+          <MenuItem disabled={busy} onClick={() => rename(item)}>Zmień nazwę</MenuItem>
+          <MenuGroup label="Zawartość">
+            {FILTERS.map(filter => <MenuItem key={filter} disabled={busy}
+              onClick={() => { void mutate(items => items.map(entry =>
+                entry.id === item.id ? { ...entry, filter } : entry)).catch(() => {}); }}>
+              {FILTER_NAMES[filter]}{item.filter === filter ? " ✓" : ""}
+            </MenuItem>)}
+            {item.filter === "manual" && <MenuGroup label="Wybrane gry">
+              <MenuItem disabled={busy || item.app_ids.length >= 1024}
+                onClick={() => addApp(item)}>Dodaj AppID</MenuItem>
+              {item.app_ids.map(appId => <MenuItem key={appId} disabled={busy}
+                onClick={() => { void mutate(items => items.map(entry =>
+                  entry.id === item.id
+                    ? { ...entry, app_ids: entry.app_ids.filter(id => id !== appId) }
+                    : entry)).catch(() => {}); }}>
+                Usuń AppID {appId}
+              </MenuItem>)}
+            </MenuGroup>}
+          </MenuGroup>
+          <MenuItem disabled={busy || index === 0}
+            onClick={() => move(item, -1)}>Przesuń wyżej</MenuItem>
+          <MenuItem disabled={busy || index === collections.length - 1}
+            onClick={() => move(item, 1)}>Przesuń niżej</MenuItem>
+          <MenuItem disabled={busy} onClick={() =>
+            showModal(<CollectionDeleteModal collection={item}
+              onDelete={() => mutate(items => items.filter(entry => entry.id !== item.id))} />)}>
+            Usuń kolekcję
+          </MenuItem>
+        </MenuGroup>)}
+      </MenuGroup>
+      : <MenuItem disabled>Brak własnych kolekcji</MenuItem>}
+  </Menu>;
 }
 
 export function CollectionsModule() {
@@ -204,19 +246,17 @@ export function CollectionsModule() {
     }
   }
 
+  function openManageMenu(parent: EventTarget | null) {
+    if (busy || !parent) return;
+    showContextMenu(<CollectionsContextMenu />, parent, {
+      bFitToWindow: true, bShiftToFitWindow: true, bPreferPopTop: true
+    });
+  }
+
   return <DialogControlsSection>
     <DialogControlsSectionHeader>Kolekcje</DialogControlsSectionHeader>
-    <Focusable flow-children="row"
-      navEntryPreferPosition={NavEntryPositionPreferences.MAINTAIN_X}
-      style={{ display: "flex", justifyContent: "space-between", alignItems: "center",
-        gap: 12, padding: "8px 0" }}>
-      <DialogButton style={{ flex: "0 1 auto", minWidth: 150 }}
-        onClick={() => showModal(<CollectionsManagerDialog />)}>
-        Zarządzaj ▾
-      </DialogButton>
-      <Toggle value={enabled} disabled={busy}
-        onChange={value => { void toggle(value); }} />
-    </Focusable>
-    {error && <Field label="Błąd" description={error} />}
+    <OptimizationManageControl busy={busy} enabled={enabled}
+      onManage={openManageMenu} onToggle={value => { void toggle(value); }} />
+    {!!error && <Field label="Błąd" description={error} />}
   </DialogControlsSection>;
 }
