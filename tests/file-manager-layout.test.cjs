@@ -269,8 +269,9 @@ test("plain text information is never collapsed in credits, desktop, or terminal
   // Terminal now uses the same full-width Focusable layout as Files and Desktop,
   // with its own scrollable console region rather than an information-only page.
   assert.ok(terminalPage.includes('role="region"'));
-  assert.ok(terminalPage.includes('aria-label={active === null ? "Terminal — brak sesji"'));
-  assert.ok(terminalPage.includes('overflowY: "auto"'));
+  assert.ok(terminalPage.includes('aria-label="Terminal — brak sesji"'));
+  assert.ok(terminalPage.includes('overflow: "hidden"'));
+  assert.ok(terminalInput.includes("scrollback: 3000"));
   assert.ok(!terminalPage.includes("setExpanded"));
 });
 
