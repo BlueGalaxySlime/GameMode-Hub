@@ -2,3 +2,7 @@
 # Decky installs this only into GameMode Hub's plugin environment.
 # No tokens, passwords or credentials are bundled.
 cryptography>=50.0.0,<51.0
+
+# Optional persistent native GOG session in the Linux Secret Service (KWallet).
+# No plaintext disk fallback; temporary sessions remain in process memory.
+secretstorage>=3.3,<4
