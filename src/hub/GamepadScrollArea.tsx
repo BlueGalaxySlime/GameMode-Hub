@@ -7,7 +7,7 @@ import { Focusable } from "@decky/ui";
  * into view without turning informational text into an expandable button.
  */
 export function GamepadScrollArea({ children }: { children: ReactNode }) {
-  return <Focusable flow-children="column"
+  return <Focusable flow-children="column" data-hub-scroll-container="reading"
     aria-label="Przewijana treść — krzyżak góra/dół"
     onFocusCapture={event => {
       const target = event.target as HTMLElement;
