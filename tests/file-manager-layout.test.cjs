@@ -54,11 +54,18 @@ test("Y is called Opcje on a single item, Opcje zaznaczenia in selection, and Op
   assert.ok(ui.includes('<Menu label="Opcje plików">'));
 });
 
-test("Y on normal files and folders includes both file actions and global options", () => {
+test("Y on normal files and folders shows only item actions, global menu stays on address and ...", () => {
   const specific = ui.split('function openFileMenu(entry: Entry', 2)[1].split('function openFocusedFilesMenu', 1)[0];
   assert.ok(specific.includes('<Menu label={"Opcje: " + entry.name}>'));
   assert.ok(specific.includes('>Właściwości</MenuItem>'));
-  assert.ok(specific.includes('{browserOptions()}'));
+  assert.ok(!specific.includes('{browserOptions()}'));
+  assert.ok(!specific.includes('MenuGroup label="Ulubione"'));
+  assert.ok(!specific.includes('MenuGroup label="Sortowanie"'));
+  const global = ui.split('function openBrowserMenu(parent: EventTarget)', 2)[1]
+    .split('function openProperties(entry: Entry)', 1)[0];
+  assert.ok(global.includes('{browserOptions()}'));
+  assert.ok(ui.includes('void withTimeout(readFavorites(), 4000)'));
+  assert.ok(ui.includes('.then(next => { setFavorites(next); return withTimeout(readFavoriteLabels(), 4000); })'));
   assert.ok(ui.includes('onContextMenu={event => {'));
   assert.ok(ui.includes('openFileMenu(entry, event.currentTarget, pane)'));
   assert.ok(ui.includes('function browserOptions()'));

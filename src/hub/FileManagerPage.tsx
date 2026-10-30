@@ -240,8 +240,12 @@ export function FileManagerPage() {
 
   useEffect(() => {
     if (!page) void load(null, hidden, 0, sortBy, descending, "left");
-    void withTimeout(readFavorites(), 4000).then(setFavorites).catch(() => {});
-    void withTimeout(readFavoriteLabels(), 4000).then(setFavoriteLabels).catch(() => {});
+    // Read serially: both RPCs can seed the default bookmark on first run.
+    // Parallel reads used to race on the same atomic favorites JSON temp file.
+    void withTimeout(readFavorites(), 4000)
+      .then(next => { setFavorites(next); return withTimeout(readFavoriteLabels(), 4000); })
+      .then(setFavoriteLabels)
+      .catch(() => {});
     return () => { request.current++; };
   }, []);
 
