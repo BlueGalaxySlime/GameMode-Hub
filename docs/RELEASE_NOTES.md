@@ -1,3 +1,11 @@
+# GameMode Hub 0.5.57 (testowy)
+
+- **Terminal:** ekran w trybie bezpiecznym przebudowany na układ Plików i Pulpitu — cienki pasek stanu, trzy zakładki sesji i duży obszar terminala zamiast kilku opisowych pól.
+- **Pad:** wybór sesji przez LB/RB (gdy sygnały docierają do panelu), A na przyciskach sesji, Y — menu natywne z sesjami i informacjami, X — powrót fokusu do zakładek. Dla klawiatury PageUp/PageDown.
+- **Sesje:** wybrana zakładka zostaje zapamiętana po zmianie strony; bez zbędnych przycisków z resetem, bez niebieskiego wyróżnienia.
+- **Bezpieczeństwo:** powłoka PTY pozostaje wyłączona po wcześniejszej awarii Steam UI. Przebudowa dotyczy nawigacji i wyglądu, nie uruchamia poleceń.
+- **Testy:** dodano test nawigacji sesji i utrzymano test blokady terminala w backendzie.
+
 # GameMode Hub 0.5.56 (testowy)
 
 - **Repozytorium:** backend Pythona uporządkowany w `backend/core/`, `backend/files/`, `backend/apps/`, `backend/downloads/` i `backend/library/`.

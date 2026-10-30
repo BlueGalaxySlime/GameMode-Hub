@@ -6,7 +6,13 @@ const backend = fs.readFileSync("main.py", "utf8");
 
 test("temporary safe mode does not mount xterm or call backend methods", () => {
   assert.doesNotMatch(adapter, /\bTerminalView\b|\bcallable\s*<|\bterminal_start\b|\bautoStart\b/);
-  assert.match(adapter, /tryb bezpieczny/i);
+  assert.match(adapter, /Tryb bezpieczny/i);
+  assert.match(adapter, /showContextMenu/);
+  assert.match(adapter, /onOptionsButton/);
+  assert.match(adapter, /onSecondaryButton/);
+  assert.match(adapter, /onButtonDown/);
+  assert.match(adapter, /nextTerminalSession/);
+  assert.doesNotMatch(adapter, /terminal_ping|terminal_read|terminal_write/);
 });
 test("backend fails closed to cached old terminal frontends", () => {
   assert.match(backend, /async def terminal_start\(/);
