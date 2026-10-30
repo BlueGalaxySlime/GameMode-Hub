@@ -80,7 +80,10 @@ test("sidebar starts with Pulpit / Pliki / Terminal; terminal settings live in H
   assert.ok(!hub.includes('title: "Opcje terminala"'));
   assert.ok(hub.includes('setTerminalFontSize={setTerminalFontSize}'));
   const options = fs.readFileSync("src/hub/HubOptionsPage.tsx", "utf8");
-  assert.ok(options.includes('label="Rozmiar czcionki terminala"'));
+  assert.ok(options.includes('"Rozmiar czcionki terminala"'));
+  assert.ok(options.includes('selectedOption={options.language}'));
+  assert.ok(options.includes('{ data: "pl", label: "Polski" }'));
+  assert.ok(options.includes('{ data: "en", label: "English" }'));
   assert.ok(options.includes('showValue onChange={setTerminalFontSize}'));
   assert.ok(options.includes('Uruchamianie na żądanie'));
   const terminal = fs.readFileSync("src/hub/DeckyTerminalAdapter.tsx", "utf8");
@@ -144,6 +147,10 @@ test("Konta remains the fourth controller tab and exposes GOG and Epic stores", 
   assert.ok(hub.includes('content: <AccountsPage />'));
   const accounts = fs.readFileSync("src/hub/AccountsPage.tsx", "utf8");
   assert.ok(accounts.includes('DialogControlsSectionHeader>Konta i sklepy</DialogControlsSectionHeader>'));
+  assert.ok(accounts.includes('<StoreConnectionRibbon'));
+  assert.ok(accounts.includes('steam: "unknown"'));
+  assert.ok(accounts.includes('epic: "unknown"'));
+  assert.ok(accounts.includes('gog.connected ? "connected" : "disconnected"'));
   assert.ok(accounts.includes('<Dropdown rgOptions={ACCOUNT_OPTIONS}'));
   assert.ok(accounts.includes('label="Wybierz sklep"'));
   assert.ok(accounts.includes("Stan sesji: niezweryfikowany"));
@@ -467,4 +474,17 @@ test("Help is the last sidebar tab after Addons and documents existing features"
     assert.ok(help.includes('title: "' + title + '"'), title);
   }
   assert.ok(!help.includes('window.open('));
+});
+
+test("Store connection ribbon is read-only and never guesses Epic/Steam authentication", () => {
+  const ribbon = fs.readFileSync("src/hub/StoreConnectionRibbon.tsx", "utf8");
+  assert.ok(ribbon.includes("SiGogdotcom"));
+  assert.ok(ribbon.includes("SiEpicgames"));
+  assert.ok(ribbon.includes("FaSteam"));
+  assert.ok(ribbon.includes("STORES.map"));
+  assert.ok(ribbon.includes("connected: \"#4caf50\""));
+  assert.ok(ribbon.includes('role="group"'));
+  assert.ok(!ribbon.includes("onClick"));
+  assert.ok(!ribbon.includes("onSelected"));
+  assert.ok(!ribbon.includes("gog_native_begin"));
 });
