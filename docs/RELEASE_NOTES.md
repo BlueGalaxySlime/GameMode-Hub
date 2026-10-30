@@ -1,3 +1,10 @@
+# GameMode Hub 0.5.63 (testowy)
+
+- **Pliki — bez dublowania opcji:** menu Y „Opcje” przy pliku lub folderze pokazuje tylko operacje na wybranym elemencie. „Opcje plików” na pasku adresu i wierszu `...` zawiera ustawienia widoku, sortowanie, Ulubione, transfer i kosz. „Opcje zaznaczenia” pozostają odrębne.
+- **Mody Steam:** zwykła, usuwalna zakładka startowa w Ulubionych. Wskazuje istniejący katalog `steamapps/workshop/content` (modów Workshop), a gdy go brak, najbliższy istniejący katalog `workshop` lub `steamapps`. Po usunięciu zakładki przez użytkownika Hub jej nie odtworzy.
+- **Migracja:** nowe jednorazowe dodawanie działa również przy zapisanych wcześniej Ulubionych i starym znaczniku migracji. Nie zmienia ani nie usuwa innych zakładek i ich własnych nazw.
+- **Bezpieczeństwo:** skrót nie tworzy katalogów, nie pobiera modów i nie wykonuje instalacji.
+
 # GameMode Hub 0.5.62 (testowy)
 
 - **Pliki — Y:** przy pojedynczym zaznaczonym pliku lub folderze przycisk ma nazwę „Opcje”, a nagłówek menu zawiera nazwę elementu. Na `...` i pasku adresu pozostaje „Opcje plików”.

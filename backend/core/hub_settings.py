@@ -120,26 +120,39 @@ def validate_favorites(paths):
     return result
 
 
-def _default_steam_mods_favorite():
-    """Shortcut to Steam's steamapps root for manual mods and Workshop content.
-
-    This is NOT a mod-loader directory: each game keeps its own mod path.
-    Never create or modify Steam directories just to add a bookmark.
-    """
+def _steamapps_roots():
+    """Known Steam libraries within the user's allowed home directory."""
     from backend.files.file_manager import _allowed_roots, _normalize
     home = _allowed_roots()[0][1]
     for relative in (
         ".local/share/Steam/steamapps",
         ".steam/steam/steamapps",
         ".steam/root/steamapps",
+        ".var/app/com.valvesoftware.Steam/.steam/steam/steamapps",
     ):
         try:
             folder = _normalize(str(home / relative))
             if folder.is_dir():
-                return str(folder)
-        except (PermissionError, OSError, ValueError):
+                yield folder
+        except (OSError, ValueError, PermissionError):
             continue
-    return None
+
+
+def _default_steam_mods_favorite():
+    """Workshop content where available; otherwise the existing Steam root.
+
+    Manual mods are game-specific. No directory creation or install actions.
+    """
+    fallback = None
+    for steamapps in _steamapps_roots():
+        for relative in ("workshop/content", "workshop", "."):
+            folder = (steamapps / relative).resolve()
+            if folder.is_dir():
+                if relative == "workshop/content":
+                    return str(folder)
+                if fallback is None:
+                    fallback = str(folder)
+    return fallback
 
 
 def _default_favorite_labels():
@@ -210,18 +223,21 @@ def get_favorite_folders():
                     result.append(str(folder))
             except (OSError, ValueError, TypeError, PermissionError):
                 continue
-        # One-time upgrade of pre-existing bookmarks: do not overwrite or
-        # re-add this shortcut after the user removes it. An explicitly empty
-        # saved list stays empty.
-        marker = FAVORITE_FOLDERS_FILE.with_suffix(".steam_default_checked")
-        if result and not marker.exists():
+        # v0.5.63 seeds ONE ordinary starting bookmark, even for users
+        # with a saved list. No reseeding after the user explicitly removes it.
+        # A separate marker is needed because older versions could mark
+        # the migration as done without ever adding a Steam shortcut.
+        marker = FAVORITE_FOLDERS_FILE.with_suffix(".steam_workshop_checked")
+        if not marker.exists():
             default = _default_steam_mods_favorite()
             if default and default not in result and len(result) < MAX_FAVORITES:
                 return set_favorite_folders([*result, default])
+            if default:  # existing bookmark, or full list: don't retry
+                marker.touch(exist_ok=True)
         return result
     except FileNotFoundError:
         default = _default_steam_mods_favorite()
-        return [default] if default else []
+        return set_favorite_folders([default]) if default else []
     except (OSError, ValueError, TypeError):
         return []
 
@@ -234,4 +250,5 @@ def set_favorite_folders(paths):
     temp.replace(FAVORITE_FOLDERS_FILE)
     # An explicit save (including deletion) disables automatic re-seeding.
     FAVORITE_FOLDERS_FILE.with_suffix(".steam_default_checked").touch(exist_ok=True)
+    FAVORITE_FOLDERS_FILE.with_suffix(".steam_workshop_checked").touch(exist_ok=True)
     return favorites

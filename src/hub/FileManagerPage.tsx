@@ -450,8 +450,8 @@ export function FileManagerPage() {
     ), 0);
   }
 
-  // One shared set of global options, available on the address bar, ...
-  // and in every ordinary file/folder context menu.
+  // Global file-manager settings belong only on the address bar and ...
+  // Never repeat these menu items inside the context menu of a file.
   function browserOptions() {
     const shortcuts = currentPage?.roots.filter(root => !breadcrumbs(currentPage.path, currentPage.roots)
       .some(part => part.path === root.path)) ?? [];
@@ -577,7 +577,6 @@ export function FileManagerPage() {
           <MenuItem onSelected={() => { void pasteTo(entry.path); }}>
             {"Wklej do folderu (" + clipboard.paths.length + ")"}
           </MenuItem>}
-        {browserOptions()}
       </Menu>,
       parent,
       { bFitToWindow: true, bShiftToFitWindow: true, bPreferPopTop: true }
