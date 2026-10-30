@@ -120,10 +120,10 @@ test("all View categories have their own selectable menu actions and visible lab
 test("all sidebar tabs form one contiguous controller-navigation list", () => {
   const pages = hub.split("  const pages = [", 2)[1].split("\n  ];", 1)[0];
   assert.ok(!pages.includes('"separator" as const'));
-  const names = [...pages.matchAll(/title: "(Pulpit|Pliki|Terminal|Konta|Dodatki|Opcje Huba|Aktualizacje|Pobieranie|Optymalizacja|Podziękowania|Zgłoszenia)"/g)]
+  const names = [...pages.matchAll(/title: "(Pulpit|Pliki|Terminal|Konta|Dodatki|Opcje Huba|Aktualizacje|Pobieranie|Optymalizacja|Podziękowania|Zgłoszenia|Pomoc)"/g)]
     .map(match => match[1]);
   assert.deepEqual(names, ["Pulpit", "Pliki", "Terminal", "Konta",
-    "Opcje Huba", "Aktualizacje", "Pobieranie", "Optymalizacja", "Podziękowania", "Zgłoszenia", "Dodatki"]);
+    "Opcje Huba", "Aktualizacje", "Pobieranie", "Optymalizacja", "Podziękowania", "Zgłoszenia", "Dodatki", "Pomoc"]);
 });
 
 test("B on Desktop backs out of edit and filters, then releases SteamOS Back", () => {
@@ -454,4 +454,17 @@ test("Heroic is the only Add-ons module and install is confirmed before backgrou
   assert.ok(downloads.includes('def enqueue_heroic(self):'));
   assert.ok(backend.includes('async def downloads_install_heroic('));
   assert.ok(!addons.includes('sudo'));
+});
+
+test("Help is the last sidebar tab after Addons and documents existing features", () => {
+  const sidebar = hub.slice(hub.indexOf('title: "Dodatki"'));
+  assert.ok(sidebar.indexOf('title: "Pomoc"') > sidebar.indexOf('title: "Dodatki"'));
+  assert.ok(hub.includes('content: <HelpPage />'));
+  const help = fs.readFileSync("src/hub/HelpPage.tsx", "utf8");
+  assert.ok(help.includes('<GamepadScrollArea>'));
+  for (const title of ["Pulpit", "Pliki", "Terminal", "Konta", "Opcje Huba",
+    "Aktualizacje", "Pobieranie", "Optymalizacja", "Podziękowania", "Zgłoszenia", "Dodatki"]) {
+    assert.ok(help.includes('title: "' + title + '"'), title);
+  }
+  assert.ok(!help.includes('window.open('));
 });
