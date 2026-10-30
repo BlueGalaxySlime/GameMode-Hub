@@ -135,6 +135,14 @@ def get_favorite_folders():
                     result.append(str(folder))
             except (OSError, ValueError, TypeError, PermissionError):
                 continue
+        # One-time upgrade of pre-existing bookmarks: do not overwrite or
+        # re-add this shortcut after the user removes it. An explicitly empty
+        # saved list stays empty.
+        marker = FAVORITE_FOLDERS_FILE.with_suffix(".steam_default_checked")
+        if result and not marker.exists():
+            default = _default_steam_mods_favorite()
+            if default and default not in result and len(result) < MAX_FAVORITES:
+                return set_favorite_folders([*result, default])
         return result
     except (OSError, ValueError, TypeError):
         return []
@@ -146,4 +154,7 @@ def set_favorite_folders(paths):
     temp = FAVORITE_FOLDERS_FILE.with_suffix(".tmp")
     temp.write_text(json.dumps(favorites, ensure_ascii=False), encoding="utf-8")
     temp.replace(FAVORITE_FOLDERS_FILE)
+    # A deliberate save (including removing all bookmarks) disables automatic
+    # re-seeding after this update.
+    FAVORITE_FOLDERS_FILE.with_suffix(".steam_default_checked").touch(exist_ok=True)
     return favorites
