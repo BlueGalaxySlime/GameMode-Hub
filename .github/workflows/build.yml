@@ -42,7 +42,7 @@ jobs:
       - name: Test update checker timeouts
         run: node --test tests/update-timeout.test.cjs
       - name: Verify terminal safe mode
-        run: node --test tests/terminal-safe-mode.test.cjs
+        run: node --test tests/terminal-safe-mode.test.cjs tests/terminal-session-layout.test.cjs
       - name: Verify session preservation and options
         run: node --test tests/hub-session.test.cjs
       - name: Verify text editing, selection and clipboard controls
