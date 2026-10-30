@@ -1,3 +1,13 @@
+# GameMode Hub 0.5.65 (testowy)
+
+- **Konta i sklepy:** wybór sklepu GOG lub Epic zamiast wyboru launchera jako głównego sposobu integracji. Epic zachowuje istniejące, tymczasowe przekierowanie do programu, ale nie udaje natywnego połączenia.
+- **GOG — import istniejącego połączenia Unifideck (na żądanie):** wykrywanie zaszyfrowanego pliku sesji i jawne „Powiąż GOG”. Hub nie kopiuje tokenów do ustawień, nie pyta o hasło ani 2FA i nie wykonuje powtórnego logowania. Lokalnie zapisuje wyłącznie zgodę na korzystanie z aktualnego źródła.
+- **GOG — biblioteka:** po powiązaniu można nacisnąć „Wczytaj gry”. Odczyt bezpośrednio z GOG przez HTTPS, z limitami czasu, liczby pozycji i stron. Token pozostaje w backendzie i nie trafia do interfejsu. Błąd autoryzacji nie jest wyświetlany jako pusta biblioteka.
+- **Bezpieczeństwo:** odmowa odczytu symlinków, nieprywatnych i niezaszyfrowanych plików tokenów; brak automatycznego odświeżania/rotacji tokenów (nie zakłócamy sesji Unifideck). „Odłącz GOG” usuwa tylko powiązanie Huba.
+- **Zależności:** dołączono `requirements.txt` z AES-GCM/cryptography, aby Decky mógł zainstalować bibliotekę podczas instalowania wtyczki.
+- **Ograniczenia:** to powiązanie zależne od sesji Unifideck, a nie samodzielny klient GOG. Nie instaluje ani nie uruchamia gier i nie otwiera jeszcze sklepu WWW w Gaming Mode. Tokeny wygasłe trzeba odświeżyć w Unifideck. Wymagany test na Lenovo przed uznaniem za stabilne.
+- **Projekt docelowy:** wspólny interfejs sklepów i możliwość wpinania osobnych, w przyszłości nawet oficjalnych adapterów. Zobacz `docs/STORE_CONNECTORS.md`.
+
 # GameMode Hub 0.5.64 (testowy)
 
 - **Terminal — powrót wersji eksperymentalnej:** możliwość ręcznego uruchomienia powłoki Linux z zakładki Terminal. Samo wejście do zakładki ani dodanie kolejnej sesji nie uruchamia procesu.
