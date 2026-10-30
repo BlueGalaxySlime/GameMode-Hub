@@ -48,5 +48,8 @@ test("terminal uses the same content layout as Files and Desktop, not custom rou
   assert.match(code, /onButtonDown/);
   assert.match(hub, /title: "Terminal"[\s\S]*?content: <DeckyTerminalPage/);
   assert.doesNotMatch(hub, /title: "Terminal"[\s\S]*?hideTitle: true, padding: "none"/);
-  assert.doesNotMatch(code, /\bTerminalView\b|\bcallable\s*<|\bterminal_start\b/);
+  assert.match(code, /TerminalView/);
+  assert.match(code, /Uruchom terminal/);
+  assert.match(code, /activated\\.includes\\(active\\)/);
+  assert.match(code, /HubTextInput/);
 });
