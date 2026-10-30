@@ -17,6 +17,10 @@
 
 „Opcje Huba” zawierają dwa przełączniki: **Zachowuj stan kart** (domyślnie włączony) oraz **Podział drzewa plików** (domyślnie wyłączony). Stan kart jest przechowywany w pamięci wtyczki, więc można przełączać zakładki bez utraty ścieżki i bieżących ustawień. Same opcje są zapisywane na dysku. Podział w Plikach ogranicza się do przeglądarki katalogów: foldery po lewej, pliki po prawej, natomiast pasek adresu i cały Hub nie są dzielone.
 
+## Konta i sklepy
+
+W **Konta → GOG** można powiązać istniejącą, zaszyfrowaną sesję GOG z Unifideck i na żądanie pobrać listę posiadanych gier. Jest to wyłącznie lokalne, odczytowe powiązanie, nie nowy klient logowania i nie migracja samych tokenów. Hub nie przechowuje haseł, a odłączenie nie zmienia konta Unifideck. Funkcja jest testowa i nie instaluje jeszcze gier. Docelowa architektura [modułów sklepów](docs/STORE_CONNECTORS.md) pozwoli zastąpić programy uruchamiające wspólnym interfejsem sklepu.
+
 ## Optymalizacja
 
 **Optymalizacja** jest prostą stroną ustawień: Gaming Mode, Karty, Kolekcje i Kopia zapasowa bez dodatkowych przełączanych ekranów. Dodawanie i edycja kart odbywają się **z poziomu biblioteki Gaming Mode** przez natywne menu **☰** zaznaczonej karty. W Optymalizacji jest jeden wiersz z **ON/OFF** oraz sąsiadującą listą **Zarządzaj ▾**, używającą tego samego menu co w bibliotece. Kolekcje Huba i karty są niezależne. Kopie zapasowe kart, kolekcji i profili można zapisać i przywrócić, bez plików gier i haseł. Nie trzeba instalować TabMastera; integracja z biblioteką respektuje zapisany przełącznik ON/OFF przy uruchomieniu Huba i jest eksperymentalna. **☰ KARTY** pokazuje się na dolnej belce biblioteki launchera Steam, nie wewnątrz opcji Huba. Osobny aktywny TabMaster musi być wyłączony; stan można odświeżyć w Optymalizacja → Karty. Szczegóły w [dokumentacji](docs/TAB_MANAGER.md).
