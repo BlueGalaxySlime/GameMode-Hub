@@ -5,11 +5,11 @@ const ts = require("typescript");
 
 const source = fs.readFileSync("src/modules/terminal/sessionNavigation.ts", "utf8");
 const js = ts.transpileModule(source, { compilerOptions: { module: ts.ModuleKind.CommonJS } }).outputText;
-const exports = {};
-new Function("exports", js)(exports);
+const moduleExports = {};
+new Function("exports", js)(moduleExports);
 
 test("session navigation wraps left and right without losing the active session", () => {
-  const { nextTerminalSession, TERMINAL_SESSIONS } = exports;
+  const { nextTerminalSession, TERMINAL_SESSIONS } = moduleExports;
   assert.deepEqual(TERMINAL_SESSIONS, [0, 1, 2]);
   assert.equal(nextTerminalSession(0, -1), 2);
   assert.equal(nextTerminalSession(2, 1), 0);
