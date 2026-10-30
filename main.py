@@ -42,6 +42,7 @@ from backend.core.runtime_state import set_hub_ui_open, get_runtime_state, diagn
 from backend.library import tab_manager
 from backend.library import collection_manager
 from backend.library import library_backup
+from backend.stores import gog_unifideck
 
 CURRENT_VERSION = "0.5.64"
 RELEASES_API = "https://api.github.com/repos/BlueGalaxySlime/GameMode-Hub/releases/latest"
@@ -319,6 +320,21 @@ class Plugin:
 
     async def downloads_enqueue_flatpak(self, app_id=None, scope="user"):
         return DOWNLOADS.enqueue_flatpak(app_id, scope)
+
+    # Stores are separate adapters; the GOG link never handles a password.
+    async def gog_link_status(self):
+        return await asyncio.to_thread(gog_unifideck.status)
+
+    async def gog_link_import(self):
+        return await asyncio.to_thread(gog_unifideck.link)
+
+    async def gog_link_remove(self):
+        return await asyncio.to_thread(gog_unifideck.unlink)
+
+    async def gog_library(self):
+        return await asyncio.wait_for(
+            asyncio.to_thread(gog_unifideck.library), timeout=35
+        )
 
     async def heroic_get_status(self):
         return await asyncio.to_thread(heroic_installed)
