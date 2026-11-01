@@ -26,7 +26,7 @@ from backend.files.file_manager import listing as list_files, create_folder, ren
 from backend.apps.desktop_apps import (list_desktop_apps, get_desktop_state, set_desktop_setting,
                           reset_desktop_categories, remember_temporary_shortcut,
                           forget_temporary_shortcut, manage_desktop_view)
-from backend.files.trash_manager import trash_entry, list_trash, restore_entry
+from backend.files.trash_manager import trash_entry, inspect_trash, list_trash, restore_entry, empty_trash
 from backend.files.lan_transfer import TransferManager
 from backend.apps.flatpak_manager import flatpak_overview, flatpak_update_user, flatpak_update_all_user, heroic_installed
 from backend.downloads.downloads_manager import DOWNLOADS
@@ -291,14 +291,20 @@ class Plugin:
     async def files_list(self, path=None, hidden=False, offset=0, sort_by="name", descending=False):
         return await asyncio.to_thread(list_files, path, hidden, offset, sort_by, descending)
 
-    async def files_trash(self, path):
-        return await asyncio.to_thread(trash_entry, path)
+    async def files_trash(self, path, confirm_protected=False):
+        return await asyncio.to_thread(trash_entry, path, confirm_protected)
+
+    async def files_trash_inspect(self, path):
+        return await asyncio.to_thread(inspect_trash, path)
 
     async def files_trash_list(self):
         return await asyncio.to_thread(list_trash)
 
     async def files_trash_restore(self, item_id):
         return await asyncio.to_thread(restore_entry, item_id)
+
+    async def files_trash_empty(self, confirm=False):
+        return await asyncio.to_thread(empty_trash, confirm)
 
     async def files_mkdir(self, folder, name):
         return await asyncio.to_thread(create_folder, folder, name)
