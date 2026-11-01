@@ -1,9 +1,9 @@
 """Reversible file removal for GameMode Hub (freedesktop home Trash).
 
-Only ordinary user files on the home filesystem may be moved. This module
-deliberately has NO permanent-delete endpoint, subprocess or recursive removal.
-External/mounted drives are refused until a same-device trash implementation is
-available, so shutil.move can never silently copy-and-delete a large directory.
+User files on the home filesystem can be moved to a shared freedesktop Trash.
+Protected paths need an additional confirmation. Emptying Trash is a separate,
+explicitly confirmed permanent operation. External drives remain unsupported
+until a same-device trash implementation is available.
 """
 import configparser
 import ctypes
@@ -11,7 +11,6 @@ from datetime import datetime
 import errno
 import os
 from pathlib import Path
-import re
 import shutil
 import stat
 from urllib.parse import quote, unquote
@@ -20,9 +19,8 @@ from uuid import uuid4
 from backend.files.file_manager import _allowed_roots, _guard_write
 
 MAX_TRASH_ITEMS = 1500
-_TRASH_ID = re.compile(r"^[^/\\\\\\x00]{1,240}$", re.DOTALL)
-# Protect the user shell, Decky/Steam databases, hidden config and top-level
-# XDG folders. Their contents remain accessible for ordinary file operations.
+# Top-level XDG folders prompt an additional confirmation when moved wholesale.
+# Hidden files prompt too; paths within them remain available to expert users.
 _PROTECTED_HOME_DIRS = {
     "Desktop", "Downloads", "Documents", "Pictures", "Music", "Videos",
     "Public", "Templates", "Games", "Gry", "Applications", "Emulation",
@@ -146,8 +144,9 @@ def trash_entry(path, confirm_protected=False):
 
 
 def _metadata(item_id):
-    if (not isinstance(item_id, str) or item_id in (".", "..") or
-            not _TRASH_ID.fullmatch(item_id)):
+    if (not isinstance(item_id, str) or not (1 <= len(item_id) <= 240)
+            or item_id in (".", "..") or "/" in item_id or "\\" in item_id
+            or "\\x00" in item_id):
         raise ValueError("Nieprawidłowy wpis Kosza.")
     files, info = _trash_roots()
     saved = files / item_id
