@@ -111,8 +111,8 @@ class TrashTests(unittest.TestCase):
         desktop_item = files / "deleted_by_dolphin.txt"
         desktop_item.write_text("old")
         (info / "deleted_by_dolphin.txt.trashinfo").write_text(
-            "[Trash Info]\\nPath=" + str(self.home / "deleted_by_dolphin.txt")
-            + "\\nDeletionDate=2026-11-01T12:00:00\\n", encoding="utf-8")
+            "[Trash Info]\nPath=" + str(self.home / "deleted_by_dolphin.txt")
+            + "\nDeletionDate=2026-11-01T12:00:00\n", encoding="utf-8")
         listed = trash_manager.list_trash()
         self.assertEqual(len(listed), 1)
         self.assertEqual(listed[0]["name"], "deleted_by_dolphin.txt")
