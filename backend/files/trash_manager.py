@@ -146,7 +146,7 @@ def trash_entry(path, confirm_protected=False):
 def _metadata(item_id):
     if (not isinstance(item_id, str) or not (1 <= len(item_id) <= 240)
             or item_id in (".", "..") or "/" in item_id or "\\" in item_id
-            or "\\x00" in item_id):
+            or chr(0) in item_id):
         raise ValueError("Nieprawidłowy wpis Kosza.")
     files, info = _trash_roots()
     saved = files / item_id
