@@ -324,8 +324,14 @@ test("Y offers a reversible Trash action with explicit confirmation and recovery
   assert.ok(trashDialog.includes("B anuluje."));
   assert.ok(trashDialog.includes("closeModal?.()"));
   assert.ok(trashDialog.includes("files_trash_restore"));
+  assert.ok(trashDialog.includes("files_trash_inspect"));
+  assert.ok(trashDialog.includes("extraConfirmation"));
+  assert.ok(trashDialog.includes("Ostrzeżenie: chroniona lokalizacja."));
+  assert.ok(trashDialog.includes("Opróżnij Kosz"));
+  assert.ok(trashDialog.includes("Potwierdź trwałe usunięcie wszystkich elementów"));
   assert.ok(!trashDialog.includes("Usuń na zawsze"));
-  for (const name of ["files_trash", "files_trash_list", "files_trash_restore"]) {
+  for (const name of ["files_trash", "files_trash_inspect", "files_trash_list",
+                       "files_trash_restore", "files_trash_empty"]) {
     assert.ok(backend.includes("async def " + name + "("));
   }
   assert.ok(packageCode.includes('rglob("*.py")') && fs.existsSync('backend/files/trash_manager.py'));
