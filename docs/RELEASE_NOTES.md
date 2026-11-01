@@ -1,3 +1,11 @@
+# GameMode Hub 0.5.71 (testowy)
+
+- **Pliki — swobodna praca w ukrytych katalogach:** usuwanie elementów z `.local`, `.config`, `.steam` i podobnych lokalizacji jest dostępne bez przechodzenia do trybu pulpitu. Operacje na tych ścieżkach wymagają ostrzeżenia i dodatkowego potwierdzenia.
+- **Kosz KDE:** elementy usuwane z Huba trafiają do systemowego Kosza w katalogu domowym. W widoku Kosza można przywrócić pliki, a na liście są również wpisy utworzone w Dolphinie.
+- **Opróżnij Kosz:** dodana możliwość trwałego usunięcia całej zawartości systemowego Kosza użytkownika. Przed operacją Hub wyraźnie ostrzega o nieodwracalności i wymaga drugiego potwierdzenia.
+- **Zabezpieczenia:** nie można przenieść samego Kosza ani folderu go zawierającego do Kosza; uprawnienia systemowe nadal obowiązują i Hub nie korzysta z roota. Obsługa Kosza na karcie SD / osobnym nośniku pozostaje do dodania.
+- **Weryfikacja:** testy backendu, UI, typecheck i pakowanie w CI. Funkcje wymagają jeszcze potwierdzenia w SteamOS Gaming Mode na urządzeniu.
+
 # GameMode Hub 0.5.70 (testowy)
 
 - **Przewijanie otwartej zakładki:** prawy drążek analogowy (jeżeli jest dostępny w przeglądarce jako standardowa oś gamepada) przewija zawartość aktywnej zakładki w prawym panelu. Obsługiwane są również zdarzenia kółka myszy z prawego gładzika oraz PageUp/PageDown.
