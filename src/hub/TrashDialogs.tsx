@@ -76,7 +76,7 @@ export function ConfirmTrashDialog({ path, name, directory, onMoved, closeModal 
       </DialogButton>
       {extraConfirmation && <DialogButton disabled={busy} onClick={() => setExtraConfirmation(false)}>
         Anuluj
-      </DialogButton>
+      </DialogButton>}
     </div>
   </ModalRoot>;
 }
