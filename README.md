@@ -45,7 +45,7 @@ W **Pulpit → Y na aplikacji** są dwa profile **Dopasowania obrazu w Gaming Mo
 
 ## Pliki
 
-W Quick Access → GameMode Hub → **Pliki** lista zajmuje całą szerokość panelu. Na górze jest edytowalny adres folderu (Enter lub Przejdź), niżej klikalne segmenty ścieżki oraz zwarty pasek z ukrytymi plikami i sortowaniem według nazwy, rozmiaru lub daty. Możesz tworzyć foldery, zmieniać nazwy i kopiować/przenosić pliki; usuwanie pozostaje wyłączone, dopóki nie dodamy bezpiecznego kosza. Systemowe katalogi są niedostępne.
+W Quick Access → GameMode Hub → **Pliki** lista zajmuje całą szerokość panelu. Na górze jest edytowalny adres folderu (Enter lub Przejdź), niżej klikalne segmenty ścieżki oraz zwarty pasek z ukrytymi plikami i sortowaniem według nazwy, rozmiaru lub daty. Możesz tworzyć foldery, zmieniać nazwy, kopiować/przenosić pliki i przenosić je do systemowego Kosza KDE. W widoku **Kosz** można przywracać elementy oraz, po dodatkowym potwierdzeniu, **trwale opróżnić cały systemowy Kosz użytkownika** (w tym elementy z Dolphina). Usuwanie w ukrytych lokalizacjach, takich jak `.local` i `.config`, jest dozwolone, ale wymaga ostrzeżenia oraz drugiego potwierdzenia. Hub nie omija uprawnień Linuksa ani nie używa roota. Na razie Kosz obejmuje dysk domowy — osobny Kosz na nośnikach zewnętrznych nie jest jeszcze obsługiwany.
 
 ## Architektura i katalogi
 
