@@ -1,4 +1,4 @@
-"""Reversible Trash tests: no destructive delete, no overwrite, no system folders."""
+"""Shared Trash tests: explicit confirmations, restore and safe permanent empty."""
 import tempfile
 import unittest
 from pathlib import Path
@@ -49,21 +49,75 @@ class TrashTests(unittest.TestCase):
         trash_manager.restore_entry(moved["id"])
         self.assertEqual((folder / "content/game.ini").read_text(), "value=1")
 
-    def test_protect_home_hidden_configuration_and_system_directories(self):
-        for directory in ("Downloads", "Documents", "Desktop", ".local", ".config", ".steam", ".var"):
-            with self.subTest(directory=directory):
-                item = self.home / directory
-                item.mkdir()
-                with self.assertRaises(PermissionError):
-                    trash_manager.trash_entry(str(item))
-                self.assertTrue(item.exists())
-        with self.assertRaises(PermissionError):
-            trash_manager.trash_entry(str(self.home))
-        file_in_config = self.home / ".config" / "settings.json"
+    def test_protected_paths_require_confirmation_but_can_be_managed(self):
+        config = self.home / ".config"
+        config.mkdir()
+        file_in_config = config / "settings.json"
         file_in_config.write_text("keep")
+        self.assertTrue(trash_manager.inspect_trash(str(file_in_config))["protected"])
         with self.assertRaises(PermissionError):
             trash_manager.trash_entry(str(file_in_config))
+        moved = trash_manager.trash_entry(str(file_in_config), confirm_protected=True)
+        self.assertFalse(file_in_config.exists())
+        trash_manager.restore_entry(moved["id"])
         self.assertEqual(file_in_config.read_text(), "keep")
+
+        documents = self.home / "Documents"
+        documents.mkdir()
+        self.assertTrue(trash_manager.inspect_trash(str(documents))["protected"])
+        with self.assertRaises(PermissionError):
+            trash_manager.trash_entry(str(documents))
+        moved = trash_manager.trash_entry(str(documents), confirm_protected=True)
+        trash_manager.restore_entry(moved["id"])
+        self.assertTrue(documents.exists())
+
+    def test_can_reach_game_mods_inside_hidden_app_directory(self):
+        game_mods = self.home / ".local/share/Steam/steamapps/common/Game/Mods"
+        game_mods.mkdir(parents=True)
+        (game_mods / "loader.dll").write_text("mod")
+        with self.assertRaises(PermissionError):
+            trash_manager.trash_entry(str(game_mods))
+        moved = trash_manager.trash_entry(str(game_mods), True)
+        self.assertFalse(game_mods.exists())
+        trash_manager.restore_entry(moved["id"])
+        self.assertTrue((game_mods / "loader.dll").exists())
+
+    def test_cannot_trash_the_trash_or_its_parent(self):
+        trash_manager.list_trash()
+        for directory in (self.home / ".local",
+                          self.home / ".local/share",
+                          self.home / ".local/share/Trash"):
+            directory.mkdir(parents=True, exist_ok=True)
+            with self.assertRaises(PermissionError):
+                trash_manager.trash_entry(str(directory), True)
+
+    def test_empty_trash_requires_explicit_confirmation(self):
+        first = self.home / "first.txt"
+        second = self.home / "second.txt"
+        first.write_text("one")
+        second.write_text("two")
+        trash_manager.trash_entry(str(first))
+        trash_manager.trash_entry(str(second))
+        with self.assertRaises(PermissionError):
+            trash_manager.empty_trash()
+        self.assertEqual(len(trash_manager.list_trash()), 2)
+        self.assertEqual(trash_manager.empty_trash(True)["count"], 2)
+        self.assertEqual(trash_manager.list_trash(), [])
+        self.assertEqual(trash_manager.empty_trash(True)["count"], 0)
+
+    def test_shared_freedesktop_trash_includes_desktop_entries(self):
+        trash_manager.empty_trash(True)
+        files, info = trash_manager._trash_roots(create=True)
+        desktop_item = files / "deleted_by_dolphin.txt"
+        desktop_item.write_text("old")
+        (info / "deleted_by_dolphin.txt.trashinfo").write_text(
+            "[Trash Info]\\nPath=" + str(self.home / "deleted_by_dolphin.txt")
+            + "\\nDeletionDate=2026-11-01T12:00:00\\n", encoding="utf-8")
+        listed = trash_manager.list_trash()
+        self.assertEqual(len(listed), 1)
+        self.assertEqual(listed[0]["name"], "deleted_by_dolphin.txt")
+        self.assertEqual(trash_manager.empty_trash(True)["count"], 1)
+        self.assertFalse(desktop_item.exists())
 
     def test_protect_outside_roots_and_symbolic_links(self):
         external = self.root / "outside"
