@@ -155,8 +155,12 @@ class TrashTests(unittest.TestCase):
         self.assertEqual(len(trash_manager.list_trash()), 1)
 
     def test_reject_fake_item_id(self):
-        for item_id in ("../etc/passwd", "gmh-xxx", "../../trash", "foo.txt"):
+        for item_id in ("../etc/passwd", "../../trash", ".", ".."):
             with self.subTest(item=item_id), self.assertRaises(ValueError):
+                trash_manager.restore_entry(item_id)
+        # Ordinary freedesktop names are valid IDs, even if the entry is absent.
+        for item_id in ("gmh-xxx", "foo.txt"):
+            with self.subTest(item=item_id), self.assertRaises(FileNotFoundError):
                 trash_manager.restore_entry(item_id)
 
     def test_belongs_to_home_filesystem_only(self):
