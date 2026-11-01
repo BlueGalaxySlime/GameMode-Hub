@@ -12,14 +12,15 @@ import errno
 import os
 from pathlib import Path
 import re
+import shutil
 import stat
 from urllib.parse import quote, unquote
 from uuid import uuid4
 
 from backend.files.file_manager import _allowed_roots, _guard_write
 
-MAX_TRASH_ITEMS = 100
-_TRASH_ID = re.compile(r"^gmh-[a-f0-9]{32}-.{1,200}$", re.DOTALL)
+MAX_TRASH_ITEMS = 1500
+_TRASH_ID = re.compile(r"^[^/\\\\\\x00]{1,240}$", re.DOTALL)
 # Protect the user shell, Decky/Steam databases, hidden config and top-level
 # XDG folders. Their contents remain accessible for ordinary file operations.
 _PROTECTED_HOME_DIRS = {
@@ -46,10 +47,6 @@ def _ensure_within_home(path, *, exists=True):
         raise PermissionError("Kosz obsługuje tylko pliki na dysku domowym.")
     if not rel.parts:
         raise PermissionError("Nie można usunąć katalogu domowego.")
-    if any(part.startswith(".") for part in rel.parts):
-        raise PermissionError("Ukryte katalogi i pliki systemowe są chronione.")
-    if len(rel.parts) == 1 and rel.parts[0] in _PROTECTED_HOME_DIRS:
-        raise PermissionError("To chroniony katalog główny użytkownika.")
     node = home
     for part in rel.parts:
         node = node / part
@@ -61,6 +58,30 @@ def _ensure_within_home(path, *, exists=True):
     if exists and not (resolved.is_file() or resolved.is_dir()):
         raise ValueError("Nieobsługiwany rodzaj pliku.")
     return resolved
+
+
+def _protected_reason(source):
+    """Paths may be used, but sensitive locations require an explicit warning."""
+    rel = source.relative_to(_home())
+    if len(rel.parts) == 1 and rel.parts[0] in _PROTECTED_HOME_DIRS:
+        return "To jeden z głównych katalogów użytkownika."
+    if any(part.startswith(".") for part in rel.parts):
+        return "Ścieżka zawiera ukryte pliki lub katalogi z danymi aplikacji."
+    return ""
+
+
+def inspect_trash(path):
+    """Validate a candidate and tell the UI whether extra confirmation is required."""
+    _guard_write()
+    source = _ensure_within_home(path)
+    trash_root = _home() / ".local" / "share" / "Trash"
+    if source == trash_root or source in trash_root.parents or trash_root in source.parents:
+        raise PermissionError("Nie można przenieść Kosza ani katalogu zawierającego Kosz do niego samego.")
+    files, _ = _trash_roots(create=True)
+    if source.stat().st_dev != files.stat().st_dev:
+        raise PermissionError("Nośniki na innym dysku wymagają osobnego Kosza.")
+    reason = _protected_reason(source)
+    return {"protected": bool(reason), "reason": reason, "path": str(source)}
 
 
 def _trash_roots(create=False):
@@ -96,8 +117,10 @@ def _rename_exclusive(source, target):
         raise OSError(error, os.strerror(error), str(target))
 
 
-def trash_entry(path):
-    _guard_write()
+def trash_entry(path, confirm_protected=False):
+    details = inspect_trash(path)
+    if details["protected"] and confirm_protected is not True:
+        raise PermissionError("Wymagane potwierdzenie operacji na chronionej ścieżce.")
     source = _ensure_within_home(path)
     files, info = _trash_roots(create=True)
     if source.stat().st_dev != files.stat().st_dev:
@@ -123,7 +146,8 @@ def trash_entry(path):
 
 
 def _metadata(item_id):
-    if not isinstance(item_id, str) or not _TRASH_ID.fullmatch(item_id):
+    if (not isinstance(item_id, str) or item_id in (".", "..") or
+            not _TRASH_ID.fullmatch(item_id)):
         raise ValueError("Nieprawidłowy wpis Kosza.")
     files, info = _trash_roots()
     saved = files / item_id
@@ -134,7 +158,7 @@ def _metadata(item_id):
     parser.read(description, encoding="utf-8")
     original = unquote(parser.get("Trash Info", "Path"))
     date = parser.get("Trash Info", "DeletionDate", fallback="")
-    if Path(original).name != item_id.split("-", 2)[-1]:
+    if item_id.startswith("gmh-") and Path(original).name != item_id.split("-", 2)[-1]:
         raise ValueError("Metadane Kosza nie pasują do pliku.")
     _ensure_within_home(original, exists=False)
     return saved, description, original, date
@@ -175,3 +199,43 @@ def restore_entry(item_id):
     _rename_exclusive(source, destination)
     metadata.unlink()
     return {"path": str(destination)}
+
+
+def _check_tree_device(folder, device):
+    """Never recursively remove a mounted filesystem inside a trashed directory."""
+    for root, directories, filenames in os.walk(folder, followlinks=False):
+        for name in ["."] + directories + filenames:
+            item = Path(root) if name == "." else Path(root) / name
+            if item.lstat().st_dev != device:
+                raise PermissionError("Kosz zawiera punkt montowania z innego dysku.")
+
+
+def empty_trash(confirm=False):
+    """Permanently empty the shared freedesktop home Trash, only on explicit consent."""
+    _guard_write()
+    if confirm is not True:
+        raise PermissionError("Opróżnienie Kosza wymaga osobnego potwierdzenia.")
+    files, info = _trash_roots()
+    if not files.exists() or not info.exists():
+        return {"count": 0}
+    device = files.stat().st_dev
+    # Preflight entries before starting any irreversible deletion.
+    entries = list(files.iterdir())
+    for entry in entries:
+        if entry.lstat().st_dev != device:
+            raise PermissionError("Kosz zawiera plik z innego dysku.")
+        if entry.is_dir() and not entry.is_symlink():
+            _check_tree_device(entry, device)
+    for entry in entries:
+        if entry.is_dir() and not entry.is_symlink():
+            shutil.rmtree(entry)
+        else:
+            entry.unlink()
+        metadata = info / (entry.name + ".trashinfo")
+        if metadata.is_file() or metadata.is_symlink():
+            metadata.unlink()
+    # Remove orphaned metadata left by interrupted trash operations, too.
+    for metadata in info.iterdir():
+        if metadata.is_file() or metadata.is_symlink():
+            metadata.unlink()
+    return {"count": len(entries)}
